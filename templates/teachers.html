@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}O'qituvchilar - Ton Academy{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>Bizning Mutaxassis O'qituvchilarimiz</h1>
+        <p>Tajribali va malakali ingliz tili o'qituvchilaridan o'rganing</p>
+    </div>
+</section>
+
+<section class="teachers-page">
+    <div class="container">
+        <div class="teachers-grid">
+            {% for teacher in teachers %}
+            <div class="teacher-card">
+                {% if teacher.photo %}
+                <div class="teacher-photo">
+                    <img src="{{ teacher.photo.url }}" alt="{{ teacher.name }}" loading="lazy">
+                    {% if teacher.video_file %}
+                    <div class="teacher-video-overlay">
+                        <button class="play-btn" data-teacher-id="{{ teacher.id }}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="teacher-info">
+                    <h3>{{ teacher.name }}</h3>
+                    <p class="teacher-specialization">{{ teacher.specialization }}</p>
+                    <p class="teacher-experience"><i class="fas fa-award"></i> {{ teacher.experience }} yillik tajriba</p>
+                    <p class="teacher-bio">{{ teacher.bio|truncatewords:30 }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-content">Hozircha o'qituvchilar mavjud emas.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Video Modal -->
+<div id="video-modal" class="modal">
+    <div class="modal-content modal-video">
+        <span class="close-modal">&times;</span>
+        <div id="video-modal-content"></div>
+    </div>
+</div>
+{% endblock %}
+

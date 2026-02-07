@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load video_filters %}
+
+{% block title %}Kurslar - Ton Academy{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>Bizning Kurslarimiz</h1>
+        <p>Ingliz tilini o'rganish safaringiz uchun mukammal kursni tanlang</p>
+    </div>
+</section>
+
+<section class="courses-page">
+    <div class="container">
+        <!-- Filters -->
+        <div class="courses-filters">
+            <form method="get" class="filter-form" id="filter-form">
+                <div class="filter-group">
+                    <label>Qidirish:</label>
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Kurslarni qidirish..." class="form-control">
+                </div>
+                <div class="filter-group">
+                    <label>Daraja:</label>
+                    <select name="level" class="form-control">
+                        <option value="">Barcha Darajalar</option>
+                        {% for value, label in level_choices %}
+                        <option value="{{ value }}" {% if level_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Filtrlash</button>
+            </form>
+        </div>
+
+        <!-- Courses Grid -->
+        <div class="courses-grid" id="courses-container">
+            {% for course in courses %}
+            <div class="course-card">
+                {% if course.image %}
+                <div class="course-image">
+                    <img src="{{ course.image.url }}" alt="{{ course.title }}" loading="lazy">
+                    {% if course.promo_video_file %}
+                    <div class="course-video-overlay">
+                        <button class="play-btn" data-course-id="{{ course.id }}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="course-content">
+                    <span class="course-level">{{ course.get_level_display }}</span>
+                    <h3><a href="{% url 'blog:course_detail' course.pk %}">{{ course.title }}</a></h3>
+                    <p>{{ course.description|truncatewords:25 }}</p>
+                    <div class="course-meta">
+                        <span><i class="fas fa-clock"></i> {{ course.duration }}</span>
+                        <span class="course-price">${{ course.price }}</span>
+                    </div>
+                    <a href="{% url 'blog:course_detail' course.pk %}" class="btn btn-primary btn-sm">Batafsil</a>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-content">Kurslar topilmadi.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if courses.has_other_pages %}
+        <div class="pagination">
+            {% if courses.has_previous %}
+            <a href="?page={{ courses.previous_page_number }}{% if level_filter %}&level={{ level_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link">Oldingi</a>
+            {% endif %}
+            
+            {% for num in courses.paginator.page_range %}
+                {% if courses.number == num %}
+                <span class="page-link active">{{ num }}</span>
+                {% else %}
+                <a href="?page={{ num }}{% if level_filter %}&level={{ level_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if courses.has_next %}
+            <a href="?page={{ courses.next_page_number }}{% if level_filter %}&level={{ level_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link">Keyingi</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

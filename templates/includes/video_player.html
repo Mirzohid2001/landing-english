@@ -1,0 +1,54 @@
+{% load static %}
+{% load video_filters %}
+
+<div class="video-player-wrapper">
+    {% if video_url|is_not_empty %}
+        {% with youtube_id=video_url|youtube_id %}
+            {% if youtube_id %}
+                {# YouTube Video - используем только чистый ID без параметров #}
+                <iframe 
+                    src="https://www.youtube.com/embed/{{ youtube_id }}?rel=0&modestbranding=1" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen
+                    class="video-iframe youtube-video"
+                    loading="lazy"
+                    data-video-id="{{ youtube_id }}"
+                    title="Video player">
+                </iframe>
+            {% else %}
+                {% with vimeo_id=video_url|vimeo_id %}
+                    {% if vimeo_id %}
+                        {# Vimeo Video #}
+                        <iframe 
+                            src="https://player.vimeo.com/video/{{ vimeo_id }}?title=0&byline=0&portrait=0" 
+                            frameborder="0" 
+                            allow="autoplay; fullscreen; picture-in-picture" 
+                            allowfullscreen
+                            class="video-iframe"
+                            loading="lazy">
+                        </iframe>
+                    {% else %}
+                        {# Invalid URL - скрываем секцию #}
+                        <div style="display: none;"></div>
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+        {% endwith %}
+    {% elif video_file %}
+        {# Local Video File #}
+        <video 
+            controls 
+            class="video-player"
+            {% if preview_image %}poster="{{ preview_image.url }}"{% endif %}
+            preload="metadata">
+            <source src="{{ video_file.url }}" type="video/mp4">
+            <source src="{{ video_file.url }}" type="video/webm">
+            Your browser does not support the video tag.
+        </video>
+    {% else %}
+        {# No video - hide the section completely #}
+        <div style="display: none;"></div>
+    {% endif %}
+</div>
+

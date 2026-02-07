@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Videolar - Ton Academy{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>Video Galereya</h1>
+        <p>Bizning ta'lim videolarimiz va kurs ko'rib chiqishlarini tomosha qiling</p>
+    </div>
+</section>
+
+<section class="videos-page">
+    <div class="container">
+        <!-- Filters -->
+        <div class="videos-filters">
+            <form method="get" class="filter-form">
+                <div class="filter-group">
+                    <label>Turi:</label>
+                    <select name="type" class="form-control">
+                        <option value="">Barcha Turlar</option>
+                        {% for value, label in video_type_choices %}
+                        <option value="{{ value }}" {% if video_type == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Filtrlash</button>
+            </form>
+        </div>
+
+        <!-- Videos Grid -->
+        <div class="videos-grid">
+            {% for video in videos %}
+            <div class="video-card">
+                {% if video.preview_image %}
+                <div class="video-preview">
+                    <img src="{{ video.preview_image.url }}" alt="{{ video.title }}" loading="lazy">
+                    <button class="play-btn" data-video-id="{{ video.id }}">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                {% elif video.video_url %}
+                <div class="video-preview">
+                    <div class="video-placeholder">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <button class="play-btn" data-video-id="{{ video.id }}">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                {% endif %}
+                <div class="video-info">
+                    <h3>{{ video.title }}</h3>
+                    {% if video.description %}
+                    <p>{{ video.description|truncatewords:20 }}</p>
+                    {% endif %}
+                    {% if video.course %}
+                    <p class="video-course"><i class="fas fa-book"></i> {{ video.course.title }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-content">Hozircha videolar mavjud emas.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if videos.has_other_pages %}
+        <div class="pagination">
+            {% if videos.has_previous %}
+            <a href="?page={{ videos.previous_page_number }}{% if video_type %}&type={{ video_type }}{% endif %}" class="page-link">Oldingi</a>
+            {% endif %}
+            
+            {% for num in videos.paginator.page_range %}
+                {% if videos.number == num %}
+                <span class="page-link active">{{ num }}</span>
+                {% else %}
+                <a href="?page={{ num }}{% if video_type %}&type={{ video_type }}{% endif %}" class="page-link">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if videos.has_next %}
+            <a href="?page={{ videos.next_page_number }}{% if video_type %}&type={{ video_type }}{% endif %}" class="page-link">Keyingi</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Video Modal -->
+<div id="video-modal" class="modal">
+    <div class="modal-content modal-video">
+        <span class="close-modal">&times;</span>
+        <div id="video-modal-content"></div>
+    </div>
+</div>
+{% endblock %}
+

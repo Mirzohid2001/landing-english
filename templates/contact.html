@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Aloqa - Ton Academy{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>Biz Bilan Bog'laning</h1>
+        <p>Har qanday savol yoki so'rovlar uchun biz bilan bog'laning</p>
+    </div>
+</section>
+
+<section class="contact-page">
+    <div class="container">
+        <div class="contact-wrapper">
+            <div class="contact-info">
+                <h2>Bog'lanish</h2>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                        <h4>Telefon</h4>
+                        <p>+998 90 123 45 67</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <h4>Email</h4>
+                        <p>info@englishcenter.uz</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <h4>Manzil</h4>
+                        <p>Toshkent, O'zbekiston</p>
+                    </div>
+                </div>
+            </div>
+            <div class="contact-form-wrapper">
+                <h2>Xabar Yuborish</h2>
+                <form id="contact-form" method="post" action="{% url 'blog:contact' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input type="text" name="name" class="form-control" placeholder="Ismingiz" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="tel" name="phone" class="form-control" placeholder="Telefon Raqamingiz" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" name="email" class="form-control" placeholder="Email Manzilingiz" required>
+                    </div>
+                    <div class="form-group">
+                        <textarea name="message" class="form-control" placeholder="Xabaringiz" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Xabar Yuborish</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Contact form submission via AJAX
+    document.getElementById('contact-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        const formData = new FormData(form);
+        
+        showLoading();
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showAlert(data.message, 'success');
+                form.reset();
+            } else {
+                showAlert('Iltimos, formani tekshirib, qayta urinib ko\'ring.', 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showAlert('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', 'error');
+        });
+    });
+</script>
+{% endblock %}
+

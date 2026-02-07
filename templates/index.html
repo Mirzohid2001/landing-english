@@ -1,0 +1,637 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load video_filters %}
+
+{% block title %}Bosh Sahifa - Ton Academy{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-background">
+        {% if about and about.video_file %}
+        <div class="hero-video">
+            {% include 'includes/video_player.html' with video_file=about.video_file %}
+        </div>
+        {% endif %}
+        <div class="hero-overlay"></div>
+        <!-- Animated Background Elements -->
+        <div class="animated-bg">
+            <div class="floating-shapes">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+                <div class="shape shape-4"></div>
+                <div class="shape shape-5"></div>
+                <div class="shape shape-6"></div>
+                <div class="shape shape-7"></div>
+                <div class="shape shape-8"></div>
+            </div>
+            <div class="wave-container">
+                <svg class="wave wave-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                    <path fill="rgba(37, 99, 235, 0.3)" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+                <svg class="wave wave-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                    <path fill="rgba(245, 158, 11, 0.25)" fill-opacity="1" d="M0,192L48,197.3C96,203,192,213,288,197.3C384,181,480,139,576,138.7C672,139,768,181,864,197.3C960,213,1056,203,1152,186.7C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+                <svg class="wave wave-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                    <path fill="rgba(16, 185, 129, 0.2)" fill-opacity="1" d="M0,256L48,234.7C96,213,192,171,288,165.3C384,160,480,192,576,197.3C672,203,768,181,864,181.3C960,181,1056,203,1152,213.3C1248,224,1344,224,1392,224L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+            </div>
+            <div class="particles" id="particles"></div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-star"></i>
+                <span>#1 Ton Academy</span>
+            </div>
+            <h1 class="hero-title">
+                <span class="title-line-1">Kelajagingizni O'zgartiring</span>
+                <span class="title-line-2">Ingliz Tilini Bugun O'rganing</span>
+            </h1>
+            <p class="hero-subtitle"><strong>10,000+</strong> muvaffaqiyatli talabalar qatoriga qo'shiling va o'z orzularingizni amalga oshiring</p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-number">95%</div>
+                    <div class="stat-label">Muvaffaqiyat Darajasi</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">10K+</div>
+                    <div class="stat-label">Talabalar</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Mutaxassis O'qituvchilar</div>
+                </div>
+            </div>
+            <div class="hero-buttons">
+                <a href="{% url 'blog:courses' %}" class="btn btn-primary btn-hero">
+                    <i class="fas fa-rocket"></i>
+                    <span>Hoziroq O'rganishni Boshlang</span>
+                </a>
+                <a href="{% url 'blog:contact' %}" class="btn btn-outline btn-hero">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Bepul Maslahat</span>
+                </a>
+            </div>
+            <div class="hero-trust">
+                <div class="trust-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Sertifikatlangan Dasturlar</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fas fa-users"></i>
+                    <span>10,000+ Bitiruvchilar</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fas fa-trophy"></i>
+                    <span>Mukofot Sohibi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-indicator">
+        <div class="mouse">
+            <div class="wheel"></div>
+        </div>
+        <span>Ko'proq ko'rish uchun aylantiring</span>
+    </div>
+</section>
+
+<!-- Benefits Section - Перемещено в самый верх для быстрого показа преимуществ -->
+<section class="benefits-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Afzalliklar</span>
+            <h2 class="section-title">Nima Uchun Aynan Bizni Tanlash</h2>
+            <p class="section-description">Bizning tizimimizni xarid qilish yoki ishlatish uchun 5 ta asosiy sabab</p>
+        </div>
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon-wrapper">
+                    <div class="benefit-icon">
+                        <i class="fas fa-infinity"></i>
+                    </div>
+                    <div class="benefit-icon-bg"></div>
+                </div>
+                <h3>Umrbod Foydalanish</h3>
+                <p>Bir marta xarid qiling va umrbod foydalaning. Hech qanday qo'shimcha to'lovlar yo'q!</p>
+                <div class="benefit-badge">Premium</div>
+            </div>
+            
+            <div class="benefit-card">
+                <div class="benefit-icon-wrapper">
+                    <div class="benefit-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div class="benefit-icon-bg"></div>
+                </div>
+                <h3>100+ Video Darslar</h3>
+                <p>Professional o'qituvchilar tomonidan tayyorlangan 100 dan ortiq video darslar</p>
+                <div class="benefit-badge">100+</div>
+            </div>
+            
+            <div class="benefit-card">
+                <div class="benefit-icon-wrapper">
+                    <div class="benefit-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="benefit-icon-bg"></div>
+                </div>
+                <h3>100+ Haqiqiy IELTS Materiallar</h3>
+                <p>Reading, Listening, Writing bo'limlari uchun CD formatdagi haqiqiy IELTS materiallari</p>
+                <div class="benefit-badge">IELTS</div>
+            </div>
+            
+            <div class="benefit-card">
+                <div class="benefit-icon-wrapper">
+                    <div class="benefit-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="benefit-icon-bg"></div>
+                </div>
+                <h3>Bepul Consultatsiyalar</h3>
+                <p>Mutaxassislar bilan bepul maslahatlar va yordam olish imkoniyati</p>
+                <div class="benefit-badge">Bepul</div>
+            </div>
+            
+            <div class="benefit-card">
+                <div class="benefit-icon-wrapper">
+                    <div class="benefit-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="benefit-icon-bg"></div>
+                </div>
+                <h3>Shaxsiy Kabinet</h3>
+                <p>Barcha materiallar va progressni kuzatish uchun qulay shaxsiy kabinet</p>
+                <div class="benefit-badge">Qulay</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Courses Section - Перемещено вверх для быстрого доступа к основной информации -->
+<section class="courses-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Bizning Dasturlarimiz</span>
+            <div class="section-header">
+                <h2 class="section-title">O'zingizga Mos Kursni Tanlang</h2>
+                <a href="{% url 'blog:courses' %}" class="view-all-link">Barcha Kurslarni Ko'rish <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <p class="section-description">Boshlang'ichdan ilg'or darajagacha, ingliz tilini o'rganish safaringiz uchun bizda mukammal kurs mavjud</p>
+        </div>
+        <div class="courses-grid" id="courses-grid">
+            {% for course in courses %}
+            <div class="course-card">
+                {% if course.image %}
+                <div class="course-image">
+                    <img src="{{ course.image.url }}" alt="{{ course.title }}" loading="lazy">
+                    {% if course.promo_video_file %}
+                    <div class="course-video-overlay">
+                        <button class="play-btn" data-course-id="{{ course.id }}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="course-content">
+                    <span class="course-level">{{ course.get_level_display }}</span>
+                    <h3><a href="{% url 'blog:course_detail' course.pk %}">{{ course.title }}</a></h3>
+                    <p>{{ course.description|truncatewords:25 }}</p>
+                    <div class="course-meta">
+                        <div class="meta-item-small">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ course.duration }}</span>
+                        </div>
+                        <div class="meta-item-small">
+                            <i class="fas fa-users"></i>
+                            <span>Kichik Guruhlar</span>
+                        </div>
+                    </div>
+                    <div class="course-footer">
+                        <div class="course-price-small">${{ course.price }}</div>
+                        <button class="btn btn-primary btn-sm apply-course-btn" data-course-id="{{ course.id }}">
+                            <i class="fas fa-arrow-right"></i> Ariza Berish
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-content">Hozircha kurslar mavjud emas.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Certificates Section - Перемещено сразу после Courses -->
+{% if certificates %}
+<section class="certificates-section">
+    <div class="container">
+        <div class="section-intro" style="color: white;">
+            <span class="section-badge" style="background: rgba(255, 255, 255, 0.2); color: white;">Yutuqlar</span>
+            <h2 class="section-title" style="color: white; -webkit-text-fill-color: white;">IELTS Muvaffaqiyat Hikoyalari</h2>
+            <p class="section-description" style="color: rgba(255, 255, 255, 0.95);">Bizning talabalarimizning yutuqlari o'z-o'zidan gapirib beradi</p>
+        </div>
+        <div class="certificates-slider-wrapper">
+            <button class="slider-btn slider-btn-prev" aria-label="Oldingi">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="certificates-slider">
+                <div class="certificates-slider-track">
+                    {% for certificate in certificates %}
+                    <div class="certificate-card slider-item">
+                        {% if certificate.student_photo %}
+                        <div class="certificate-student-photo">
+                            <img src="{{ certificate.student_photo.url }}" alt="{{ certificate.student_name }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                        <div class="certificate-content">
+                            <h4>{{ certificate.student_name }}</h4>
+                            <div class="certificate-score">
+                                <span class="score-label">IELTS Balli</span>
+                                <span class="score-value">{{ certificate.ielts_score }}</span>
+                            </div>
+                            {% if certificate.certificate_image %}
+                            <div class="certificate-image">
+                                <img src="{{ certificate.certificate_image.url }}" alt="IELTS Certificate" loading="lazy">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button class="slider-btn slider-btn-next" aria-label="Keyingi">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="slider-indicators">
+                {% for certificate in certificates %}
+                <button class="slider-indicator" data-slide="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Videos Section - После Certificates -->
+{% if videos %}
+<section class="videos-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Videolar</span>
+            <h2 class="section-title">Bizning Video Darslar</h2>
+            <p class="section-description">Professional o'qituvchilar tomonidan tayyorlangan video darslar va ko'rib chiqishlar</p>
+            <a href="{% url 'blog:videos' %}" class="view-all-link">Barcha Videolarni Ko'rish <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="videos-grid-home">
+            {% for video in videos %}
+            <div class="video-card-home">
+                {% if video.preview_image %}
+                <div class="video-preview-home">
+                    <img src="{{ video.preview_image.url }}" alt="{{ video.title }}" loading="lazy">
+                    <button class="play-btn-home" data-video-id="{{ video.id }}">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                {% elif video.video_url %}
+                <div class="video-preview-home">
+                    <div class="video-placeholder-home">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <button class="play-btn-home" data-video-id="{{ video.id }}">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                {% endif %}
+                <div class="video-info-home">
+                    <h3>{{ video.title }}</h3>
+                    {% if video.description %}
+                    <p>{{ video.description|truncatewords:15 }}</p>
+                    {% endif %}
+                    {% if video.course %}
+                    <p class="video-course-home"><i class="fas fa-book"></i> {{ video.course.title }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" data-target="10000">0</div>
+                    <div class="stat-label">Baxtli Talabalar</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" data-target="50">0</div>
+                    <div class="stat-label">Mutaxassis O'qituvchilar</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" data-target="25">0</div>
+                    <div class="stat-label">Mavjud Kurslar</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" data-target="95">0</div>
+                    <div class="stat-label">Muvaffaqiyat Darajasi %</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+{% if features %}
+<section class="features-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Nima Uchun Bizni Tanlash</span>
+            <h2 class="section-title">Ingliz Tilini Mukammal O'rganish Yo'lingiz</h2>
+            <p class="section-description">Ingliz tilini o'rganishda bizni #1 tanlov qiladigan narsalarni kashf eting</p>
+        </div>
+        <div class="features-grid">
+            {% for feature in features %}
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <div class="feature-icon">
+                        {% if feature.icon|slice:":2" == "fa" %}
+                            <i class="{{ feature.icon }}"></i>
+                        {% else %}
+                            {{ feature.icon }}
+                        {% endif %}
+                    </div>
+                    <div class="feature-icon-bg"></div>
+                </div>
+                <h3>{{ feature.title }}</h3>
+                <p>{{ feature.description }}</p>
+                <div class="feature-link">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- How It Works Section - Перемещено выше для быстрого понимания процесса -->
+{% if process_steps %}
+<section class="how-it-works-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Jarayon</span>
+            <h2 class="section-title">Qanday Ishlaydi</h2>
+            <p class="section-description">Ingliz tilini mukammal o'rganish safaringiz {{ process_steps|length }} oddiy qadamda</p>
+        </div>
+        <div class="process-timeline">
+            {% for step in process_steps %}
+            <div class="timeline-item" data-step="{{ step.step_number }}">
+                <div class="timeline-icon">
+                    <i class="{{ step.icon }}"></i>
+                    <div class="step-number">{{ step.step_number|stringformat:"02d" }}</div>
+                </div>
+                <div class="timeline-content">
+                    <h3>{{ step.title }}</h3>
+                    <p>{{ step.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Teachers Section -->
+{% if teachers %}
+<section class="teachers-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Bizning Jamoa</span>
+            <h2 class="section-title">Jahon Darajasidagi O'qituvchilardan O'rganing</h2>
+            <p class="section-description">Sizning muvaffaqiyatingizga bag'ishlangan tajribali o'qituvchilarimiz bilan tanishing</p>
+        </div>
+        <div class="teachers-grid">
+            {% for teacher in teachers %}
+            <div class="teacher-card">
+                {% if teacher.photo %}
+                <div class="teacher-photo">
+                    <img src="{{ teacher.photo.url }}" alt="{{ teacher.name }}" loading="lazy">
+                    {% if teacher.video_file %}
+                    <div class="teacher-video-overlay">
+                        <button class="play-btn" data-teacher-id="{{ teacher.id }}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="teacher-info">
+                    <h3>{{ teacher.name }}</h3>
+                    <p class="teacher-specialization">{{ teacher.specialization }}</p>
+                    <p class="teacher-experience">{{ teacher.experience }} yillik tajriba</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center">
+            <a href="{% url 'blog:teachers' %}" class="btn btn-outline">Barcha O'qituvchilarni Ko'rish</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Testimonials Section -->
+{% if testimonials %}
+<section class="testimonials-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Muvaffaqiyat Hikoyalari</span>
+            <h2 class="section-title">Talabalarimizdan Eshiting</h2>
+            <p class="section-description">Biz bilan ingliz tilini o'zgartirgan talabalarning haqiqiy tajribalari</p>
+        </div>
+        <div class="testimonials-slider">
+            {% for testimonial in testimonials %}
+            <div class="testimonial-card">
+                {% if testimonial.student_photo %}
+                <div class="testimonial-photo">
+                    <img src="{{ testimonial.student_photo.url }}" alt="{{ testimonial.student_name }}" loading="lazy">
+                </div>
+                {% endif %}
+                <div class="testimonial-content">
+                    <div class="testimonial-rating">
+                        {% for i in "12345" %}
+                            <i class="fas fa-star {% if forloop.counter <= testimonial.rating %}active{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                    <p class="testimonial-text">"{{ testimonial.text }}"</p>
+                    <h4>{{ testimonial.student_name }}</h4>
+                    {% if testimonial.course %}
+                    <p class="testimonial-course">{{ testimonial.course.title }}</p>
+                    {% endif %}
+                    {% if testimonial.video_file %}
+                    <button class="btn btn-sm btn-outline watch-video-btn" data-testimonial-id="{{ testimonial.id }}">
+                        <i class="fas fa-play"></i> Videoni Ko'rish
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- FAQ Section -->
+{% if faqs %}
+<section class="faq-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Savol-Javob</span>
+            <h2 class="section-title">Tez-Tez Beriladigan Savollar</h2>
+            <p class="section-description">Bizning kurslarimiz haqida bilishingiz kerak bo'lgan hamma narsa</p>
+        </div>
+        <div class="faq-container">
+            {% for faq in faqs %}
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>{{ faq.question }}</h3>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>{{ faq.answer|linebreaks }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Application Modal -->
+<div id="application-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Kursga Ariza Berish</h2>
+        <form id="application-form" method="post" action="{% url 'blog:apply_course' %}">
+            {% csrf_token %}
+            <input type="hidden" name="course" id="application-course-id">
+            <div class="form-group">
+                <input type="text" name="name" class="form-control" placeholder="Ismingiz" required>
+            </div>
+            <div class="form-group">
+                <input type="tel" name="phone" class="form-control" placeholder="Telefon Raqamingiz" required>
+            </div>
+            <div class="form-group">
+                <input type="email" name="email" class="form-control" placeholder="Email Manzilingiz" required>
+            </div>
+            <div class="form-group">
+                <textarea name="message" class="form-control" placeholder="Qo'shimcha Xabar (Ixtiyoriy)" rows="4"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Arizani Yuborish</button>
+        </form>
+    </div>
+</div>
+
+<!-- Video Modal -->
+<div id="video-modal" class="modal">
+    <div class="modal-content modal-video">
+        <span class="close-modal">&times;</span>
+        <div id="video-modal-content"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // FAQ Accordion
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', function() {
+                const faqItem = this.parentElement;
+                const isActive = faqItem.classList.contains('active');
+                
+                // Close all FAQ items
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Open clicked item if it wasn't active
+                if (!isActive) {
+                    faqItem.classList.add('active');
+                }
+            });
+        });
+        
+        // Timeline items will be animated by main.js observer
+    });
+    
+    // Course application handling
+    document.querySelectorAll('.apply-course-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            document.getElementById('application-course-id').value = courseId;
+            document.getElementById('application-modal').style.display = 'block';
+        });
+    });
+
+    // Application form submission via AJAX
+    document.getElementById('application-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        const formData = new FormData(form);
+        
+        showLoading();
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showAlert(data.message, 'success');
+                form.reset();
+                document.getElementById('application-modal').style.display = 'none';
+            } else {
+                showAlert('Iltimos, formani tekshirib, qayta urinib ko\'ring.', 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showAlert('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', 'error');
+        });
+    });
+</script>
+{% endblock %}
+

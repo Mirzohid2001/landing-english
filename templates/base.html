@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ton Academy{% endblock %}</title>
+    {% load static %}
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'images/site.webmanifest' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-wrapper">
+                <a href="{% url 'blog:home' %}" class="logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Ton Academy</span>
+                </a>
+                <button class="mobile-menu-toggle" aria-label="Menyuni ochish/yopish">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="{% url 'blog:home' %}">Bosh Sahifa</a></li>
+                    <li><a href="{% url 'blog:courses' %}">Kurslar</a></li>
+                    <li><a href="{% url 'blog:teachers' %}">O'qituvchilar</a></li>
+                    <li><a href="{% url 'blog:videos' %}">Videolar</a></li>
+                    <li><a href="{% url 'blog:contact' %}">Aloqa</a></li>
+                    <li><a href="#" class="admin-link" onclick="return false;">
+                        <i class="fas fa-cog"></i>
+                        <span>Systemaga O'tish</span>
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+            <button class="close-btn">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Ton Academy</h3>
+                    <p>Ingliz tilini mukammal o'rganish uchun darvoza. Minglab muvaffaqiyatli talabalar qatoriga qo'shiling.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Tezkor Havolalar</h4>
+                    <ul>
+                        <li><a href="{% url 'blog:home' %}">Bosh Sahifa</a></li>
+                        <li><a href="{% url 'blog:courses' %}">Kurslar</a></li>
+                        <li><a href="{% url 'blog:teachers' %}">O'qituvchilar</a></li>
+                        <li><a href="{% url 'blog:contact' %}">Aloqa</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Aloqa Ma'lumotlari</h4>
+                    <p><i class="fas fa-phone"></i> +998 90 123 45 67</p>
+                    <p><i class="fas fa-envelope"></i> info@englishcenter.uz</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Ton Academy. Barcha huquqlar himoyalangan.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay / Preloader -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="preloader-content">
+            <div class="preloader-logo">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="preloader-text">Ton Academy</div>
+            <div class="preloader-progress">
+                <div class="preloader-progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress-bar" id="scroll-progress-bar"></div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scroll to Top Button -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Yuqoriga qaytish">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/video-handler.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
