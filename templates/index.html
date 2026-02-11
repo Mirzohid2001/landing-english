@@ -171,6 +171,54 @@
     </div>
 </section>
 
+<!-- Students Results Section -->
+{% if students %}
+<section class="students-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Muvaffaqiyat Hikoyalari</span>
+            <h2 class="section-title">Bizning O'quvchilarning Natijalari</h2>
+            <p class="section-description">Bizning talabalarimizning muvaffaqiyat hikoyalari va erishgan natijalari</p>
+        </div>
+        <div class="students-grid">
+            {% for student in students %}
+            <div class="student-card">
+                {% if student.photo %}
+                <div class="student-photo">
+                    <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" loading="lazy">
+                    {% if student.video_file or student.video_url %}
+                    <div class="student-video-overlay">
+                        <button class="play-btn" data-student-id="{{ student.id }}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="student-info">
+                    <h3>{{ student.full_name }}</h3>
+                    {% if student.course %}
+                    <p class="student-course">
+                        <i class="fas fa-book"></i> {{ student.course.title }}
+                    </p>
+                    {% endif %}
+                    {% if student.achievement %}
+                    <p class="student-achievement">
+                        <i class="fas fa-trophy"></i> {{ student.achievement }}
+                    </p>
+                    {% endif %}
+                    <p class="student-bio">{{ student.bio|truncatewords:25 }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center">
+            <a href="{% url 'blog:students' %}" class="btn btn-outline">Barcha Natijalarni Ko'rish</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- Courses Section - Перемещено вверх для быстрого доступа к основной информации -->
 <section class="courses-section">
     <div class="container">
@@ -428,45 +476,6 @@
 </section>
 {% endif %}
 
-<!-- Teachers Section -->
-{% if teachers %}
-<section class="teachers-section">
-    <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Bizning Jamoa</span>
-            <h2 class="section-title">Jahon Darajasidagi O'qituvchilardan O'rganing</h2>
-            <p class="section-description">Sizning muvaffaqiyatingizga bag'ishlangan tajribali o'qituvchilarimiz bilan tanishing</p>
-        </div>
-        <div class="teachers-grid">
-            {% for teacher in teachers %}
-            <div class="teacher-card">
-                {% if teacher.photo %}
-                <div class="teacher-photo">
-                    <img src="{{ teacher.photo.url }}" alt="{{ teacher.name }}" loading="lazy">
-                    {% if teacher.video_file %}
-                    <div class="teacher-video-overlay">
-                        <button class="play-btn" data-teacher-id="{{ teacher.id }}">
-                            <i class="fas fa-play"></i>
-                        </button>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-                <div class="teacher-info">
-                    <h3>{{ teacher.name }}</h3>
-                    <p class="teacher-specialization">{{ teacher.specialization }}</p>
-                    <p class="teacher-experience">{{ teacher.experience }} yillik tajriba</p>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        <div class="text-center">
-            <a href="{% url 'blog:teachers' %}" class="btn btn-outline">Barcha O'qituvchilarni Ko'rish</a>
-        </div>
-    </div>
-</section>
-{% endif %}
-
 <!-- Testimonials Section -->
 {% if testimonials %}
 <section class="testimonials-section">
@@ -590,6 +599,51 @@
         });
         
         // Timeline items will be animated by main.js observer
+    });
+    
+    // Student video handling
+    document.querySelectorAll('.play-btn[data-student-id]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            const modal = document.getElementById('video-modal');
+            const modalContent = document.getElementById('video-modal-content');
+            
+            // Show loading
+            modalContent.innerHTML = '<div style="text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin fa-3x"></i></div>';
+            modal.style.display = 'block';
+            
+            // Fetch video
+            fetch(`/api/student-video/${studentId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let videoHTML = '';
+                        if (data.video_url) {
+                            // YouTube or Vimeo URL
+                            let embedUrl = '';
+                            if (data.video_url.includes('youtube.com') || data.video_url.includes('youtu.be')) {
+                                const videoId = data.video_url.includes('youtu.be') 
+                                    ? data.video_url.split('youtu.be/')[1].split('?')[0]
+                                    : data.video_url.split('v=')[1].split('&')[0];
+                                embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                            } else if (data.video_url.includes('vimeo.com')) {
+                                const videoId = data.video_url.split('vimeo.com/')[1].split('?')[0];
+                                embedUrl = `https://player.vimeo.com/video/${videoId}`;
+                            }
+                            videoHTML = `<iframe src="${embedUrl}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="width: 100%; height: 500px;"></iframe>`;
+                        } else if (data.video_file) {
+                            videoHTML = `<video controls autoplay style="width: 100%; max-height: 80vh;"><source src="${data.video_file}" type="video/mp4">Your browser does not support the video tag.</video>`;
+                        }
+                        modalContent.innerHTML = videoHTML;
+                    } else {
+                        modalContent.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Video topilmadi</p></div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalContent.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Xatolik yuz berdi</p></div>';
+                });
+        });
     });
     
     // Course application handling

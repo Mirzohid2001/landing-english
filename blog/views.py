@@ -8,17 +8,17 @@ import json
 
 from .models import (
     Course, Teacher, Testimonial, Video, ContactRequest,
-    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep
+    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep, StudentResult
 )
 from .forms import ContactForm, CourseApplicationForm
 from .telegram_bot import send_telegram_message, format_contact_message, format_course_application_message
 
 
 def home(request):
-    """Главная страница с hero секцией, курсами, преподавателями, отзывами"""
+    """Главная страница с hero секцией, курсами, о'quvchilar natijalari, отзывами"""
     featured_courses = Course.objects.filter(is_featured=True)[:6]
     all_courses = Course.objects.all()[:6]
-    teachers = Teacher.objects.filter(is_active=True)[:4]
+    featured_students = StudentResult.objects.filter(is_active=True, is_featured=True)[:6]
     featured_testimonials = Testimonial.objects.filter(is_featured=True)[:6]
     features = Feature.objects.filter(is_active=True)
     certificates = IELTSCertificate.objects.filter(show_on_homepage=True)[:8]
@@ -30,7 +30,7 @@ def home(request):
     context = {
         'featured_courses': featured_courses,
         'courses': all_courses,
-        'teachers': teachers,
+        'students': featured_students,
         'testimonials': featured_testimonials,
         'features': features,
         'certificates': certificates,
@@ -87,14 +87,21 @@ def course_detail(request, pk):
     return render(request, 'course_detail.html', context)
 
 
-def teachers(request):
-    """Список преподавателей"""
-    teachers_list = Teacher.objects.filter(is_active=True)
+def students(request):
+    """Bizning o'quvchilarning natijalari"""
+    students_list = StudentResult.objects.filter(is_active=True)
+    
+    # Filter by course if provided
+    course_filter = request.GET.get('course', '')
+    if course_filter:
+        students_list = students_list.filter(course_id=course_filter)
     
     context = {
-        'teachers': teachers_list,
+        'students': students_list,
+        'courses': Course.objects.all(),
+        'course_filter': course_filter,
     }
-    return render(request, 'teachers.html', context)
+    return render(request, 'students.html', context)
 
 
 def contact(request):
@@ -187,22 +194,23 @@ def get_course_video(request, pk):
         return JsonResponse({'success': False, 'message': 'Course not found'}, status=404)
 
 
-def get_teacher_video(request, pk):
-    """API endpoint для получения видео преподавателя"""
+def get_student_video(request, pk):
+    """API endpoint для получения видео о'quvchi"""
     try:
-        teacher = Teacher.objects.get(pk=pk)
-        video_file = teacher.video_file.url if teacher.video_file else None
+        student = StudentResult.objects.get(pk=pk)
+        video_file = student.video_file.url if student.video_file else None
+        video_url = student.video_url if student.video_url else None
         
-        if not video_file:
+        if not video_file and not video_url:
             return JsonResponse({'success': False, 'message': 'No video available'}, status=404)
         
         return JsonResponse({
             'success': True,
-            'video_url': None,
+            'video_url': video_url,
             'video_file': video_file,
         })
-    except Teacher.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Teacher not found'}, status=404)
+    except StudentResult.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Student not found'}, status=404)
 
 
 def get_testimonial_video(request, pk):

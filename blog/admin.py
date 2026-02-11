@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Course, Teacher, Testimonial, Video, ContactRequest,
-    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep
+    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep, StudentResult
 )
 
 
@@ -149,3 +149,27 @@ class ProcessStepAdmin(admin.ModelAdmin):
             'fields': ('step_number', 'title', 'description', 'icon', 'order', 'is_active')
         }),
     )
+
+
+@admin.register(StudentResult)
+class StudentResultAdmin(admin.ModelAdmin):
+    list_display = ['full_name', 'course', 'achievement', 'is_featured', 'order', 'is_active', 'created_at']
+    list_filter = ['is_active', 'is_featured', 'course', 'created_at']
+    search_fields = ['first_name', 'last_name', 'bio', 'achievement']
+    list_editable = ['is_featured', 'order', 'is_active']
+    fieldsets = (
+        ('O\'quvchi Ma\'lumotlari', {
+            'fields': ('first_name', 'last_name', 'photo', 'bio', 'course', 'achievement')
+        }),
+        ('Video Kontent', {
+            'fields': ('video_file', 'video_url'),
+            'description': 'Lokal video fayl yoki YouTube/Vimeo havolasi'
+        }),
+        ('Ko\'rsatish Sozlamalari', {
+            'fields': ('is_featured', 'order', 'is_active')
+        }),
+    )
+    
+    def full_name(self, obj):
+        return obj.full_name
+    full_name.short_description = "To'liq Ism"

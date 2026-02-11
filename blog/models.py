@@ -232,3 +232,33 @@ class ProcessStep(models.Model):
     
     def __str__(self):
         return f"Step {self.step_number}: {self.title}"
+
+
+class StudentResult(models.Model):
+    """O'quvchilarning natijalari va ma'lumotlari"""
+    first_name = models.CharField(max_length=100, verbose_name="Ism")
+    last_name = models.CharField(max_length=100, verbose_name="Familiya")
+    photo = models.ImageField(upload_to='students/', blank=True, null=True, verbose_name="Rasm")
+    bio = models.TextField(verbose_name="O'quvchi haqida ma'lumot")
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True, related_name='student_results', verbose_name="Kurs")
+    video_file = models.FileField(upload_to='videos/students/', blank=True, null=True, help_text="O'quvchi videosi (faqat lokal fayl)", verbose_name="Video")
+    video_url = models.URLField(blank=True, null=True, help_text="YouTube yoki Vimeo video havolasi", verbose_name="Video URL")
+    achievement = models.CharField(max_length=200, blank=True, help_text="Muvaffaqiyat (masalan: IELTS 7.5, TOEFL 100)", verbose_name="Muvaffaqiyat")
+    is_featured = models.BooleanField(default=False, verbose_name="Asosiy sahifada ko'rsatish")
+    order = models.IntegerField(default=0, help_text="Tartib raqami (kichik raqamlar birinchi ko'rsatiladi)")
+    is_active = models.BooleanField(default=True, verbose_name="Faol")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order', '-created_at']
+        verbose_name = "O'quvchi natijasi"
+        verbose_name_plural = "O'quvchilarning natijalari"
+    
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+    
+    @property
+    def full_name(self):
+        """To'liq ism-familiya"""
+        return f"{self.first_name} {self.last_name}"
