@@ -21,7 +21,7 @@ def home(request):
     featured_students = StudentResult.objects.filter(is_active=True, is_featured=True)[:6]
     featured_testimonials = Testimonial.objects.filter(is_featured=True)[:6]
     features = Feature.objects.filter(is_active=True)
-    certificates = IELTSCertificate.objects.filter(show_on_homepage=True)[:8]
+    certificates = IELTSCertificate.objects.filter(show_on_homepage=True)
     videos = Video.objects.filter(is_active=True)[:6]  # Последние активные видео для главной страницы
     about = About.objects.first()
     faqs = FAQ.objects.filter(is_active=True)

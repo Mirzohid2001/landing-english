@@ -219,62 +219,7 @@
 </section>
 {% endif %}
 
-<!-- Courses Section - Перемещено вверх для быстрого доступа к основной информации -->
-<section class="courses-section">
-    <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Bizning Dasturlarimiz</span>
-            <div class="section-header">
-                <h2 class="section-title">O'zingizga Mos Kursni Tanlang</h2>
-                <a href="{% url 'blog:courses' %}" class="view-all-link">Barcha Kurslarni Ko'rish <i class="fas fa-arrow-right"></i></a>
-            </div>
-            <p class="section-description">Boshlang'ichdan ilg'or darajagacha, ingliz tilini o'rganish safaringiz uchun bizda mukammal kurs mavjud</p>
-        </div>
-        <div class="courses-grid" id="courses-grid">
-            {% for course in courses %}
-            <div class="course-card">
-                {% if course.image %}
-                <div class="course-image">
-                    <img src="{{ course.image.url }}" alt="{{ course.title }}" loading="lazy">
-                    {% if course.promo_video_file %}
-                    <div class="course-video-overlay">
-                        <button class="play-btn" data-course-id="{{ course.id }}">
-                            <i class="fas fa-play"></i>
-                        </button>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-                <div class="course-content">
-                    <span class="course-level">{{ course.get_level_display }}</span>
-                    <h3><a href="{% url 'blog:course_detail' course.pk %}">{{ course.title }}</a></h3>
-                    <p>{{ course.description|truncatewords:25 }}</p>
-                    <div class="course-meta">
-                        <div class="meta-item-small">
-                            <i class="fas fa-clock"></i>
-                            <span>{{ course.duration }}</span>
-                        </div>
-                        <div class="meta-item-small">
-                            <i class="fas fa-users"></i>
-                            <span>Kichik Guruhlar</span>
-                        </div>
-                    </div>
-                    <div class="course-footer">
-                        <div class="course-price-small">${{ course.price }}</div>
-                        <button class="btn btn-primary btn-sm apply-course-btn" data-course-id="{{ course.id }}">
-                            <i class="fas fa-arrow-right"></i> Ariza Berish
-                        </button>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <p class="no-content">Hozircha kurslar mavjud emas.</p>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<!-- Certificates Section - Перемещено сразу после Courses -->
+<!-- Certificates Section - Перемещено сразу после Students -->
 {% if certificates %}
 <section class="certificates-section">
     <div class="container">
@@ -411,6 +356,61 @@
                     <div class="stat-label">Muvaffaqiyat Darajasi %</div>
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- Courses Section - Stats section'dan keyin -->
+<section class="courses-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">Bizning Dasturlarimiz</span>
+            <div class="section-header">
+                <h2 class="section-title">O'zingizga Mos Kursni Tanlang</h2>
+                <a href="{% url 'blog:courses' %}" class="view-all-link">Barcha Kurslarni Ko'rish <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <p class="section-description">Boshlang'ichdan ilg'or darajagacha, ingliz tilini o'rganish safaringiz uchun bizda mukammal kurs mavjud</p>
+        </div>
+        <div class="courses-grid" id="courses-grid">
+            {% for course in courses %}
+            <div class="course-card">
+                {% if course.image %}
+                <div class="course-image">
+                    <img src="{{ course.image.url }}" alt="{{ course.title }}" loading="lazy">
+                    {% if course.promo_video_file %}
+                    <div class="course-video-overlay">
+                        <button class="play-btn" data-course-id="{{ course.id }}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="course-content">
+                    <span class="course-level">{{ course.get_level_display }}</span>
+                    <h3><a href="{% url 'blog:course_detail' course.pk %}">{{ course.title }}</a></h3>
+                    <p>{{ course.description|truncatewords:25 }}</p>
+                    <div class="course-meta">
+                        <div class="meta-item-small">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ course.duration }}</span>
+                        </div>
+                        <div class="meta-item-small">
+                            <i class="fas fa-users"></i>
+                            <span>Kichik Guruhlar</span>
+                        </div>
+                    </div>
+                    <div class="course-footer">
+                        <div class="course-price-small">${{ course.price }}</div>
+                        <button class="btn btn-primary btn-sm apply-course-btn" data-course-id="{{ course.id }}">
+                            <i class="fas fa-arrow-right"></i> Ariza Berish
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-content">Hozircha kurslar mavjud emas.</p>
+            {% endfor %}
         </div>
     </div>
 </section>
