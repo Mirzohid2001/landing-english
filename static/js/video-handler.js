@@ -96,9 +96,10 @@ function createVideoEmbed(videoUrl, videoFile, previewImage = null) {
         embedHTML = `
             <video 
                 controls 
+                autoplay
                 class="video-player"
                 ${previewImage ? `poster="${previewImage}"` : ''}
-                preload="metadata">
+                preload="auto">
                 <source src="${videoFile}" type="video/mp4">
                 <source src="${videoFile}" type="video/webm">
                 Your browser does not support the video tag.

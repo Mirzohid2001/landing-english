@@ -236,7 +236,12 @@ def get_lesson_video(request, pk):
     try:
         video = Video.objects.get(pk=pk)
         video_url = video.video_url if video.video_url else None
-        video_file = video.video_file.url if video.video_file else None
+        video_file = None
+        if video.video_file:
+            video_file = request.build_absolute_uri(video.video_file.url)
+        preview_image = None
+        if video.preview_image:
+            preview_image = request.build_absolute_uri(video.preview_image.url)
         
         if not video_url and not video_file:
             return JsonResponse({'success': False, 'message': 'No video available'}, status=404)
@@ -245,7 +250,7 @@ def get_lesson_video(request, pk):
             'success': True,
             'video_url': video_url,
             'video_file': video_file,
-            'preview_image': video.preview_image.url if video.preview_image else None,
+            'preview_image': preview_image,
         })
     except Video.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Video not found'}, status=404)
