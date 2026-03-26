@@ -117,7 +117,7 @@ main {
     left: 0;
     right: 0;
     z-index: 9999 !important;
-    padding: 1.2rem 0;
+    padding: 0.7rem 0;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border-bottom: 1px solid rgba(37, 99, 235, 0.1);
 }
@@ -129,7 +129,7 @@ main {
         0 0 0 1px rgba(37, 99, 235, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 1),
         0 0 40px rgba(37, 99, 235, 0.1);
-    padding: 1rem 0;
+    padding: 0.6rem 0;
     border-bottom: 1px solid rgba(37, 99, 235, 0.15);
 }
 
@@ -154,6 +154,12 @@ main {
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     animation: logoGradient 5s ease infinite;
     position: relative;
+    white-space: nowrap;
+}
+
+.logo span {
+    white-space: nowrap;
+    line-height: 1;
 }
 
 .logo:hover {
@@ -247,12 +253,6 @@ main {
 .nav-menu a:hover::after {
     width: 80%;
 }
-    color: var(--primary-color);
-}
-
-.nav-menu a:hover::after {
-    width: 100%;
-}
 
 /* Admin Link Styles */
 .nav-menu .admin-link {
@@ -284,6 +284,36 @@ main {
 .nav-menu .admin-link i {
     font-size: 1rem;
     animation: rotate 3s linear infinite;
+}
+
+/* Prevent navbar breaking on medium desktop widths */
+@media (max-width: 1280px) {
+    .container {
+        padding: 0 28px;
+    }
+
+    .logo {
+        font-size: 1.45rem;
+        gap: 10px;
+    }
+
+    .logo i {
+        font-size: 1.9rem;
+    }
+
+    .nav-menu {
+        gap: 1.2rem;
+    }
+
+    .nav-menu a {
+        font-size: 0.9rem;
+        padding: 0.42rem 0.7rem;
+    }
+
+    .nav-menu .admin-link {
+        padding: 0.42rem 0.8rem;
+        gap: 0.45rem;
+    }
 }
 
 @keyframes rotate {
@@ -1382,6 +1412,58 @@ section {
     .benefits-section {
         padding: 60px 0;
     }
+}
+
+/* SAT Section */
+.sat-section {
+    padding: 120px 0;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    position: relative;
+}
+
+.sat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.sat-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 24px;
+    padding: 2rem;
+    border: 1px solid rgba(37, 99, 235, 0.1);
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.12);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 45px rgba(37, 99, 235, 0.2);
+}
+
+.sat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: var(--white);
+    font-size: 1.4rem;
+    background: var(--gradient-primary);
+}
+
+.sat-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.7rem;
+}
+
+.sat-card p {
+    color: var(--text-light);
+    line-height: 1.75;
 }
 
 .features-section {
@@ -5599,5 +5681,80 @@ section {
     .course-card:active,
     .teacher-card:active {
         transform: scale(0.98);
+    }
+}
+
+/* ===== Navbar stability override (clean version) ===== */
+.navbar {
+    padding: 0.62rem 0 !important;
+    min-height: 0 !important;
+}
+
+.nav-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.logo {
+    font-size: 1.7rem;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.logo i {
+    font-size: 2rem;
+}
+
+.logo span {
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.nav-menu {
+    gap: 1.1rem !important;
+}
+
+.nav-menu a {
+    font-size: 0.92rem !important;
+    padding: 0.45rem 0.7rem !important;
+    color: var(--text-dark) !important;
+    transform: none !important;
+}
+
+/* Remove glitchy pseudo effects in navbar links */
+.nav-menu a::before,
+.nav-menu a::after {
+    display: none !important;
+    content: none !important;
+}
+
+.nav-menu a:hover {
+    color: var(--primary-color) !important;
+    background: rgba(37, 99, 235, 0.08);
+}
+
+.nav-menu .admin-link {
+    padding: 0.45rem 0.85rem !important;
+    color: var(--white) !important;
+}
+
+@media (max-width: 1280px) {
+    .logo {
+        font-size: 1.45rem;
+    }
+
+    .logo i {
+        font-size: 1.8rem;
+    }
+
+    .nav-menu {
+        gap: 0.8rem !important;
+    }
+
+    .nav-menu a {
+        font-size: 0.86rem !important;
+        padding: 0.38rem 0.56rem !important;
     }
 }

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SAT Dasturi - Ton Academy{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>SAT Dasturi</h1>
+        <p>SAT imtihoniga professional tayyorlov va amaliy strategiyalar</p>
+    </div>
+</section>
+
+<section class="sat-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">SAT</span>
+            <h2 class="section-title">SAT Imtihoniga Professional Tayyorlov</h2>
+            <p class="section-description">
+                AQSH va xalqaro universitetlarga kirish uchun kerak bo'ladigan SAT imtihoniga
+                bosqichma-bosqich tayyorlaymiz.
+            </p>
+        </div>
+
+        <div class="sat-grid">
+            <div class="sat-card">
+                <div class="sat-icon"><i class="fas fa-brain"></i></div>
+                <h3>Math va Verbal Bloklar</h3>
+                <p>Asosiy bo'limlar bo'yicha to'liq syllabus, dars va amaliy mashqlar.</p>
+            </div>
+            <div class="sat-card">
+                <div class="sat-icon"><i class="fas fa-stopwatch"></i></div>
+                <h3>Test Strategiyasi</h3>
+                <p>Vaqtni to'g'ri boshqarish va savollarni tez yechish metodikalari.</p>
+            </div>
+            <div class="sat-card">
+                <div class="sat-icon"><i class="fas fa-chart-line"></i></div>
+                <h3>Mock va Monitoring</h3>
+                <p>Doimiy mock testlar, tahlil va individual feedback orqali ballni oshirish.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="courses-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="section-badge">SAT Kurslari</span>
+            <h2 class="section-title">SAT Kurslari</h2>
+            <p class="section-description">Kurs nomi yoki tavsifida "SAT" bo'lgan kurslar shu yerda chiqadi.</p>
+        </div>
+
+        <div class="courses-grid">
+            {% for course in sat_courses %}
+            <div class="course-card">
+                {% if course.image %}
+                <div class="course-image">
+                    <img src="{{ course.image.url }}" alt="{{ course.title }}" loading="lazy">
+                </div>
+                {% endif %}
+                <div class="course-content">
+                    <span class="course-level">{{ course.get_level_display }}</span>
+                    <h3><a href="{% url 'blog:course_detail' course.pk %}">{{ course.title }}</a></h3>
+                    <p>{{ course.description|truncatewords:22 }}</p>
+                    <div class="course-footer">
+                        <div class="course-price-small">${{ course.price }}</div>
+                        <a href="{% url 'blog:contact' %}" class="btn btn-primary btn-sm">
+                            SAT Kursiga Yozilish
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-content">Hozircha SAT kurslari mavjud emas.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+

@@ -174,6 +174,18 @@ def videos(request):
     return render(request, 'videos.html', context)
 
 
+def sat(request):
+    """SAT dasturi uchun alohida sahifa"""
+    sat_courses = Course.objects.filter(
+        Q(title__icontains='sat') | Q(description__icontains='sat')
+    )
+
+    context = {
+        'sat_courses': sat_courses,
+    }
+    return render(request, 'sat.html', context)
+
+
 # API endpoints for AJAX video loading
 def get_course_video(request, pk):
     """API endpoint для получения видео курса"""
