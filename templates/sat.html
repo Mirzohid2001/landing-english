@@ -47,7 +47,7 @@
         <div class="section-intro">
             <span class="section-badge">SAT Kurslari</span>
             <h2 class="section-title">SAT Kurslari</h2>
-            <p class="section-description">Kurs nomi yoki tavsifida "SAT" bo'lgan kurslar shu yerda chiqadi.</p>
+            <p class="section-description">Bizning SAT yo'nalishidagi barcha kurslar shu sahifada.</p>
         </div>
 
         <div class="courses-grid">
@@ -60,7 +60,7 @@
                 {% endif %}
                 <div class="course-content">
                     <span class="course-level">{{ course.get_level_display }}</span>
-                    <h3><a href="{% url 'blog:course_detail' course.pk %}">{{ course.title }}</a></h3>
+                    <h3>{{ course.title }}</h3>
                     <p>{{ course.description|truncatewords:22 }}</p>
                     <div class="course-footer">
                         <div class="course-price-small">${{ course.price }}</div>

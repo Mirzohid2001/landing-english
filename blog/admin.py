@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Course, Teacher, Testimonial, Video, ContactRequest,
-    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep, StudentResult
+    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep, StudentResult, SATCourse
 )
 
 
@@ -173,3 +173,19 @@ class StudentResultAdmin(admin.ModelAdmin):
     def full_name(self, obj):
         return obj.full_name
     full_name.short_description = "To'liq Ism"
+
+
+@admin.register(SATCourse)
+class SATCourseAdmin(admin.ModelAdmin):
+    list_display = ['title', 'level', 'price', 'duration', 'order', 'is_active', 'created_at']
+    list_filter = ['level', 'is_active', 'created_at']
+    search_fields = ['title', 'description']
+    list_editable = ['order', 'is_active']
+    fieldsets = (
+        ('SAT Course Information', {
+            'fields': ('title', 'description', 'level', 'duration', 'price', 'image')
+        }),
+        ('Display Settings', {
+            'fields': ('order', 'is_active')
+        }),
+    )

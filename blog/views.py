@@ -8,7 +8,7 @@ import json
 
 from .models import (
     Course, Teacher, Testimonial, Video, ContactRequest,
-    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep, StudentResult
+    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep, StudentResult, SATCourse
 )
 from .forms import ContactForm, CourseApplicationForm
 from .telegram_bot import send_telegram_message, format_contact_message, format_course_application_message
@@ -176,9 +176,7 @@ def videos(request):
 
 def sat(request):
     """SAT dasturi uchun alohida sahifa"""
-    sat_courses = Course.objects.filter(
-        Q(title__icontains='sat') | Q(description__icontains='sat')
-    )
+    sat_courses = SATCourse.objects.filter(is_active=True)
 
     context = {
         'sat_courses': sat_courses,
