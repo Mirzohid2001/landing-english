@@ -47,8 +47,8 @@
                 <span>#1 Ton Academy</span>
             </div>
             <h1 class="hero-title">
-                <span class="title-line-1">Kelajagingizni O'zgartiring</span>
-                <span class="title-line-2">Ingliz Tilini Bugun O'rganing</span>
+                <span class="title-line-1">Siz boshqasini sinab ko‘rdingiz —</span>
+                <span class="title-line-2">endi eng zo‘rini sinab ko‘ring!</span>
             </h1>
             <p class="hero-subtitle"><strong>10,000+</strong> muvaffaqiyatli talabalar qatoriga qo'shiling va o'z orzularingizni amalga oshiring</p>
             <div class="hero-stats">
@@ -177,8 +177,8 @@
     <div class="container">
         <div class="section-intro">
             <span class="section-badge">Muvaffaqiyat Hikoyalari</span>
-            <h2 class="section-title">Bizning O'quvchilarning Natijalari</h2>
-            <p class="section-description">Bizning talabalarimizning muvaffaqiyat hikoyalari va erishgan natijalari</p>
+            <h2 class="section-title">IELTS O'quvchilarimizning Natijalari</h2>
+            <p class="section-description">Bizning IELTS o'quvchilarimizning haqiqiy natijalari va muvaffaqiyat hikoyalari</p>
         </div>
         <div class="students-grid">
             {% for student in students %}
@@ -276,8 +276,8 @@
     <div class="container">
         <div class="section-intro">
             <span class="section-badge">Videolar</span>
-            <h2 class="section-title">Bizning Video Darslar</h2>
-            <p class="section-description">Professional o'qituvchilar tomonidan tayyorlangan video darslar va ko'rib chiqishlar</p>
+            <h2 class="section-title">IELTS Demo darslar</h2>
+            <p class="section-description">Bizning IELTS kurslarimizdan demo video darslar va ko'rib chiqishlar</p>
             <a href="{% url 'blog:videos' %}" class="view-all-link">Barcha Videolarni Ko'rish <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="videos-grid-home">
@@ -335,7 +335,7 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-number" data-target="50">0</div>
-                    <div class="stat-label">Mutaxassis O'qituvchilar</div>
+                    <div class="stat-label">Til va Kasb Akademiyasi</div>
                 </div>
             </div>
             <div class="stat-card">
@@ -389,19 +389,15 @@
                 <div class="course-content">
                     <span class="course-level">{{ course.get_level_display }}</span>
                     <h3><a href="{% url 'blog:course_detail' course.pk %}">{{ course.title }}</a></h3>
-                    <p>{{ course.description|truncatewords:25 }}</p>
+                    <p>{{ course.short_description }}</p>
                     <div class="course-meta">
                         <div class="meta-item-small">
                             <i class="fas fa-clock"></i>
                             <span>{{ course.duration }}</span>
                         </div>
-                        <div class="meta-item-small">
-                            <i class="fas fa-users"></i>
-                            <span>Kichik Guruhlar</span>
-                        </div>
                     </div>
                     <div class="course-footer">
-                        <div class="course-price-small">${{ course.price }}</div>
+                        <div class="course-price-small">{{ course.price }} so'm</div>
                         <button class="btn btn-primary btn-sm apply-course-btn" data-course-id="{{ course.id }}">
                             <i class="fas fa-arrow-right"></i> Ariza Berish
                         </button>
@@ -415,66 +411,38 @@
     </div>
 </section>
 
-<!-- Features Section -->
-{% if features %}
-<section class="features-section">
-    <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Nima Uchun Bizni Tanlash</span>
-            <h2 class="section-title">Ingliz Tilini Mukammal O'rganish Yo'lingiz</h2>
-            <p class="section-description">Ingliz tilini o'rganishda bizni #1 tanlov qiladigan narsalarni kashf eting</p>
-        </div>
-        <div class="features-grid">
-            {% for feature in features %}
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">
-                    <div class="feature-icon">
-                        {% if feature.icon|slice:":2" == "fa" %}
-                            <i class="{{ feature.icon }}"></i>
-                        {% else %}
-                            {{ feature.icon }}
-                        {% endif %}
-                    </div>
-                    <div class="feature-icon-bg"></div>
-                </div>
-                <h3>{{ feature.title }}</h3>
-                <p>{{ feature.description }}</p>
-                <div class="feature-link">
-                    <i class="fas fa-arrow-right"></i>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
-<!-- How It Works Section - Перемещено выше для быстрого понимания процесса -->
-{% if process_steps %}
+<!-- How It Works Section -->
 <section class="how-it-works-section">
     <div class="container">
         <div class="section-intro">
             <span class="section-badge">Jarayon</span>
             <h2 class="section-title">Qanday Ishlaydi</h2>
-            <p class="section-description">Ingliz tilini mukammal o'rganish safaringiz {{ process_steps|length }} oddiy qadamda</p>
+            <p class="section-description">Ingliz tilini mukammal o'rganish safaringiz 2 oddiy qadamda</p>
         </div>
         <div class="process-timeline">
-            {% for step in process_steps %}
-            <div class="timeline-item" data-step="{{ step.step_number }}">
+            <div class="timeline-item" data-step="1">
                 <div class="timeline-icon">
-                    <i class="{{ step.icon }}"></i>
-                    <div class="step-number">{{ step.step_number|stringformat:"02d" }}</div>
+                    <i class="fas fa-user-plus"></i>
+                    <div class="step-number">01</div>
                 </div>
                 <div class="timeline-content">
-                    <h3>{{ step.title }}</h3>
-                    <p>{{ step.description }}</p>
+                    <h3>Ro'yxatdan o'ting</h3>
+                    <p>Sayt orqali ariza qoldiring yoki administrator bilan bog'laning.</p>
                 </div>
             </div>
-            {% endfor %}
+            <div class="timeline-item" data-step="2">
+                <div class="timeline-icon">
+                    <i class="fas fa-university"></i>
+                    <div class="step-number">02</div>
+                </div>
+                <div class="timeline-content">
+                    <h3>To'liq akademiya imkoniyatini qo'lga kiriting</h3>
+                    <p>Barcha kurslar, materiallar va qo'shimcha imkoniyatlardan cheklovsiz foydalaning.</p>
+                </div>
+            </div>
         </div>
     </div>
 </section>
-{% endif %}
 
 <!-- Testimonials Section -->
 {% if testimonials %}
@@ -558,7 +526,7 @@
                 <input type="tel" name="phone" class="form-control" placeholder="Telefon Raqamingiz" required>
             </div>
             <div class="form-group">
-                <input type="email" name="email" class="form-control" placeholder="Email Manzilingiz" required>
+                <input type="text" name="email" class="form-control" placeholder="Telegram nickname (@username)" required>
             </div>
             <div class="form-group">
                 <textarea name="message" class="form-control" placeholder="Qo'shimcha Xabar (Ixtiyoriy)" rows="4"></textarea>

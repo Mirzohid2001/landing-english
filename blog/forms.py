@@ -17,9 +17,9 @@ class ContactForm(forms.ModelForm):
                 'placeholder': 'Your Phone',
                 'required': True
             }),
-            'email': forms.EmailInput(attrs={
+            'email': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Your Email',
+                'placeholder': 'Telegram nickname (@username)',
                 'required': True
             }),
             'message': forms.Textarea(attrs={
