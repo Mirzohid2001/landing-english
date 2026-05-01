@@ -286,3 +286,25 @@ class SATCourse(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class TelegramConfig(models.Model):
+    name = models.CharField(max_length=100, default="Asosiy sozlama")
+    bot_token = models.CharField(max_length=255)
+    chat_ids = models.TextField(
+        help_text="Har bir chat ID ni yangi qatorda yozing (masalan: -100123..., -100456...)"
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        verbose_name = "Telegram sozlamasi"
+        verbose_name_plural = "Telegram sozlamalari"
+
+    def __str__(self):
+        return self.name
+
+    def get_chat_ids_list(self):
+        return [chat_id.strip() for chat_id in self.chat_ids.splitlines() if chat_id.strip()]

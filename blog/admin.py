@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Course, Teacher, Testimonial, Video, ContactRequest,
-    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep, StudentResult, SATCourse
+    CourseApplication, About, Feature, IELTSCertificate, FAQ, ProcessStep, StudentResult, SATCourse, TelegramConfig
 )
 
 
@@ -193,3 +193,26 @@ class SATCourseAdmin(admin.ModelAdmin):
             'fields': ('order', 'is_active')
         }),
     )
+
+
+@admin.register(TelegramConfig)
+class TelegramConfigAdmin(admin.ModelAdmin):
+    list_display = ['name', 'masked_bot_token', 'chat_ids_count', 'is_active', 'updated_at']
+    list_filter = ['is_active', 'updated_at']
+    search_fields = ['name', 'bot_token', 'chat_ids']
+    list_editable = ['is_active']
+    fieldsets = (
+        ('Telegram API Sozlamalari', {
+            'fields': ('name', 'bot_token', 'chat_ids', 'is_active')
+        }),
+    )
+
+    def chat_ids_count(self, obj):
+        return len(obj.get_chat_ids_list())
+    chat_ids_count.short_description = "Chat ID soni"
+
+    def masked_bot_token(self, obj):
+        if len(obj.bot_token) <= 10:
+            return "********"
+        return f"{obj.bot_token[:6]}...{obj.bot_token[-4:]}"
+    masked_bot_token.short_description = "Bot token"
