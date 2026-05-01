@@ -105,7 +105,7 @@ class Video(models.Model):
 class ContactRequest(models.Model):
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
-    email = models.EmailField()
+    email = models.CharField(max_length=100)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_processed = models.BooleanField(default=False)
@@ -127,7 +127,7 @@ class CourseApplication(models.Model):
     
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
-    email = models.EmailField()
+    email = models.CharField(max_length=100)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='applications')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     message = models.TextField(blank=True)

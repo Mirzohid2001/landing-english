@@ -3,6 +3,14 @@ from .models import ContactRequest, CourseApplication
 
 
 class ContactForm(forms.ModelForm):
+    email = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Telegram username (@username)',
+            'required': True
+        })
+    )
+
     class Meta:
         model = ContactRequest
         fields = ['name', 'phone', 'email', 'message']
@@ -15,11 +23,6 @@ class ContactForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Your Phone',
-                'required': True
-            }),
-            'email': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Telegram nickname (@username)',
                 'required': True
             }),
             'message': forms.Textarea(attrs={
@@ -35,7 +38,7 @@ class CourseApplicationForm(forms.ModelForm):
     email = forms.CharField(
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Telegram nickname (@username)',
+            'placeholder': 'Telegram username (@username)',
             'required': True
         })
     )
