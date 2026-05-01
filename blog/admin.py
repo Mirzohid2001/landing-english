@@ -13,13 +13,17 @@ class CourseAdmin(admin.ModelAdmin):
     prepopulated_fields = {}
     fieldsets = (
         ('Basic Information', {
-            'fields': ('title', 'description', 'level', 'duration', 'price', 'image', 'is_featured')
+            'fields': ('title', 'description', 'level', 'price', 'image', 'is_featured')
         }),
         ('Video Content', {
             'fields': ('promo_video_file',),
             'description': 'Upload a local video file (MP4, WebM, etc.)'
         }),
     )
+
+    def save_model(self, request, obj, form, change):
+        obj.duration = "Umrbod"
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Teacher)

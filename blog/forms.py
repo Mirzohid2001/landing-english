@@ -32,6 +32,14 @@ class ContactForm(forms.ModelForm):
 
 
 class CourseApplicationForm(forms.ModelForm):
+    email = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Telegram nickname (@username)',
+            'required': True
+        })
+    )
+
     class Meta:
         model = CourseApplication
         fields = ['name', 'phone', 'email', 'course', 'message']
@@ -44,11 +52,6 @@ class CourseApplicationForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Your Phone',
-                'required': True
-            }),
-            'email': forms.EmailInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Your Email',
                 'required': True
             }),
             'course': forms.Select(attrs={
