@@ -358,7 +358,6 @@
             <span class="section-badge">Bizning Dasturlarimiz</span>
             <div class="section-header">
                 <h2 class="section-title">O'zingizga Mos Kursni Tanlang</h2>
-                <a href="{% url 'blog:courses' %}" class="view-all-link">Barcha Kurslarni Ko'rish <i class="fas fa-arrow-right"></i></a>
             </div>
             <p class="section-description">Boshlang'ichdan ilg'or darajagacha, ingliz tilini o'rganish safaringiz uchun bizda mukammal kurs mavjud</p>
         </div>
@@ -614,37 +613,6 @@
         });
     });
 
-    // Application form submission via AJAX
-    document.getElementById('application-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const form = this;
-        const formData = new FormData(form);
-        
-        showLoading();
-        
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            hideLoading();
-            if (data.success) {
-                showAlert(data.message, 'success');
-                form.reset();
-                document.getElementById('application-modal').style.display = 'none';
-            } else {
-                showAlert('Iltimos, formani tekshirib, qayta urinib ko\'ring.', 'error');
-            }
-        })
-        .catch(error => {
-            hideLoading();
-            showAlert('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', 'error');
-        });
-    });
 </script>
 {% endblock %}
 

@@ -106,24 +106,32 @@ def students(request):
 
 def contact(request):
     """Страница контактов"""
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
             contact_request = form.save()
-            
+
             # Отправка в Telegram
             telegram_message = format_contact_message(contact_request)
             send_telegram_message(telegram_message)
-            
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+
+            if is_ajax:
                 return JsonResponse({
                     'success': True,
-                    'message': 'Thank you for your message! We will contact you soon.'
+                    'message': 'Xabaringiz qabul qilindi! Tez orada siz bilan bog\'lanamiz.',
                 })
             return redirect('contact')
+
+        if is_ajax:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors,
+            }, status=400)
     else:
         form = ContactForm()
-    
+
     context = {
         'form': form,
     }

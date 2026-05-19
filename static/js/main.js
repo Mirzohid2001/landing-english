@@ -119,6 +119,157 @@ function showAlert(message, type = 'success') {
     showToast(message, type);
 }
 
+function getFormLoaderContainer(form) {
+    return form.closest('.contact-form-wrapper')
+        || form.closest('.modal-content')
+        || form.parentElement;
+}
+
+function ensureFormLoader(container) {
+    let overlay = container.querySelector('.form-loader-overlay');
+    if (overlay) return overlay;
+
+    overlay = document.createElement('div');
+    overlay.className = 'form-loader-overlay';
+    overlay.setAttribute('role', 'status');
+    overlay.setAttribute('aria-live', 'polite');
+    overlay.innerHTML = `
+        <div class="form-loader-panel form-loader-panel--loading">
+            <div class="form-loader-orbit" aria-hidden="true">
+                <span class="form-loader-ring"></span>
+                <span class="form-loader-core"><i class="fas fa-paper-plane"></i></span>
+            </div>
+            <p class="form-loader-title">Yuborilmoqda...</p>
+            <p class="form-loader-subtitle">Iltimos, biroz kuting</p>
+            <div class="form-loader-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+        </div>
+        <div class="form-loader-panel form-loader-panel--success" hidden>
+            <div class="form-loader-check" aria-hidden="true"><i class="fas fa-check"></i></div>
+            <p class="form-loader-title">Muvaffaqiyatli!</p>
+            <p class="form-loader-subtitle">Xabaringiz qabul qilindi</p>
+        </div>
+    `;
+    container.appendChild(overlay);
+    return overlay;
+}
+
+function showFormLoader(form, title = 'Yuborilmoqda...', subtitle = 'Iltimos, biroz kuting') {
+    const container = getFormLoaderContainer(form);
+    if (!container) return null;
+
+    container.classList.add('is-loading');
+    const overlay = ensureFormLoader(container);
+    const loadingPanel = overlay.querySelector('.form-loader-panel--loading');
+    const successPanel = overlay.querySelector('.form-loader-panel--success');
+
+    overlay.querySelector('.form-loader-panel--loading .form-loader-title').textContent = title;
+    overlay.querySelector('.form-loader-panel--loading .form-loader-subtitle').textContent = subtitle;
+
+    if (successPanel) successPanel.hidden = true;
+    if (loadingPanel) loadingPanel.hidden = false;
+
+    requestAnimationFrame(() => overlay.classList.add('is-visible'));
+    return overlay;
+}
+
+function showFormLoaderSuccess(overlay, title = 'Muvaffaqiyatli!', subtitle = 'Xabaringiz qabul qilindi') {
+    if (!overlay) return;
+
+    const loadingPanel = overlay.querySelector('.form-loader-panel--loading');
+    const successPanel = overlay.querySelector('.form-loader-panel--success');
+
+    if (loadingPanel) loadingPanel.hidden = true;
+    if (successPanel) {
+        successPanel.querySelector('.form-loader-title').textContent = title;
+        successPanel.querySelector('.form-loader-subtitle').textContent = subtitle;
+        successPanel.hidden = false;
+    }
+    overlay.classList.add('is-success');
+}
+
+function hideFormLoader(form) {
+    const container = getFormLoaderContainer(form);
+    if (!container) return;
+
+    const overlay = container.querySelector('.form-loader-overlay');
+    container.classList.remove('is-loading');
+
+    if (!overlay) return;
+
+    overlay.classList.remove('is-visible', 'is-success');
+    setTimeout(() => {
+        if (!overlay.classList.contains('is-visible')) {
+            const loadingPanel = overlay.querySelector('.form-loader-panel--loading');
+            const successPanel = overlay.querySelector('.form-loader-panel--success');
+            if (loadingPanel) loadingPanel.hidden = false;
+            if (successPanel) successPanel.hidden = true;
+        }
+    }, 400);
+}
+
+function bindAjaxForm(form, options = {}) {
+    const {
+        successTitle = 'Muvaffaqiyatli!',
+        loadingTitle = 'Yuborilmoqda...',
+        loadingSubtitle = 'Ma\'lumotlaringiz yuborilmoqda',
+        successLoaderTitle = 'Muvaffaqiyatli!',
+        successLoaderSubtitle = 'Tez orada siz bilan bog\'lanamiz',
+        onSuccess = null,
+    } = options;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (form.dataset.submitting === 'true') return;
+
+        form.dataset.submitting = 'true';
+        const formData = new FormData(form);
+        const overlay = showFormLoader(form, loadingTitle, loadingSubtitle);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCsrfToken(),
+            },
+        })
+            .then(async (response) => {
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    return response.json();
+                }
+                throw new Error(`Server ${response.status}: not JSON`);
+            })
+            .then((data) => {
+                if (data.success) {
+                    showFormLoaderSuccess(overlay, successLoaderTitle, successLoaderSubtitle);
+                    setTimeout(() => {
+                        hideFormLoader(form);
+                        form.dataset.submitting = 'false';
+                        form.reset();
+                        showToast(data.message, 'success', successTitle);
+                        if (onSuccess) onSuccess(form, data);
+                    }, 1600);
+                    return;
+                }
+
+                hideFormLoader(form);
+                form.dataset.submitting = 'false';
+                let errorMessage = 'Iltimos, formani tekshirib, qayta urinib ko\'ring.';
+                if (data.errors) {
+                    errorMessage = Object.values(data.errors).flat().join(', ');
+                }
+                showToast(errorMessage, 'error', 'Xatolik');
+            })
+            .catch((error) => {
+                hideFormLoader(form);
+                form.dataset.submitting = 'false';
+                showToast('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', 'error', 'Xatolik');
+                console.error('Error:', error);
+            });
+    });
+}
+
 function createMessagesContainer() {
     const container = document.createElement('div');
     container.className = 'messages-container';
@@ -170,87 +321,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Application form handling (if exists on page)
     const applicationForm = document.getElementById('application-form');
     if (applicationForm) {
-        applicationForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = this;
-            const formData = new FormData(form);
-            
-            showLoading();
-            
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': getCsrfToken(),
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    showToast(data.message, 'success', 'Ariza Yuborildi!');
-                    form.reset();
-                    const modal = form.closest('.modal');
-                    if (modal) {
+        bindAjaxForm(applicationForm, {
+            successTitle: 'Ariza Yuborildi!',
+            loadingTitle: 'Ariza yuborilmoqda...',
+            loadingSubtitle: 'Ma\'lumotlaringiz qayta ishlanmoqda',
+            successLoaderTitle: 'Ariza qabul qilindi!',
+            successLoaderSubtitle: 'Tez orada siz bilan bog\'lanamiz',
+            onSuccess(form) {
+                const modal = form.closest('.modal');
+                if (modal) {
+                    setTimeout(() => {
                         modal.style.display = 'none';
-                    }
-                } else {
-                    let errorMessage = 'Please check the form and try again.';
-                    if (data.errors) {
-                        errorMessage = Object.values(data.errors).flat().join(', ');
-                    }
-                    showToast(errorMessage, 'error', 'Error');
+                    }, 400);
                 }
-            })
-            .catch(error => {
-                hideLoading();
-                showAlert('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', 'error');
-                console.error('Error:', error);
-            });
+            },
         });
     }
-    
-    // Contact form handling (if exists on page)
+
     const contactForm = document.getElementById('contact-form');
     if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = this;
-            const formData = new FormData(form);
-            
-            showLoading();
-            
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': getCsrfToken(),
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    showToast(data.message, 'success', 'Xabar Yuborildi!');
-                    form.reset();
-                } else {
-                    let errorMessage = 'Please check the form and try again.';
-                    if (data.errors) {
-                        errorMessage = Object.values(data.errors).flat().join(', ');
-                    }
-                    showToast(errorMessage, 'error', 'Error');
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                showAlert('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', 'error');
-                console.error('Error:', error);
-            });
+        bindAjaxForm(contactForm, {
+            successTitle: 'Xabar Yuborildi!',
+            loadingTitle: 'Xabar yuborilmoqda...',
+            loadingSubtitle: 'Iltimos, sahifani yopmang',
+            successLoaderTitle: 'Xabar yuborildi!',
+            successLoaderSubtitle: 'Tez orada siz bilan bog\'lanamiz',
         });
     }
     
@@ -313,7 +410,10 @@ document.addEventListener('DOMContentLoaded', function() {
         el.style.transform = 'translate3d(0, 20px, 0)';
         el.style.transition = `opacity 0.4s ease ${index * 0.03}s, transform 0.4s ease ${index * 0.03}s`;
         el.style.willChange = 'transform, opacity';
-        el.style.contain = 'layout style paint';
+        // timeline-item: badge va glow kesilmasin (contain overflow yaratadi)
+        if (!el.classList.contains('timeline-item')) {
+            el.style.contain = 'layout style paint';
+        }
         observer.observe(el);
     });
 });
