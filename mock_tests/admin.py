@@ -15,6 +15,7 @@ from .admin_forms import (
     question_type_rules_json,
 )
 from .models import MockAttempt, MockPassage, MockQuestion, MockTest
+from .services.stats import get_dashboard_stats
 
 
 class MockPassageInline(admin.StackedInline):
@@ -178,12 +179,28 @@ class MockTestAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom = [
             path(
+                "stats/",
+                self.admin_site.admin_view(self.stats_view),
+                name="mock_tests_mocktest_stats",
+            ),
+            path(
                 "import-json/",
                 self.admin_site.admin_view(self.import_json_view),
                 name="mock_tests_mocktest_import_json",
             ),
         ]
         return custom + urls
+
+    def stats_view(self, request):
+        days = int(request.GET.get("days", 7))
+        days = max(1, min(days, 90))
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Mock test statistikasi",
+            "opts": self.model._meta,
+            "stats": get_dashboard_stats(days=days),
+        }
+        return render(request, "admin/mock_tests/stats.html", context)
 
     def import_json_view(self, request):
         if request.method == "POST":
@@ -403,6 +420,7 @@ class MockQuestionAdmin(admin.ModelAdmin):
 
 @admin.register(MockAttempt)
 class MockAttemptAdmin(admin.ModelAdmin):
+    change_list_template = "admin/mock_tests/mockattempt_change_list.html"
     list_display = [
         "test",
         "short_session_key",

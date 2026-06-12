@@ -1,0 +1,170 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Mock test statistikasi{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+.mock-stats-wrap { max-width: 1100px; padding: 10px 0 40px; }
+.mock-stats-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.mock-stats-head h1 { margin: 0; font-size: 1.5rem; }
+.mock-stats-note { font-size: 13px; color: #64748b; max-width: 520px; margin: 0; }
+.mock-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.mock-stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.mock-stat-card strong { display: block; font-size: 1.65rem; line-height: 1.2; color: #0f172a; }
+.mock-stat-card span { font-size: 12px; color: #64748b; font-weight: 600; }
+.mock-stat-card--accent { border-color: #93c5fd; background: #eff6ff; }
+.mock-stat-card--ok { border-color: #86efac; background: #f0fdf4; }
+.mock-stats-section { margin-bottom: 28px; }
+.mock-stats-section h2 { font-size: 1.05rem; margin: 0 0 10px; color: #334155; }
+.mock-stats-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+.mock-stats-table th, .mock-stats-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+.mock-stats-table th { background: #f8fafc; font-weight: 700; color: #475569; }
+.mock-stats-table tr:last-child td { border-bottom: none; }
+.mock-stats-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.mock-stats-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+.mock-stats-bar-label { width: 72px; color: #64748b; flex-shrink: 0; }
+.mock-stats-bar-track { flex: 1; height: 10px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+.mock-stats-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #6366f1); border-radius: inherit; }
+.mock-stats-bar-val { width: 36px; text-align: right; font-weight: 700; color: #334155; }
+.mock-stats-back { margin-bottom: 12px; display: inline-block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mock-stats-wrap">
+  <a href="{% url 'admin:mock_tests_mocktest_changelist' %}" class="mock-stats-back">← Demo testlar</a>
+
+  <div class="mock-stats-head">
+    <div>
+      <h1>Mock test statistikasi</h1>
+      <p class="mock-stats-note">
+        Login yo'q — har bir brauzer sessiyasi (<code>session_key</code>) alohida «mehmon» hisoblanadi.
+        Bir kishi boshqa qurilma yoki inkognito ochsa, yangi sessiya bo'ladi.
+      </p>
+    </div>
+    <p class="mock-stats-note" style="text-align:right;">Yangilangan: {{ stats.generated_at|date:"d.m.Y H:i" }}</p>
+  </div>
+
+  <div class="mock-stats-grid">
+    <div class="mock-stat-card mock-stat-card--accent">
+      <strong>{{ stats.unique_sessions }}</strong>
+      <span>Unikal sessiyalar (mehmon)</span>
+    </div>
+    <div class="mock-stat-card mock-stat-card--ok">
+      <strong>{{ stats.unique_sessions_with_finish }}</strong>
+      <span>Kamida 1 test tugatgan</span>
+    </div>
+    <div class="mock-stat-card">
+      <strong>{{ stats.total_attempts }}</strong>
+      <span>Jami urinishlar</span>
+    </div>
+    <div class="mock-stat-card">
+      <strong>{{ stats.finished_attempts }}</strong>
+      <span>Tugallangan</span>
+    </div>
+    <div class="mock-stat-card">
+      <strong>{{ stats.in_progress }}</strong>
+      <span>Hozir davom etmoqda</span>
+    </div>
+    <div class="mock-stat-card">
+      <strong>{{ stats.today_finished }}</strong>
+      <span>Bugun tugallangan</span>
+    </div>
+    {% if stats.avg_score %}
+    <div class="mock-stat-card">
+      <strong>{{ stats.avg_score|floatformat:1 }}%</strong>
+      <span>O'rtacha ball</span>
+    </div>
+    {% endif %}
+    {% if stats.avg_band %}
+    <div class="mock-stat-card">
+      <strong>{{ stats.avg_band|floatformat:1 }}</strong>
+      <span>O'rtacha IELTS band</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="mock-stats-section">
+    <h2>Oxirgi {{ stats.period_days }} kun — tugallangan testlar</h2>
+    {% if stats.daily %}
+      {% for row in stats.daily %}
+      <div class="mock-stats-bar-row">
+        <span class="mock-stats-bar-label">{{ row.day|date:"d M" }}</span>
+        <div class="mock-stats-bar-track">
+          <div class="mock-stats-bar-fill" style="width: {% widthratio row.finished_count stats.max_daily_finished 100 %}%;"></div>
+        </div>
+        <span class="mock-stats-bar-val">{{ row.finished_count }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:#64748b;font-size:13px;">Bu davrda tugallangan test yo'q.</p>
+    {% endif %}
+  </div>
+
+  <div class="mock-stats-section">
+    <h2>Test turi bo'yicha</h2>
+    <table class="mock-stats-table">
+      <thead>
+        <tr>
+          <th>Tur</th>
+          <th class="num">Tugallangan</th>
+          <th class="num">Unikal sessiya</th>
+          <th class="num">O'rtacha %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in stats.by_type %}
+        <tr>
+          <td>{{ row.type_label }}</td>
+          <td class="num">{{ row.count }}</td>
+          <td class="num">{{ row.unique_sessions }}</td>
+          <td class="num">{% if row.avg_score %}{{ row.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Hali ma'lumot yo'q.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mock-stats-section">
+    <h2>Har bir test bo'yicha</h2>
+    <table class="mock-stats-table">
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Tur</th>
+          <th class="num">Urinish</th>
+          <th class="num">Tugallangan</th>
+          <th class="num">Davom etmoqda</th>
+          <th class="num">Mehmon</th>
+          <th class="num">O'rtacha %</th>
+          <th class="num">Band</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in stats.per_test %}
+        <tr>
+          <td><a href="{% url 'admin:mock_tests_mocktest_change' t.pk %}">{{ t.title }}</a></td>
+          <td>{{ t.get_test_type_display }}</td>
+          <td class="num">{{ t.total_attempts }}</td>
+          <td class="num">{{ t.finished_attempts }}</td>
+          <td class="num">{{ t.in_progress }}</td>
+          <td class="num">{{ t.unique_sessions }}</td>
+          <td class="num">{% if t.avg_score %}{{ t.avg_score|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td class="num">{% if t.avg_band %}{{ t.avg_band|floatformat:1 }}{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">Faol testlar yo'q.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-size:12px;color:#94a3b8;">
+    <a href="{% url 'admin:mock_tests_mockattempt_changelist' %}">Barcha urinishlar ro'yxati →</a>
+  </p>
+</div>
+{% endblock %}

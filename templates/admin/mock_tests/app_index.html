@@ -1,0 +1,12 @@
+{% extends "admin/app_index.html" %}
+
+{% block content %}
+<div class="mock-admin-home-stats" style="margin-bottom:18px;padding:14px 16px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;max-width:640px;">
+  <h2 style="margin:0 0 6px;font-size:15px;color:#1e40af;">Statistika</h2>
+  <p style="margin:0 0 10px;font-size:13px;color:#475569;">Test urinishlari, unikal mehmonlar, kunlik faollik.</p>
+  <a href="{% url 'admin:mock_tests_mocktest_stats' %}" class="button" style="background:#2563eb;padding:8px 14px;">
+    Statistika paneli →
+  </a>
+</div>
+{{ block.super }}
+{% endblock %}

@@ -3,6 +3,7 @@ import json
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from mock_tests.matching_utils import (
     build_matching_fields,
@@ -14,6 +15,7 @@ from mock_tests.models import MockAttempt, MockPassage, MockQuestion, MockTest
 from mock_tests.services.answer_normalizer import match_text_answer, score_extended_text
 from mock_tests.services.band_score import earned_ratio_to_band
 from mock_tests.services.scoring import check_question_answer, score_attempt
+from mock_tests.services.stats import get_dashboard_stats
 
 
 class MockTestFixturesMixin:
@@ -345,3 +347,26 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         html = response.content.decode()
         self.assertIn('audio-progress-track', html)
         self.assertIn('audio-progress-fill', html)
+
+
+class StatsTests(MockTestFixturesMixin, TestCase):
+    def test_dashboard_stats_counts_sessions(self):
+        test = self._create_listening_test()
+        MockAttempt.objects.create(
+            test=test, session_key='sess-a', is_finished=True,
+            score_percent=80, correct_count=1, total_questions=2,
+            finished_at=timezone.now(),
+        )
+        MockAttempt.objects.create(
+            test=test, session_key='sess-a', is_finished=False,
+        )
+        MockAttempt.objects.create(
+            test=test, session_key='sess-b', is_finished=True,
+            score_percent=50, correct_count=1, total_questions=2,
+            finished_at=timezone.now(),
+        )
+        stats = get_dashboard_stats()
+        self.assertEqual(stats['unique_sessions'], 2)
+        self.assertEqual(stats['finished_attempts'], 2)
+        self.assertEqual(stats['in_progress'], 1)
+        self.assertEqual(stats['total_attempts'], 3)
