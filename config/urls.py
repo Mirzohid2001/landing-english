@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('courses/', include(('mock_tests.urls', 'mock_tests'), namespace='mock_tests')),
     path('', include('blog.urls')),
 ]
 

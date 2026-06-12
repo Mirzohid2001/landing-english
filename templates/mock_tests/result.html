@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Natija - {{ test.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=7">
+{% endblock %}
+
+{% block content %}
+<section class="mock-result-hero">
+    <div class="container">
+        <span class="mock-hero-badge">{{ test.get_test_type_display }}</span>
+        <h1>Test natijasi</h1>
+        <p>{{ test.title }}</p>
+    </div>
+</section>
+
+<section class="mock-result-page">
+    <div class="container">
+        <div class="mock-result-card {% if passed %}mock-result-card--pass{% else %}mock-result-card--fail{% endif %}" data-score="{{ attempt.score_percent }}">
+            {% if attempt.ielts_band %}
+            <div class="mock-result-band"><i class="fas fa-star"></i> IELTS Band {{ attempt.ielts_band }}</div>
+            {% endif %}
+            <div class="mock-result-score-ring" style="--score-pct: {{ attempt.score_percent }};">
+                <div class="mock-result-score-inner">{{ attempt.score_percent }}%</div>
+            </div>
+            <p class="mock-result-summary">
+                {{ attempt.correct_count }} / {{ attempt.total_questions }} to'liq to'g'ri
+                {% if result.earned_points and result.total_points %}
+                · <span class="mock-result-points">{{ result.earned_points }}/{{ result.total_points }} ball</span>
+                {% endif %}
+            </p>
+            <div class="mock-result-progress-bar" aria-hidden="true">
+                <div class="mock-result-progress-fill" style="width: {{ attempt.score_percent }}%;"></div>
+            </div>
+            <p class="mock-result-status">
+                {% if passed %}
+                <i class="fas fa-trophy"></i> Ajoyib! Maqsadingizga yaqinlashyapsiz.
+                {% elif attempt.score_percent >= 50 %}
+                <i class="fas fa-chart-line"></i> Yaxshi boshlang'ich! Yana bir marta urinib ko'ring.
+                {% else %}
+                <i class="fas fa-seedling"></i> Har urinish sizni kuchliroq qiladi — davom eting!
+                {% endif %}
+            </p>
+            <div class="mock-detail-actions mock-result-actions">
+                <a href="{% url 'mock_tests:test_take' test.pk %}" class="btn btn-primary">
+                    <i class="fas fa-redo"></i> Qayta ishlash
+                </a>
+                <a href="{% url 'mock_tests:test_list' %}" class="btn btn-outline">Boshqa testlar</a>
+                <button type="button" class="btn btn-outline" onclick="window.print()">
+                    <i class="fas fa-print"></i> Chop etish
+                </button>
+            </div>
+        </div>
+
+        <div class="mock-result-details">
+            <div class="mock-result-details-head">
+                <h2>Javoblar tahlili</h2>
+                <div class="mock-result-filters" role="tablist">
+                    <button type="button" class="mock-result-filter is-active" data-filter="all">Barchasi</button>
+                    <button type="button" class="mock-result-filter" data-filter="correct">To'g'ri</button>
+                    <button type="button" class="mock-result-filter" data-filter="partial">Qisman</button>
+                    <button type="button" class="mock-result-filter" data-filter="incorrect">Noto'g'ri</button>
+                </div>
+            </div>
+            {% for item in result.details %}
+            <div class="mock-result-item {% if item.is_correct %}correct{% elif item.earned_points > 0 %}partial{% else %}incorrect{% endif %}"
+                 data-result-type="{% if item.is_correct %}correct{% elif item.earned_points > 0 %}partial{% else %}incorrect{% endif %}">
+                <div class="mock-result-item-head">
+                    <span class="mock-result-qnum">#{{ item.order }}</span>
+                    <div class="mock-result-item-badges">
+                        {% if item.max_points > 1 %}
+                        <span class="mock-result-points-badge">{{ item.earned_points }}/{{ item.max_points }}</span>
+                        {% endif %}
+                        {% if item.is_correct %}
+                        <span class="mock-result-badge mock-result-badge--ok"><i class="fas fa-check"></i></span>
+                        {% elif item.earned_points > 0 %}
+                        <span class="mock-result-badge mock-result-badge--partial"><i class="fas fa-adjust"></i></span>
+                        {% else %}
+                        <span class="mock-result-badge mock-result-badge--no"><i class="fas fa-times"></i></span>
+                        {% endif %}
+                    </div>
+                </div>
+                <p><strong>Sizning javobingiz:</strong> {{ item.user_answer_display|default:"—" }}</p>
+                {% if not item.is_correct %}
+                <p><strong>To'g'ri javob:</strong> {{ item.correct_answer|default:"—" }}</p>
+                {% endif %}
+                {% if item.explanation %}<p class="mock-result-explanation">{{ item.explanation }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/mock-test-result.js' %}"></script>
+{% endblock %}

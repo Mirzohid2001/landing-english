@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
@@ -32,7 +32,7 @@
                 <ul class="nav-menu">
                     <li><a href="{% url 'blog:home' %}">Bosh Sahifa</a></li>
                     <li><a href="{% url 'blog:contact' %}">Ariza berish</a></li>
-                    <li><a href="{% url 'blog:courses' %}">Demo Mock testlar</a></li>
+                    <li><a href="{% url 'mock_tests:test_list' %}">Demo Mock testlar</a></li>
                     <li><a href="{% url 'blog:students' %}">O'quvchilar Natijalari</a></li>
                     <li><a href="{% url 'blog:videos' %}">Videolar</a></li>
                     <li><a href="{% url 'blog:contact' %}">Aloqa</a></li>
@@ -75,7 +75,7 @@
                     <ul>
                         <li><a href="{% url 'blog:home' %}">Bosh Sahifa</a></li>
                         <li><a href="{% url 'blog:contact' %}">Ariza berish</a></li>
-                        <li><a href="{% url 'blog:courses' %}">Demo Mock testlar</a></li>
+                        <li><a href="{% url 'mock_tests:test_list' %}">Demo Mock testlar</a></li>
                         <li><a href="{% url 'blog:students' %}">O'quvchilar Natijalari</a></li>
                         <li><a href="{% url 'blog:contact' %}">Aloqa</a></li>
                     </ul>

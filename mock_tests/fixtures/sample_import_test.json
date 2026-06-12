@@ -1,0 +1,36 @@
+{
+  "title": "JSON Import Demo — Summary Box",
+  "test_type": "reading",
+  "difficulty": "easy",
+  "description": "import_mock_test command orqali yaratilgan demo test.",
+  "duration_minutes": 15,
+  "passing_score": 60,
+  "passages": [
+    {
+      "order": 1,
+      "title": "Sample Passage",
+      "text": "The Golden Gate Bridge was built in 1937. It connects San Francisco to Marin County."
+    }
+  ],
+  "questions": [
+    {
+      "order": 1,
+      "part_number": 1,
+      "question_type": "summary_box",
+      "instruction": "Complete the summary using words from the list.",
+      "question_text": "The [1] was built in [2].",
+      "correct_answers_json": ["golden gate bridge", "1937"],
+      "options_json": {
+        "word_list": ["Golden Gate Bridge", "1937", "1960", "London Bridge"]
+      }
+    },
+    {
+      "order": 2,
+      "part_number": 1,
+      "question_type": "fill_blank",
+      "question_text": "The bridge connects San Francisco to ______ County.",
+      "correct_answer": "marin",
+      "correct_answers_json": ["marin", "Marin"]
+    }
+  ]
+}

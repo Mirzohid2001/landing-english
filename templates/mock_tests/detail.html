@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ test.title }} - Demo Test{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=7">
+{% endblock %}
+
+{% block content %}
+<section class="mock-hero" style="padding-bottom: 1.5rem;">
+    <div class="container mock-hero-inner">
+        <span class="mock-hero-badge">{{ test.get_test_type_display }}</span>
+        <h1>{{ test.title }}</h1>
+        <p>{{ test.get_difficulty_display }} daraja · bepul demo test</p>
+    </div>
+</section>
+
+<section class="mock-test-detail">
+    <div class="container">
+        <div class="mock-detail-card">
+            <div class="mock-detail-header">
+                <div class="mock-test-icon mock-test-icon--{{ test.test_type }}">
+                    {% if test.test_type == 'reading' %}<i class="fas fa-book-open"></i>
+                    {% elif test.test_type == 'listening' %}<i class="fas fa-headphones"></i>
+                    {% elif test.test_type == 'writing' %}<i class="fas fa-pen-fancy"></i>
+                    {% else %}<i class="fas fa-microphone"></i>{% endif %}
+                </div>
+                <div>
+                    <h2>{{ test.title }}</h2>
+                    <div class="mock-detail-pills">
+                        <span class="mock-detail-pill"><i class="fas fa-tag"></i> {{ test.get_test_type_display }}</span>
+                        <span class="mock-detail-pill"><i class="fas fa-signal"></i> {{ test.get_difficulty_display }}</span>
+                        {% if test.duration_minutes %}<span class="mock-detail-pill"><i class="fas fa-clock"></i> {{ test.duration_minutes }} daqiqa</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if test.description %}<p>{{ test.description|linebreaks }}</p>{% endif %}
+
+            <div class="mock-detail-howto">
+                <h3><i class="fas fa-route"></i> Qanday ishlaydi?</h3>
+                <ol class="mock-detail-steps">
+                    <li><span>1</span> Testni boshlang — login shart emas</li>
+                    <li><span>2</span> Javoblaringiz avtomatik saqlanadi</li>
+                    <li><span>3</span> Yakunlangach natija va tahlil darhol chiqadi</li>
+                </ol>
+            </div>
+
+            <ul class="mock-detail-stats">
+                <li><strong>{{ test.total_questions }}</strong><span>savol</span></li>
+                {% if test.duration_minutes %}<li><strong>{{ test.duration_minutes }}</strong><span>daqiqa</span></li>{% endif %}
+                <li><strong>{{ test.passing_score }}%</strong><span>o'tish balli</span></li>
+            </ul>
+
+            {% if attempts_remaining > 0 %}
+            <p class="mock-attempts-note">
+                <i class="fas fa-redo"></i> Bugun qolgan urinishlar: <strong>{{ attempts_remaining }}/{{ max_daily_attempts }}</strong>
+            </p>
+            {% else %}
+            <p class="mock-attempts-note mock-attempts-note--limit">
+                <i class="fas fa-exclamation-circle"></i> Kunlik limit tugadi. Ertaga qayta urinib ko'ring.
+            </p>
+            {% endif %}
+
+            <div class="mock-detail-actions">
+                {% if attempts_remaining > 0 %}
+                <a href="{% url 'mock_tests:test_take' test.pk %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-rocket"></i> Testni Boshlash
+                </a>
+                {% endif %}
+                <a href="{% url 'mock_tests:test_list' %}" class="btn btn-outline">Orqaga</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

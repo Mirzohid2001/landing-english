@@ -1,0 +1,54 @@
+{% comment %}Tonielts uslubida listening savol qatori{% endcomment %}
+<article class="listening-q-card" id="q-card-{{ question.id }}" data-qid="{{ question.id }}"
+         data-order="{{ question.order }}" {% if question.audio_timestamp %}data-audio-ts="{{ question.audio_timestamp }}"{% endif %}>
+
+    {% if question.question_type == 'fill_blank' or question.question_type == 'sentence_completion' or question.question_type == 'summary_completion' or question.question_type == 'notes_completion' or question.question_type == 'table_completion' %}
+        {% with parts=question.get_listening_inline_parts %}
+        {% if parts %}
+        <div class="listening-notes-line engnovate-notes-format selectable-text">
+            {% for p in parts %}
+                {% if p.type == 'text' %}<span class="listening-notes-text">{{ p.content }}</span>{% endif %}
+                {% if p.type == 'input' %}
+                <span class="inline-blank-wrap">
+                    <span class="inline-blank-num">{{ p.num }}</span>
+                    <input type="text" class="inline-blank-input mock-fill-input mock-inline-input"
+                           data-question-id="{{ question.id }}" data-blank="{{ p.num }}"
+                           autocomplete="off" aria-label="Answer {{ p.num }}">
+                </span>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="listening-notes-line listening-sa-row selectable-text">
+            <span class="inline-blank-num">{{ question.order }}</span>
+            <span class="listening-sa-text">{{ question.question_text }}</span>
+            <input type="text" class="inline-blank-input mock-fill-input"
+                   data-question-id="{{ question.id }}" autocomplete="off">
+        </div>
+        {% endif %}
+        {% endwith %}
+
+    {% elif question.is_multi_matching %}
+        {% if question.instruction and not block_grouper %}
+        <div class="listening-instruction-block">{{ question.instruction }}</div>
+        {% endif %}
+        {% if question.question_text %}<div class="listening-q-prompt selectable-text">{{ question.question_text|linebreaks }}</div>{% endif %}
+        {% include 'mock_tests/_question_fields.html' with question=question %}
+
+    {% elif question.question_type == 'mcq' or question.question_type == 'true_false_not_given' or question.question_type == 'yes_no_not_given' or question.question_type == 'matching' %}
+        <div class="listening-mcq-block">
+            <div class="listening-mcq-stem selectable-text">
+                <span class="inline-blank-num">{{ question.order }}</span>
+                <span>{{ question.question_text }}</span>
+            </div>
+            {% include 'mock_tests/_question_fields.html' with question=question %}
+        </div>
+
+    {% else %}
+        <div class="listening-notes-line listening-sa-row selectable-text">
+            <span class="inline-blank-num">{{ question.order }}</span>
+            <span class="listening-sa-text">{{ question.question_text }}</span>
+        </div>
+        {% include 'mock_tests/_question_fields.html' with question=question %}
+    {% endif %}
+</article>

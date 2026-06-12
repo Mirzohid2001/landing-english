@@ -1,0 +1,279 @@
+import json
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+
+from .models import MockTest, MockAttempt
+from .services.scoring import score_attempt
+
+
+def _ensure_session(request):
+    if not request.session.session_key:
+        request.session.create()
+    return request.session.session_key
+
+
+MAX_DAILY_ATTEMPTS = 5
+
+
+def _count_today_attempts(session_key, test):
+    from django.utils import timezone
+    today = timezone.now().date()
+    return MockAttempt.objects.filter(
+        test=test, session_key=session_key, is_finished=True,
+        finished_at__date=today,
+    ).count()
+
+
+def _get_or_create_attempt(request, test):
+    session_key = _ensure_session(request)
+    attempt = MockAttempt.objects.filter(
+        test=test, session_key=session_key, is_finished=False
+    ).first()
+    if not attempt:
+        attempt = MockAttempt.objects.create(test=test, session_key=session_key)
+    return attempt
+
+
+def _build_blank_buttons(questions):
+    """Footer dock tugmalari — har bir savol yoki matching/blank raqami."""
+    buttons = []
+    for q in questions:
+        if q.question_type == 'summary_box':
+            for seg in q.get_summary_segments():
+                if seg['type'] == 'blank':
+                    buttons.append({
+                        'num': int(seg['num']),
+                        'question_id': q.pk,
+                        'is_blank': True,
+                        'blank_key': seg['num'],
+                    })
+        elif q.is_multi_matching():
+            fields = q.get_matching_fields()
+            for mf in fields:
+                buttons.append({
+                    'num': int(mf['num']),
+                    'question_id': q.pk,
+                    'is_blank': True,
+                    'blank_key': str(mf['num']),
+                })
+            if not fields:
+                buttons.append({
+                    'num': q.order,
+                    'question_id': q.pk,
+                    'is_blank': False,
+                    'blank_key': '',
+                })
+        elif q.question_type in ('notes_completion', 'table_completion'):
+            segs = q.get_bracket_segments()
+            blanks = [s for s in segs if s['type'] == 'blank']
+            if blanks:
+                for seg in blanks:
+                    buttons.append({
+                        'num': int(seg['num']),
+                        'question_id': q.pk,
+                        'is_blank': True,
+                        'blank_key': seg['num'],
+                    })
+            else:
+                buttons.append({
+                    'num': q.order,
+                    'question_id': q.pk,
+                    'is_blank': False,
+                    'blank_key': '',
+                })
+        else:
+            buttons.append({
+                'num': q.order,
+                'question_id': q.pk,
+                'is_blank': False,
+                'blank_key': '',
+            })
+    return sorted(buttons, key=lambda b: b['num'])
+
+
+def _build_part_groups(test, questions, passages):
+    parts = {}
+    for q in questions:
+        part_num = q.part_number or 1
+        parts.setdefault(part_num, []).append(q)
+
+    passage_map = {p.order: p for p in passages}
+    part_groups = []
+    for part_num in sorted(parts.keys()):
+        qs = parts[part_num]
+        blank_buttons = _build_blank_buttons(qs)
+        orders = [q.order for q in qs]
+        start_order = min(orders) if orders else 0
+        end_order = max(orders) if orders else 0
+        question_count = len(qs)
+        range_label = f'{start_order}-{end_order}' if start_order != end_order else str(start_order)
+
+        title = f'Task {part_num}' if test.test_type == 'writing' else f'Part {part_num}'
+        audio_start_time = 0
+        if test.test_type == 'listening':
+            for q in qs:
+                if q.audio_timestamp is not None:
+                    audio_start_time = float(q.audio_timestamp)
+                    break
+
+        part_groups.append({
+            'part_number': part_num,
+            'passage': passage_map.get(part_num),
+            'questions': qs,
+            'blank_buttons': blank_buttons,
+            'question_count': question_count,
+            'start_order': start_order,
+            'end_order': end_order,
+            'range_label': range_label,
+            'title': title,
+            'slug': f'part-{part_num}',
+            'audio_start_time': audio_start_time,
+        })
+    return part_groups
+
+
+def _questions_range_display(questions):
+    if not questions:
+        return '0'
+    orders = [q.order for q in questions]
+    start, end = min(orders), max(orders)
+    return f'{start}-{end}' if start != end else str(start)
+
+
+def _latest_finished_attempts(session_key, test_ids):
+    """Har bir test uchun sessiyadagi eng so'nggi tugallangan urinish."""
+    if not test_ids:
+        return {}
+    attempts = MockAttempt.objects.filter(
+        session_key=session_key,
+        test_id__in=test_ids,
+        is_finished=True,
+    ).order_by('test_id', '-finished_at')
+    latest = {}
+    for attempt in attempts:
+        if attempt.test_id not in latest:
+            latest[attempt.test_id] = attempt
+    return latest
+
+
+def test_list(request):
+    test_type = request.GET.get('type', '')
+    tests_qs = MockTest.objects.filter(is_active=True)
+    if test_type:
+        tests_qs = tests_qs.filter(test_type=test_type)
+    tests = list(tests_qs)
+
+    session_key = _ensure_session(request)
+    last_attempts = _latest_finished_attempts(session_key, [t.pk for t in tests])
+    tests_with_meta = [
+        {'test': t, 'last_attempt': last_attempts.get(t.pk)}
+        for t in tests
+    ]
+
+    context = {
+        'tests_with_meta': tests_with_meta,
+        'test_type': test_type,
+        'test_type_choices': MockTest.TEST_TYPES,
+    }
+    return render(request, 'mock_tests/list.html', context)
+
+
+def test_detail(request, pk):
+    test = get_object_or_404(MockTest, pk=pk, is_active=True)
+    session_key = _ensure_session(request)
+    today_count = _count_today_attempts(session_key, test)
+    attempts_remaining = max(0, MAX_DAILY_ATTEMPTS - today_count)
+    context = {
+        'test': test,
+        'attempts_remaining': attempts_remaining,
+        'max_daily_attempts': MAX_DAILY_ATTEMPTS,
+    }
+    return render(request, 'mock_tests/detail.html', context)
+
+
+@require_http_methods(['GET', 'POST'])
+def test_take(request, pk):
+    test = get_object_or_404(MockTest, pk=pk, is_active=True)
+    questions = list(test.questions.all())
+    passages = list(test.passages.all())
+    if request.method == 'GET':
+        session_key = _ensure_session(request)
+        if _count_today_attempts(session_key, test) >= MAX_DAILY_ATTEMPTS:
+            return render(request, 'mock_tests/limit_reached.html', {'test': test, 'max': MAX_DAILY_ATTEMPTS})
+
+    attempt = _get_or_create_attempt(request, test)
+
+    if request.method == 'POST':
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            data = json.loads(request.body.decode('utf-8'))
+            if data.get('action') == 'save':
+                attempt.answers_json = data.get('answers', {})
+                attempt.save(update_fields=['answers_json'])
+                return JsonResponse({'success': True})
+
+            if data.get('action') == 'finish':
+                attempt.answers_json = data.get('answers', {})
+                result = score_attempt(attempt, questions)
+                attempt.correct_count = result['correct_count']
+                attempt.total_questions = result['total_questions']
+                attempt.score_percent = result['score_percent']
+                if result.get('ielts_band') is not None:
+                    attempt.ielts_band = result['ielts_band']
+                attempt.is_finished = True
+                attempt.finished_at = timezone.now()
+                attempt.save()
+                return JsonResponse({
+                    'success': True,
+                    'redirect_url': f'/courses/tests/{test.pk}/result/{attempt.pk}/',
+                })
+
+        answers = {}
+        for q in questions:
+            answers[str(q.id)] = request.POST.get(f'q_{q.id}', '')
+        attempt.answers_json = answers
+        result = score_attempt(attempt, questions)
+        attempt.correct_count = result['correct_count']
+        attempt.total_questions = result['total_questions']
+        attempt.score_percent = result['score_percent']
+        if result.get('ielts_band') is not None:
+            attempt.ielts_band = result['ielts_band']
+        attempt.is_finished = True
+        attempt.finished_at = timezone.now()
+        attempt.save()
+        return redirect('mock_tests:test_result', pk=test.pk, attempt_id=attempt.pk)
+
+    part_groups = _build_part_groups(test, questions, passages)
+    saved_answers = attempt.answers_json or {}
+    for q in questions:
+        ua = saved_answers.get(str(q.pk), '')
+        q.ui_matching_fields = q.get_matching_fields(ua)
+        q.ui_matching_ref_options = q.get_matching_ref_options()
+        q.ui_matching_ref_title = q.get_matching_ref_title()
+        q.ui_bracket_segments = q.get_bracket_segments()
+    context = {
+        'test': test,
+        'attempt': attempt,
+        'part_groups': part_groups,
+        'total_questions': len(questions),
+        'questions_range_display': _questions_range_display(questions),
+        'saved_answers': saved_answers,
+        'duration_minutes': test.duration_minutes or 60,
+    }
+    return render(request, 'mock_tests/take.html', context)
+
+
+def test_result(request, pk, attempt_id):
+    test = get_object_or_404(MockTest, pk=pk, is_active=True)
+    attempt = get_object_or_404(MockAttempt, pk=attempt_id, test=test, is_finished=True)
+    questions = list(test.questions.all())
+    result = score_attempt(attempt, questions)
+
+    context = {
+        'test': test,
+        'attempt': attempt,
+        'result': result,
+        'passed': result['passed'],
+    }
+    return render(request, 'mock_tests/result.html', context)

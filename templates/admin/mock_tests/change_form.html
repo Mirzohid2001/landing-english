@@ -1,0 +1,41 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+{% if question_type_rules_json %}
+<script>window.QUESTION_TYPE_RULES = {{ question_type_rules_json|safe }};</script>
+{% endif %}
+{% if original and original.pk %}
+<script>
+  window.MOCK_TEST_META = {
+    type: "{{ original.test_type|escapejs }}",
+    pk: {{ original.pk }},
+    {% if original.audio_file %}audioUrl: "{{ original.audio_file.url|escapejs }}",{% endif %}
+    previewUrl: "{{ original.get_absolute_url|escapejs }}"
+  };
+</script>
+{% endif %}
+<script src="{% static 'admin/mock_tests/question_admin.js' %}?v=4"></script>
+<link rel="stylesheet" href="{% static 'admin/mock_tests/question_admin.css' %}?v=4">
+{% endblock %}
+
+{% block after_field_sets %}
+{% if original and original.pk %}
+<div class="mock-admin-manual-panel" id="mock-admin-summary">
+  <div class="mock-admin-panel-head">
+    <h3>Test qo'shish markazi</h3>
+    <a href="{{ original.get_absolute_url }}" target="_blank" class="mock-admin-preview-link">Saytda ko'rish ↗</a>
+  </div>
+  <p class="mock-admin-summary-line" id="mock-admin-question-stats">Savollar yuklanmoqda…</p>
+  <p class="mock-admin-hint-line">
+    Tez shablonlar pastda — yoki <strong>Oldingisidan nusxa</strong>. Saqlangan savollar yig'iladi, bosib ochasiz.
+  </p>
+</div>
+{% else %}
+<p class="mock-admin-step-hint">
+  <strong>Birinchi marta:</strong> sarlavha va turini kiriting, <strong>Saqlash</strong> bosing — keyin savollar qo'shiladi.
+</p>
+{% endif %}
+{{ block.super }}
+{% endblock %}

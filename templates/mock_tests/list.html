@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Demo Mock Testlar - Ton Academy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=7">
+{% endblock %}
+
+{% block content %}
+<section class="mock-hero">
+    <div class="container mock-hero-inner">
+        <span class="mock-hero-badge"><i class="fas fa-bolt"></i> Bepul demo</span>
+        <h1>IELTS Mock Testlar</h1>
+        <p>Haqiqiy imtihon muhitida mashq qiling — login shart emas, natijangiz darhol ko‘rinadi.</p>
+        <div class="mock-hero-stats">
+            <div class="mock-hero-stat"><strong>{{ tests_with_meta|length }}</strong><span>Demo test</span></div>
+            <div class="mock-hero-stat"><strong>4</strong><span>Test turi</span></div>
+            <div class="mock-hero-stat"><strong>100%</strong><span>Bepul</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="mock-tests-page">
+    <div class="container">
+        <div class="mock-filters">
+            <a href="{% url 'mock_tests:test_list' %}" class="mock-filter-btn {% if not test_type %}active{% endif %}">Barchasi</a>
+            {% for value, label in test_type_choices %}
+            <a href="?type={{ value }}" class="mock-filter-btn {% if test_type == value %}active{% endif %}">{{ label }}</a>
+            {% endfor %}
+        </div>
+
+        <div class="mock-tests-grid">
+            {% for item in tests_with_meta %}
+            {% with test=item.test last=item.last_attempt %}
+            <article class="mock-test-card">
+                <div class="mock-test-card-top">
+                    <div class="mock-test-icon mock-test-icon--{{ test.test_type }}">
+                        {% if test.test_type == 'reading' %}<i class="fas fa-book-open"></i>
+                        {% elif test.test_type == 'listening' %}<i class="fas fa-headphones"></i>
+                        {% elif test.test_type == 'writing' %}<i class="fas fa-pen-fancy"></i>
+                        {% else %}<i class="fas fa-microphone"></i>{% endif %}
+                    </div>
+                    <span class="mock-test-badge mock-test-badge--{{ test.test_type }}">{{ test.get_test_type_display }}</span>
+                </div>
+                <h3>{{ test.title }}</h3>
+                <p>{{ test.description|truncatewords:22|default:"IELTS formatidagi interaktiv demo test." }}</p>
+                <ul class="mock-test-meta">
+                    <li><i class="fas fa-list-ol"></i> {{ test.total_questions }} savol</li>
+                    {% if test.duration_minutes %}<li><i class="fas fa-clock"></i> {{ test.duration_minutes }} daq</li>{% endif %}
+                    <li><i class="fas fa-signal"></i> {{ test.get_difficulty_display }}</li>
+                </ul>
+                {% if last %}
+                <div class="mock-test-last-result {% if last.score_percent >= test.passing_score %}mock-test-last-result--pass{% endif %}">
+                    <div class="mock-test-last-result-main">
+                        <span class="mock-test-last-score">{{ last.score_percent|floatformat:0 }}%</span>
+                        {% if last.ielts_band %}
+                        <span class="mock-test-last-band">Band {{ last.ielts_band }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="mock-test-last-date"><i class="fas fa-history"></i> {{ last.finished_at|date:"d M, H:i" }}</span>
+                </div>
+                {% endif %}
+                <div class="mock-test-card-actions">
+                    <a href="{% url 'mock_tests:test_detail' test.pk %}" class="btn btn-primary">
+                        <i class="fas fa-play"></i> {% if last %}Qayta ishlash{% else %}Boshlash{% endif %}
+                    </a>
+                    {% if last %}
+                    <a href="{% url 'mock_tests:test_result' test.pk last.pk %}" class="btn btn-outline mock-test-result-link">
+                        <i class="fas fa-chart-bar"></i> Natija
+                    </a>
+                    {% endif %}
+                </div>
+            </article>
+            {% endwith %}
+            {% empty %}
+            <p class="no-content">Hozircha demo testlar mavjud emas.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

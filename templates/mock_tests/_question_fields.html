@@ -1,0 +1,138 @@
+{% if question.is_multi_matching %}
+<div class="mock-matching-block">
+    {% if question.ui_matching_ref_options and question.question_type != 'matching_info' %}
+    <div class="mock-matching-ref">
+        <div class="mock-matching-ref-title">{{ question.ui_matching_ref_title }}</div>
+        {% for op in question.ui_matching_ref_options %}
+        <div class="mock-matching-ref-row">
+            {% if question.question_type == 'matching_headings' %}
+            <span class="mock-matching-ref-letter">{{ op.letter }}.</span>
+            {% else %}
+            <strong>{{ op.letter|upper }}.</strong>
+            {% endif %}
+            {% if op.text %}{{ op.text }}{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if question.question_type == 'matching_headings' %}
+    <p class="mock-matching-hint">Choose the correct heading for each paragraph.</p>
+    {% endif %}
+    {% for mf in question.ui_matching_fields %}
+    <div class="mock-matching-row">
+        <span class="mock-q-num-box">{{ mf.num }}</span>
+        <span class="mock-matching-label">{{ mf.label }}</span>
+        <select class="mock-matching-select" data-question-id="{{ question.id }}" data-match-num="{{ mf.num }}" aria-label="Answer {{ mf.num }}">
+            <option value="">—</option>
+            {% for op in mf.options %}
+            <option value="{{ op.letter|lower }}" {% if mf.value|lower == op.letter|lower %}selected{% endif %}>
+                {% if question.question_type == 'matching_headings' %}{{ op.letter }}{% else %}{{ op.letter|upper }}{% endif %}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% empty %}
+    <p class="mock-matching-warn">Admin: Matching itemlar va to'g'ri javoblarni to'ldiring.</p>
+    {% endfor %}
+</div>
+
+{% elif question.question_type == 'mcq' or question.question_type == 'matching' %}
+<div class="mock-options mock-options--inline">
+    {% for opt in question.get_choice_options %}
+    <label class="mock-option mock-option--inline">
+        <input type="radio" name="q_{{ question.id }}" value="{{ opt.letter }}" data-question-id="{{ question.id }}">
+        <span class="mock-option-letter">{{ opt.letter|lower }}</span>
+        <span class="mock-option-text">{{ opt.text }}</span>
+    </label>
+    {% endfor %}
+</div>
+
+{% elif question.question_type == 'true_false_not_given' %}
+<div class="mock-options mock-options--inline">
+    {% for opt in question.get_tfng_options %}
+    <label class="mock-option mock-option--inline">
+        <input type="radio" name="q_{{ question.id }}" value="{{ opt.letter }}" data-question-id="{{ question.id }}">
+        <span class="mock-option-letter">{{ opt.letter|lower }}</span>
+        <span class="mock-option-text">{{ opt.text|upper }}</span>
+    </label>
+    {% endfor %}
+</div>
+
+{% elif question.question_type == 'yes_no_not_given' %}
+<div class="mock-options mock-options--inline">
+    {% for opt in question.get_ynng_options %}
+    <label class="mock-option mock-option--inline">
+        <input type="radio" name="q_{{ question.id }}" value="{{ opt.letter }}" data-question-id="{{ question.id }}">
+        <span class="mock-option-letter">{{ opt.letter|lower }}</span>
+        <span class="mock-option-text">{{ opt.text|upper }}</span>
+    </label>
+    {% endfor %}
+</div>
+
+{% elif question.question_type == 'notes_completion' or question.question_type == 'table_completion' %}
+{% if question.ui_bracket_segments %}
+<div class="mock-notes-inline selectable-text">
+    {% for seg in question.ui_bracket_segments %}
+        {% if seg.type == 'text' %}{{ seg.value }}{% else %}
+        <span class="mock-inline-blank">
+            <span class="mock-summary-num">{{ seg.num }}</span>
+            <input type="text" class="mock-fill-input mock-inline-input"
+                   data-question-id="{{ question.id }}" data-blank="{{ seg.num }}" autocomplete="off">
+        </span>
+        {% endif %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="mock-fill-answer">
+    <input type="text" name="q_{{ question.id }}" class="mock-fill-input"
+           placeholder="Javobingiz" data-question-id="{{ question.id }}" autocomplete="off">
+</div>
+{% endif %}
+
+{% elif question.question_type == 'essay' %}
+<div class="mock-essay-answer">
+    <textarea name="q_{{ question.id }}" class="mock-essay-input mock-writing-answer-ta" rows="14"
+              placeholder="Enter your task {{ question.order }} answer..."
+              data-question-id="{{ question.id }}"></textarea>
+    <div class="mock-word-count"><strong>Word count:</strong> <span class="essay-chars" data-for="{{ question.id }}">0</span></div>
+</div>
+
+{% elif question.question_type == 'summary_box' %}
+<div class="mock-summary-box">
+    <div class="mock-summary-inline selectable-text">
+        {% for seg in question.get_summary_segments %}
+            {% if seg.type == 'text' %}{{ seg.value }}{% else %}
+            <span class="mock-inline-blank">
+                <span class="mock-summary-num">{{ seg.num }}</span>
+                <input type="text" class="mock-fill-input mock-inline-input"
+                       data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
+                       placeholder="" autocomplete="off">
+            </span>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% with words=question.get_summary_option_list %}
+    {% if words %}
+    <div class="mock-word-list">
+        <strong>Word list:</strong>
+        {% for w in words %}<span class="mock-word-chip">{{ w }}</span>{% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+</div>
+
+{% elif question.question_type == 'speaking' %}
+<div class="mock-speaking-answer">
+    <p class="mock-speaking-tip"><i class="fas fa-microphone"></i> Javobingizni yozing (demo rejim).</p>
+    <textarea class="mock-speaking-input mock-writing-answer-ta" rows="6"
+              placeholder="Speaking javobingiz..." data-question-id="{{ question.id }}"></textarea>
+</div>
+
+{% else %}
+{% if question.question_type != 'fill_blank' and question.question_type != 'sentence_completion' and question.question_type != 'summary_completion' %}
+<div class="mock-fill-answer">
+    <input type="text" name="q_{{ question.id }}" class="mock-fill-input"
+           placeholder="Javobingiz" data-question-id="{{ question.id }}" autocomplete="off">
+</div>
+{% endif %}
+{% endif %}
