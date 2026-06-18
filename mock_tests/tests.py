@@ -14,6 +14,7 @@ from mock_tests.matching_utils import (
 from mock_tests.models import MockAttempt, MockPassage, MockQuestion, MockTest
 from mock_tests.services.answer_normalizer import match_text_answer, score_extended_text
 from mock_tests.services.band_score import earned_ratio_to_band
+from mock_tests.services.gradable import total_gradable_slots
 from mock_tests.services.scoring import check_question_answer, score_attempt
 from mock_tests.services.stats import get_dashboard_stats
 
@@ -175,8 +176,9 @@ class ScoringTests(MockTestFixturesMixin, TestCase):
             answers_json={str(q.pk): {'1': 'anna', '2': 'wrong'}},
         )
         result = score_attempt(attempt, [q])
-        self.assertEqual(result['earned_points'], 0.5)
-        self.assertFalse(result['details'][0]['is_correct'])
+        self.assertEqual(result['earned_points'], 1.0)
+        self.assertEqual(result['correct_count'], 1)
+        self.assertEqual(len(result['details']), 2)
 
     def test_fill_blank_number_variant(self):
         test = MockTest.objects.create(
@@ -217,7 +219,59 @@ class ScoringTests(MockTestFixturesMixin, TestCase):
 
 
 class ModelTests(MockTestFixturesMixin, TestCase):
-    def test_bracket_segments(self):
+    def test_notes_ten_blanks_count_as_ten_slots(self):
+        test = MockTest.objects.create(
+            title='Notes 10 blanks',
+            test_type='listening',
+            is_active=True,
+        )
+        text = ' '.join(f'Word [{i}]' for i in range(1, 11))
+        answers = [
+            '15 October', 'hotel', '175', 'sailing', 'class',
+            'golf', 'fishing', 'caravan', 'massage', 'menu',
+        ]
+        q = MockQuestion.objects.create(
+            test=test,
+            order=1,
+            part_number=1,
+            question_type='notes_completion',
+            question_text=text,
+            correct_answers_json=answers,
+            points=1,
+        )
+        self.assertEqual(q.gradable_slot_count(), 10)
+        self.assertEqual(total_gradable_slots([q]), 10)
+
+        attempt = MockAttempt.objects.create(
+            test=test,
+            session_key='notes-10',
+            answers_json={str(q.pk): {'1': '15 October', '2': 'hotel', '3': '511566'}},
+        )
+        result = score_attempt(attempt, [q])
+        self.assertEqual(result['total_questions'], 10)
+        self.assertEqual(len(result['details']), 10)
+        self.assertEqual(result['correct_count'], 2)
+        self.assertGreater(float(result['score_percent']), 0)
+        self.assertLess(float(result['score_percent']), 100)
+
+    def test_take_page_shows_gradable_slot_count(self):
+        test = MockTest.objects.create(
+            title='Notes UI count',
+            test_type='listening',
+            is_active=True,
+        )
+        q = MockQuestion.objects.create(
+            test=test,
+            order=1,
+            part_number=1,
+            question_type='notes_completion',
+            question_text='A [1] B [2] C [3]',
+            correct_answers_json=['a', 'b', 'c'],
+        )
+        url = reverse('mock_tests:test_take', kwargs={'pk': test.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('data-total-questions="3"', response.content.decode())
         test = self._create_listening_test()
         q = test.questions.get(question_type='notes_completion')
         blanks = [s for s in q.get_bracket_segments() if s['type'] == 'blank']
@@ -347,6 +401,61 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         html = response.content.decode()
         self.assertIn('audio-progress-track', html)
         self.assertIn('audio-progress-fill', html)
+
+    def test_daily_limit_blocks_new_post_without_in_progress(self):
+        test = self._create_listening_test()
+        url = reverse('mock_tests:test_take', kwargs={'pk': test.pk})
+        session_key = 'limit-test-session'
+        session = self.client.session
+        session.save()
+        session_key = session.session_key
+        for _ in range(5):
+            MockAttempt.objects.create(
+                test=test,
+                session_key=session_key,
+                is_finished=True,
+                finished_at=timezone.now(),
+                score_percent=50,
+                correct_count=1,
+                total_questions=2,
+            )
+        response = self.client.post(
+            url,
+            data=json.dumps({'action': 'save', 'answers': {}}),
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()['error'], 'limit_reached')
+
+    def test_result_page_requires_same_session(self):
+        test = self._create_listening_test()
+        attempt = MockAttempt.objects.create(
+            test=test,
+            session_key='owner-session',
+            is_finished=True,
+            finished_at=timezone.now(),
+            score_percent=80,
+            correct_count=2,
+            total_questions=3,
+        )
+        url = reverse('mock_tests:test_result', kwargs={'pk': test.pk, 'attempt_id': attempt.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_dock_buttons_use_sequential_numbers(self):
+        from mock_tests.views import _build_blank_buttons
+
+        test = self._create_listening_test()
+        questions = list(test.questions.all())
+        buttons, _ = _build_blank_buttons(questions)
+        nums = [b['num'] for b in buttons]
+        self.assertEqual(nums, [1, 2, 3])
+
+    def test_only_three_test_types(self):
+        self.assertEqual(len(MockTest.TEST_TYPES), 3)
+        labels = [t[0] for t in MockTest.TEST_TYPES]
+        self.assertEqual(labels, ['reading', 'listening', 'writing'])
 
 
 class StatsTests(MockTestFixturesMixin, TestCase):

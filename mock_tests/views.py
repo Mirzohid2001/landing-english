@@ -1,10 +1,12 @@
 import json
+import re
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 
 from .models import MockTest, MockAttempt
+from .services.gradable import total_gradable_slots
 from .services.scoring import score_attempt
 
 
@@ -36,61 +38,46 @@ def _get_or_create_attempt(request, test):
     return attempt
 
 
-def _build_blank_buttons(questions):
-    """Footer dock tugmalari — har bir savol yoki matching/blank raqami."""
+def _build_blank_buttons(questions, start_num=0):
+    """Footer dock tugmalari — ketma-ket raqamlash (1, 2, 3…)."""
     buttons = []
-    for q in questions:
+    display_num = start_num
+
+    def _append(question_id, is_blank, blank_key=''):
+        nonlocal display_num
+        display_num += 1
+        buttons.append({
+            'num': display_num,
+            'question_id': question_id,
+            'is_blank': is_blank,
+            'blank_key': blank_key,
+        })
+
+    for q in sorted(questions, key=lambda x: (x.order, x.pk)):
         if q.question_type == 'summary_box':
-            for seg in q.get_summary_segments():
-                if seg['type'] == 'blank':
-                    buttons.append({
-                        'num': int(seg['num']),
-                        'question_id': q.pk,
-                        'is_blank': True,
-                        'blank_key': seg['num'],
-                    })
+            segs = [s for s in q.get_summary_segments() if s['type'] == 'blank']
+            if segs:
+                for seg in segs:
+                    _append(q.pk, True, seg['num'])
+            else:
+                _append(q.pk, False)
         elif q.is_multi_matching():
             fields = q.get_matching_fields()
-            for mf in fields:
-                buttons.append({
-                    'num': int(mf['num']),
-                    'question_id': q.pk,
-                    'is_blank': True,
-                    'blank_key': str(mf['num']),
-                })
-            if not fields:
-                buttons.append({
-                    'num': q.order,
-                    'question_id': q.pk,
-                    'is_blank': False,
-                    'blank_key': '',
-                })
+            if fields:
+                for mf in fields:
+                    _append(q.pk, True, str(mf['num']))
+            else:
+                _append(q.pk, False)
         elif q.question_type in ('notes_completion', 'table_completion'):
-            segs = q.get_bracket_segments()
-            blanks = [s for s in segs if s['type'] == 'blank']
+            blanks = [s for s in q.get_bracket_segments() if s['type'] == 'blank']
             if blanks:
                 for seg in blanks:
-                    buttons.append({
-                        'num': int(seg['num']),
-                        'question_id': q.pk,
-                        'is_blank': True,
-                        'blank_key': seg['num'],
-                    })
+                    _append(q.pk, True, seg['num'])
             else:
-                buttons.append({
-                    'num': q.order,
-                    'question_id': q.pk,
-                    'is_blank': False,
-                    'blank_key': '',
-                })
+                _append(q.pk, False)
         else:
-            buttons.append({
-                'num': q.order,
-                'question_id': q.pk,
-                'is_blank': False,
-                'blank_key': '',
-            })
-    return sorted(buttons, key=lambda b: b['num'])
+            _append(q.pk, False)
+    return buttons, display_num
 
 
 def _build_part_groups(test, questions, passages):
@@ -101,14 +88,19 @@ def _build_part_groups(test, questions, passages):
 
     passage_map = {p.order: p for p in passages}
     part_groups = []
+    global_offset = 0
     for part_num in sorted(parts.keys()):
         qs = parts[part_num]
-        blank_buttons = _build_blank_buttons(qs)
+        question_count = sum(q.gradable_slot_count() for q in qs)
+        blank_buttons, global_offset = _build_blank_buttons(qs, global_offset)
         orders = [q.order for q in qs]
         start_order = min(orders) if orders else 0
         end_order = max(orders) if orders else 0
-        question_count = len(qs)
-        range_label = f'{start_order}-{end_order}' if start_order != end_order else str(start_order)
+        if blank_buttons:
+            start_num, end_num = blank_buttons[0]['num'], blank_buttons[-1]['num']
+            range_label = str(start_num) if start_num == end_num else f'{start_num}-{end_num}'
+        else:
+            range_label = f'{start_order}-{end_order}' if start_order != end_order else str(start_order)
 
         title = f'Task {part_num}' if test.test_type == 'writing' else f'Part {part_num}'
         audio_start_time = 0
@@ -137,9 +129,19 @@ def _build_part_groups(test, questions, passages):
 def _questions_range_display(questions):
     if not questions:
         return '0'
+    buttons, _ = _build_blank_buttons(questions)
+    if buttons:
+        start, end = buttons[0]['num'], buttons[-1]['num']
+        return str(start) if start == end else f'{start}-{end}'
     orders = [q.order for q in questions]
     start, end = min(orders), max(orders)
     return f'{start}-{end}' if start != end else str(start)
+
+
+def _limit_reached_response(request, test):
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': False, 'error': 'limit_reached'}, status=403)
+    return render(request, 'mock_tests/limit_reached.html', {'test': test, 'max': MAX_DAILY_ATTEMPTS})
 
 
 def _latest_finished_attempts(session_key, test_ids):
@@ -198,16 +200,26 @@ def test_take(request, pk):
     test = get_object_or_404(MockTest, pk=pk, is_active=True)
     questions = list(test.questions.all())
     passages = list(test.passages.all())
-    if request.method == 'GET':
-        session_key = _ensure_session(request)
-        if _count_today_attempts(session_key, test) >= MAX_DAILY_ATTEMPTS:
-            return render(request, 'mock_tests/limit_reached.html', {'test': test, 'max': MAX_DAILY_ATTEMPTS})
+    session_key = _ensure_session(request)
 
-    attempt = _get_or_create_attempt(request, test)
+    if request.method == 'GET':
+        if _count_today_attempts(session_key, test) >= MAX_DAILY_ATTEMPTS:
+            return _limit_reached_response(request, test)
 
     if request.method == 'POST':
+        in_progress = MockAttempt.objects.filter(
+            test=test, session_key=session_key, is_finished=False,
+        ).first()
+        if not in_progress and _count_today_attempts(session_key, test) >= MAX_DAILY_ATTEMPTS:
+            return _limit_reached_response(request, test)
+        attempt = in_progress or MockAttempt.objects.create(test=test, session_key=session_key)
+
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            data = json.loads(request.body.decode('utf-8'))
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return JsonResponse({'success': False, 'error': 'invalid_json'}, status=400)
+
             if data.get('action') == 'save':
                 attempt.answers_json = data.get('answers', {})
                 attempt.save(update_fields=['answers_json'])
@@ -244,6 +256,8 @@ def test_take(request, pk):
         attempt.save()
         return redirect('mock_tests:test_result', pk=test.pk, attempt_id=attempt.pk)
 
+    attempt = _get_or_create_attempt(request, test)
+
     part_groups = _build_part_groups(test, questions, passages)
     saved_answers = attempt.answers_json or {}
     for q in questions:
@@ -256,7 +270,7 @@ def test_take(request, pk):
         'test': test,
         'attempt': attempt,
         'part_groups': part_groups,
-        'total_questions': len(questions),
+        'total_questions': total_gradable_slots(questions),
         'questions_range_display': _questions_range_display(questions),
         'saved_answers': saved_answers,
         'duration_minutes': test.duration_minutes or 60,
@@ -266,7 +280,10 @@ def test_take(request, pk):
 
 def test_result(request, pk, attempt_id):
     test = get_object_or_404(MockTest, pk=pk, is_active=True)
-    attempt = get_object_or_404(MockAttempt, pk=attempt_id, test=test, is_finished=True)
+    session_key = _ensure_session(request)
+    attempt = get_object_or_404(
+        MockAttempt, pk=attempt_id, test=test, is_finished=True, session_key=session_key,
+    )
     questions = list(test.questions.all())
     result = score_attempt(attempt, questions)
 

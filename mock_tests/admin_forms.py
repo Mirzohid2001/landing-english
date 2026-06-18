@@ -1,5 +1,6 @@
 """Admin: savol formasi — JSON o'rniga oddiy matn maydonlari."""
 import json
+import re
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -23,8 +24,7 @@ QUESTION_TYPE_RULES = {
     "matching_info": "Itemlar: 14|Savol matni. Variantlar: A|Paragraph A. To'g'ri: 14:A",
     "matching_sentences": "Itemlar + variantlar (A|ending). To'g'ri: 1:c",
     "classification": "Itemlar + A|B|C variantlar. To'g'ri: 1:A",
-    "essay": "To'liq task matni. 50+ belgi yozilgan bo'lsa o'tadi.",
-    "speaking": "Savol matni. 20+ belgi (demo matn).",
+    "essay": "To'liq task matni. 50+ so'z yozilgan bo'lsa o'tadi.",
 }
 
 
@@ -239,6 +239,35 @@ class MockQuestionAdminForm(forms.ModelForm):
             raise ValidationError({"correct_answer": "Eski matching: bitta harf kiriting."})
         if has_text and qtype in mcq_types and not cleaned.get("correct_answer"):
             raise ValidationError({"correct_answer": "To'g'ri javob (harf) kiriting."})
+
+        bracket_types = (
+            "summary_completion", "summary_box", "notes_completion", "table_completion",
+        )
+        if has_text and qtype in bracket_types:
+            qtext = cleaned.get("question_text") or ""
+            brackets = re.findall(r"\[(\d+)\]", qtext)
+            if not brackets:
+                raise ValidationError({
+                    "question_text": "Matnda kamida bitta [1] ko'rinishi kerak.",
+                })
+            answers = cleaned.get("correct_answers_json")
+            if not answers and fill_text:
+                answers = self._parse_fill_answers(fill_text)
+            if not answers:
+                raise ValidationError({
+                    "fill_answers": "Bracket soniga mos javoblarni vergul bilan kiriting.",
+                })
+            if len(answers) != len(brackets):
+                raise ValidationError({
+                    "fill_answers": (
+                        f"Javoblar soni ({len(answers)}) bracket soni "
+                        f"({len(brackets)}) bilan mos kelishi kerak."
+                    ),
+                })
+
+        test = cleaned.get("test") or getattr(self.instance, "test", None)
+        if test and test.test_type == "reading" and qtype in ("notes_completion", "table_completion"):
+            raise ValidationError("Notes/Table faqat Listening test uchun.")
 
         return cleaned
 

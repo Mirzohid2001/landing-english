@@ -52,7 +52,7 @@ class MockTest(models.Model):
 
     @property
     def total_questions(self):
-        return self.questions.count()
+        return sum(q.gradable_slot_count() for q in self.questions.all())
 
     def get_absolute_url(self):
         return reverse('mock_tests:test_detail', kwargs={'pk': self.pk})
@@ -93,7 +93,6 @@ class MockQuestion(models.Model):
         ('summary_box', 'Summary + box (inline qavslar)'),
         ('notes_completion', 'Notes Completion (Listening)'),
         ('table_completion', 'Table Completion'),
-        ('speaking', 'Speaking (audio yozish)'),
     ]
 
     test = models.ForeignKey(
@@ -248,9 +247,16 @@ class MockQuestion(models.Model):
             return len([s for s in self.get_bracket_segments() if s['type'] == 'blank']) or 1
         if self.question_type in ('notes_completion', 'table_completion'):
             answers = self.correct_answers_json or []
-            if isinstance(answers, list) and answers:
-                return len(answers)
-            return len([s for s in self.get_bracket_segments() if s['type'] == 'blank']) or 1
+            blanks = [s for s in self.get_bracket_segments() if s['type'] == 'blank']
+            n_answers = len(answers) if isinstance(answers, list) and answers else 0
+            n_blanks = len(blanks)
+            if n_blanks and n_answers:
+                return max(n_blanks, n_answers)
+            if n_blanks:
+                return n_blanks
+            if n_answers:
+                return n_answers
+            return 1
         return 1
 
     def get_summary_segments(self):

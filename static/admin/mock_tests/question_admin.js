@@ -31,8 +31,7 @@
             FILL_TYPES.indexOf(qType) >= 0 ||
             qType === 'matching' ||
             MULTI_MATCHING.indexOf(qType) >= 0 ||
-            qType === 'essay' ||
-            qType === 'speaking'
+            qType === 'essay'
         );
     }
 
@@ -156,7 +155,6 @@
         var isFill =
             FILL_TYPES.indexOf(qType) >= 0 && qType !== 'summary_box';
         var isEssay = qType === 'essay';
-        var isSpeaking = qType === 'speaking';
 
         ['instruction', 'question_text', 'explanation', 'part_number', 'points'].forEach(
             function (name) {
@@ -178,7 +176,7 @@
         toggleFieldRow(container, 'matching_options_lines', isMatching || isMultiMatching);
         toggleFieldRow(container, 'matching_correct', isMultiMatching);
         toggleFieldRow(container, 'word_list_lines', isSummaryBox);
-        toggleFieldRow(container, 'audio_timestamp', !isEssay && !isSpeaking);
+        toggleFieldRow(container, 'audio_timestamp', !isEssay);
         toggleFieldRow(
             container,
             'correct_answer',

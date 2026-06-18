@@ -285,10 +285,10 @@ class MockTestAdmin(admin.ModelAdmin):
         if not obj or not obj.pk:
             return "—"
         p_count = obj.passages.count()
-        q_count = obj.questions.count()
+        slot_count = obj.total_questions
         if obj.test_type == "reading" and p_count:
-            return format_html("{} passage / {} savol", p_count, q_count)
-        return format_html("<strong>{}</strong> savol", q_count)
+            return format_html("{} passage / {} slot", p_count, slot_count)
+        return format_html("<strong>{}</strong> slot", slot_count)
 
     content_summary_display.short_description = "Tarkib"
 

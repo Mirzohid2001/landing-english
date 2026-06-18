@@ -17,14 +17,13 @@ DEMO_TEST_TITLES = [
     'Writing Task Demo',
     'Listening Part 1 Demo',
     'Full Reading Mock Test (40 Questions)',
-    'Speaking Demo — Part 1',
     'Listening Demo — Timestamps & Notes',
     'Reading Demo — Matching Headings',
 ]
 
 
 class Command(BaseCommand):
-    help = "Barcha demo mock testlarni bazaga qo'shadi (reading, listening, writing, speaking)"
+    help = "Barcha demo mock testlarni bazaga qo'shadi (reading, listening, writing)"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -43,7 +42,7 @@ class Command(BaseCommand):
             ('seed_demo_test', 'Reading demo (qisqa)'),
             ('seed_phase2_demos', 'Writing + Listening Part 1'),
             ('seed_phase3_full_reading', 'To\'liq Reading (40 savol)'),
-            ('seed_phase4_demos', 'Summary box + Speaking'),
+            ('seed_phase4_demos', 'Summary box (Reading)'),
             ('seed_listening_matching_demos', 'Listening timestamps + Matching headings'),
         ]
 

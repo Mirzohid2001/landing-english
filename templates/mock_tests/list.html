@@ -15,7 +15,7 @@
         <p>Haqiqiy imtihon muhitida mashq qiling — login shart emas, natijangiz darhol ko‘rinadi.</p>
         <div class="mock-hero-stats">
             <div class="mock-hero-stat"><strong>{{ tests_with_meta|length }}</strong><span>Demo test</span></div>
-            <div class="mock-hero-stat"><strong>4</strong><span>Test turi</span></div>
+            <div class="mock-hero-stat"><strong>{{ test_type_choices|length }}</strong><span>Test turi</span></div>
             <div class="mock-hero-stat"><strong>100%</strong><span>Bepul</span></div>
         </div>
     </div>
@@ -39,7 +39,7 @@
                         {% if test.test_type == 'reading' %}<i class="fas fa-book-open"></i>
                         {% elif test.test_type == 'listening' %}<i class="fas fa-headphones"></i>
                         {% elif test.test_type == 'writing' %}<i class="fas fa-pen-fancy"></i>
-                        {% else %}<i class="fas fa-microphone"></i>{% endif %}
+                        {% endif %}
                     </div>
                     <span class="mock-test-badge mock-test-badge--{{ test.test_type }}">{{ test.get_test_type_display }}</span>
                 </div>

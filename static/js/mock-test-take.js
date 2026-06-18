@@ -79,17 +79,65 @@
         });
     }
 
+    function countAnsweredSlots(answers) {
+        const navBtns = exam.querySelectorAll('.mock-q-nav-btn, .q-num-btn');
+        if (navBtns.length) {
+            let n = 0;
+            navBtns.forEach(btn => { if (isNavAnswered(btn, answers)) n++; });
+            return n;
+        }
+        let count = 0;
+        Object.values(answers).forEach(v => {
+            if (typeof v === 'object' && v && !Array.isArray(v)) {
+                Object.values(v).forEach(blank => {
+                    if (blank && String(blank).trim().length) count++;
+                });
+            } else if (isAnswered(v)) {
+                count++;
+            }
+        });
+        return count;
+    }
+
+    function setAnsweredCounts(count) {
+        document.querySelectorAll('#answered-count, #answered-count-top').forEach(el => {
+            el.textContent = count;
+        });
+    }
+
+    function updateCurrentQuestionLabel(order) {
+        const qLabel = document.getElementById('current-q-label');
+        if (qLabel && order != null) qLabel.textContent = order;
+    }
+
+    function getAllNavButtons() {
+        return Array.from(exam.querySelectorAll('.mock-q-nav-btn, .q-num-btn'));
+    }
+
+    function getUnansweredSlotNums(answers) {
+        const nums = [];
+        getAllNavButtons().forEach(btn => {
+            if (!isNavAnswered(btn, answers)) {
+                const n = parseInt(btn.dataset.order, 10);
+                nums.push(Number.isFinite(n) ? n : btn.textContent.trim());
+            }
+        });
+        return nums.sort((a, b) => {
+            const na = parseInt(a, 10);
+            const nb = parseInt(b, 10);
+            if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+            return String(a).localeCompare(String(b));
+        });
+    }
+
     function updateProgress() {
         const answers = collectAnswers();
-        const count = Object.values(answers).filter(v => isAnswered(v)).length;
-        const answeredEl = document.getElementById('answered-count');
-        if (answeredEl) answeredEl.textContent = count;
-        const pct = totalQuestions ? Math.round((count / totalQuestions) * 100) : 0;
+        const count = countAnsweredSlots(answers);
+        setAnsweredCounts(count);
+        const pct = totalQuestions ? Math.min(100, Math.round((count / totalQuestions) * 100)) : 0;
         ['progress-pct'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = pct + '%'; });
         const fillEl = document.getElementById('progress-fill');
         if (fillEl) fillEl.style.width = pct + '%';
-        const qLabel = document.getElementById('current-q-label');
-        if (qLabel) qLabel.textContent = count;
         exam.querySelectorAll('.mock-q-nav-btn, .q-num-btn').forEach(btn => {
             btn.classList.toggle('answered', isNavAnswered(btn, answers));
         });
@@ -123,21 +171,52 @@
         return m + ':' + String(s).padStart(2, '0');
     }
 
-    function openSubmitModal() {
+    function openSubmitModal(options) {
+        const opts = options || {};
         updateProgress();
         const answers = collectAnswers();
-        const count = Object.values(answers).filter(v => isAnswered(v)).length;
+        const count = countAnsweredSlots(answers);
+        const unanswered = getUnansweredSlotNums(answers);
         const modal = document.getElementById('submit-modal');
         const answeredEl = document.getElementById('submit-answered');
         const warnEl = document.getElementById('submit-warn');
         const timeEl = document.getElementById('submit-time-left');
+        const listWrap = document.getElementById('submit-unanswered-wrap');
+        const listEl = document.getElementById('submit-unanswered-list');
+        const timeUpEl = document.getElementById('submit-timeup');
+        const titleEl = document.getElementById('submit-modal-title');
         if (answeredEl) answeredEl.textContent = count;
         if (timeEl) timeEl.textContent = formatTimeLeft();
-        if (warnEl) warnEl.hidden = count >= totalQuestions;
+        if (warnEl) warnEl.hidden = !unanswered.length;
+        if (listWrap && listEl) {
+            if (unanswered.length) {
+                listWrap.hidden = false;
+                listEl.innerHTML = unanswered.map(n =>
+                    `<li><button type="button" class="mock-submit-goto" data-goto-order="${n}">${n}</button></li>`
+                ).join('');
+                listEl.querySelectorAll('.mock-submit-goto').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const order = btn.dataset.gotoOrder;
+                        const target = getAllNavButtons().find(b => String(b.dataset.order) === String(order));
+                        closeSubmitModal();
+                        if (target) scrollToQuestion(target);
+                    });
+                });
+            } else {
+                listWrap.hidden = true;
+                listEl.innerHTML = '';
+            }
+        }
+        if (timeUpEl) timeUpEl.hidden = !opts.timeUp;
+        if (titleEl) {
+            titleEl.textContent = opts.timeUp ? 'Vaqt tugadi' : 'Testni yakunlaysizmi?';
+        }
         if (modal) {
             modal.hidden = false;
             modal.setAttribute('aria-hidden', 'false');
             modal.classList.add('is-open');
+            if (opts.timeUp) modal.classList.add('is-time-up');
+            else modal.classList.remove('is-time-up');
         }
     }
 
@@ -146,8 +225,12 @@
         if (modal) {
             modal.hidden = true;
             modal.setAttribute('aria-hidden', 'true');
-            modal.classList.remove('is-open');
+            modal.classList.remove('is-open', 'is-time-up');
         }
+        const timeUpEl = document.getElementById('submit-timeup');
+        const titleEl = document.getElementById('submit-modal-title');
+        if (timeUpEl) timeUpEl.hidden = true;
+        if (titleEl) titleEl.textContent = 'Testni yakunlaysizmi?';
     }
 
     function restoreAnswers() {
@@ -278,6 +361,7 @@
         if (!btn) return;
         switchPart(btn.dataset.part);
         setActiveNavBtn(btn);
+        updateCurrentQuestionLabel(btn.dataset.order || btn.textContent.trim());
         if (btn.dataset.blank) {
             const sel = exam.querySelector(
                 `.mock-matching-select[data-question-id="${btn.dataset.qid}"][data-match-num="${btn.dataset.blank}"]`
@@ -518,7 +602,7 @@
             {
                 target: () => document.getElementById('finish-test-btn') || document.querySelector('.mock-btn-submit'),
                 title: 'Testni yakunlang',
-                text: 'Tayyor bo\'lsangiz Submit tugmasini bosing. Avval nechta javob berilganini ko\'rasiz.',
+                text: 'Tayyor bo\'lsangiz Yuborish tugmasini bosing. Javobsiz savollar ro\'yxatini ko\'rasiz.',
             },
         ];
 
@@ -576,10 +660,10 @@
             });
         }
 
+        showStep(0);
         overlay.hidden = false;
         overlay.setAttribute('aria-hidden', 'false');
         overlay.classList.add('is-open');
-        showStep(0);
         window.addEventListener('resize', positionStep);
         window.addEventListener('scroll', positionStep, true);
 
@@ -601,6 +685,10 @@
         const label = document.getElementById('pause-label');
         if (icon) icon.className = isPaused ? 'fas fa-play' : 'fas fa-pause';
         if (label) label.textContent = isPaused ? 'Davom ettirish' : "To'xtatish";
+        if (audioEl) {
+            if (isPaused) audioEl.pause();
+            else audioEl.play().catch(() => {});
+        }
     });
 
     exam.querySelectorAll('textarea[data-question-id]').forEach(ta => {
@@ -642,9 +730,16 @@
 
     const timerEl = document.getElementById('exam-timer');
     const timerPill = document.getElementById('timer-container');
+    let timeUpHandled = false;
     function tick() {
         if (isPaused) return;
-        if (secondsLeft <= 0) { finishTest(); return; }
+        if (secondsLeft <= 0) {
+            if (!timeUpHandled) {
+                timeUpHandled = true;
+                openSubmitModal({ timeUp: true });
+            }
+            return;
+        }
         const m = Math.floor(secondsLeft / 60), s = secondsLeft % 60;
         if (timerEl) timerEl.textContent = m + ':' + String(s).padStart(2, '0');
         if (timerPill) {
@@ -657,6 +752,11 @@
     timerInterval = setInterval(tick, 1000);
 
     restoreAnswers();
+
+    const btns = getAllNavButtons();
+    if (btns.length) {
+        updateCurrentQuestionLabel(btns[0].dataset.order || '1');
+    }
 
     const restoredCount = Object.values(savedAnswers).filter(v => isAnswered(v)).length;
     if (restoredCount > 0) {

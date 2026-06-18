@@ -121,13 +121,6 @@
     {% endwith %}
 </div>
 
-{% elif question.question_type == 'speaking' %}
-<div class="mock-speaking-answer">
-    <p class="mock-speaking-tip"><i class="fas fa-microphone"></i> Javobingizni yozing (demo rejim).</p>
-    <textarea class="mock-speaking-input mock-writing-answer-ta" rows="6"
-              placeholder="Speaking javobingiz..." data-question-id="{{ question.id }}"></textarea>
-</div>
-
 {% else %}
 {% if question.question_type != 'fill_blank' and question.question_type != 'sentence_completion' and question.question_type != 'summary_completion' %}
 <div class="mock-fill-answer">

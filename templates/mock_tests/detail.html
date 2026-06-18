@@ -24,7 +24,7 @@
                     {% if test.test_type == 'reading' %}<i class="fas fa-book-open"></i>
                     {% elif test.test_type == 'listening' %}<i class="fas fa-headphones"></i>
                     {% elif test.test_type == 'writing' %}<i class="fas fa-pen-fancy"></i>
-                    {% else %}<i class="fas fa-microphone"></i>{% endif %}
+                    {% endif %}
                 </div>
                 <div>
                     <h2>{{ test.title }}</h2>

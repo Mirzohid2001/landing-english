@@ -1,13 +1,13 @@
 from django.core.management.base import BaseCommand
-from mock_tests.models import MockTest, MockPassage, MockQuestion
+from mock_tests.models import MockTest, MockQuestion
 
 
 class Command(BaseCommand):
-    help = 'Phase 4 demo: summary_box va speaking savollar'
+    help = 'Phase 4 demo: Reading uchun summary_box savollar'
 
     def handle(self, *args, **options):
         self._add_summary_to_reading_demo()
-        self._create_speaking_demo()
+        self._remove_speaking_demo()
 
     def _add_summary_to_reading_demo(self):
         test = MockTest.objects.filter(title='Becoming an Expert — Reading Demo').first()
@@ -65,46 +65,10 @@ class Command(BaseCommand):
             msg = f'Reading Demo: {total} ta summary_box allaqachon mavjud (yangilandi: {updated})'
         self.stdout.write(self.style.SUCCESS(f'{msg} — /courses/tests/{test.pk}/'))
 
-    def _create_speaking_demo(self):
-        test, created = MockTest.objects.get_or_create(
-            title='Speaking Demo — Part 1',
-            defaults={
-                'test_type': 'writing',
-                'difficulty': 'easy',
-                'description': 'Speaking savollarini demo rejimda matn ko\'rinishida javob bering.',
-                'duration_minutes': 15,
-                'passing_score': 60,
-                'is_active': True,
-            },
-        )
-
-        if not created and test.questions.filter(question_type='speaking').exists():
-            self.stdout.write(self.style.WARNING(
-                f'Speaking Demo allaqachon mavjud — /courses/tests/{test.pk}/'
+    def _remove_speaking_demo(self):
+        deleted, _ = MockTest.objects.filter(title='Speaking Demo — Part 1').delete()
+        deactivated = MockTest.objects.filter(test_type='speaking').update(is_active=False)
+        if deleted or deactivated:
+            self.stdout.write(self.style.SUCCESS(
+                f'Speaking demo olib tashlandi (o\'chirildi: {deleted}, o\'chirilgan: {deactivated})'
             ))
-            return
-
-        questions = [
-            {
-                'order': 1,
-                'part_number': 1,
-                'question_type': 'speaking',
-                'instruction': 'Part 1: Introduction and Interview',
-                'question_text': 'Describe your hometown. What do you like most about it?',
-                'explanation': 'Demo: kamida 20 belgi yozilgan javob qabul qilinadi.',
-            },
-            {
-                'order': 2,
-                'part_number': 1,
-                'question_type': 'speaking',
-                'instruction': 'Part 1: Introduction and Interview',
-                'question_text': 'Do you prefer studying alone or with others? Why?',
-            },
-        ]
-
-        for q in questions:
-            MockQuestion.objects.update_or_create(test=test, order=q['order'], defaults=q)
-
-        self.stdout.write(self.style.SUCCESS(
-            f'Speaking Demo tayyor — /courses/tests/{test.pk}/'
-        ))

@@ -98,6 +98,7 @@ class ListeningFlowE2ETests(StaticLiveServerTestCase, MockTestFixturesMixin):
     def test_onboarding_shows_and_can_skip(self):
         self._open_take_page(clear_onboarding=True)
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.mock-onboarding.is-open')))
+        self.wait.until(lambda d: d.find_element(By.ID, 'mock-onboarding-title').text.strip())
         title = self.driver.find_element(By.ID, 'mock-onboarding-title')
         self.assertTrue(title.text.strip())
         self.driver.find_element(By.ID, 'mock-onboarding-skip').click()
@@ -180,7 +181,7 @@ class ListeningFlowE2ETests(StaticLiveServerTestCase, MockTestFixturesMixin):
         )
         self._click_js(radio)
 
-        self.wait.until(lambda d: d.find_element(By.ID, 'answered-count').text.strip() == '2')
+        self.wait.until(lambda d: d.find_element(By.ID, 'answered-count').text.strip() == '3')
 
         self._click_js(self.driver.find_element(By.ID, 'finish-test-btn'))
         self._click_js(self.wait.until(EC.element_to_be_clickable((By.ID, 'confirm-submit-btn'))))

@@ -15,6 +15,7 @@ from .answer_normalizer import (
     score_extended_text,
 )
 from .band_score import earned_ratio_to_band
+from .gradable import question_total_points, total_gradable_slots
 
 
 def format_answer_display(user_answer):
@@ -62,17 +63,30 @@ def _acceptable_blanks_list(question):
     return [str(a) for a in raw if a is not None and str(a).strip()]
 
 
+def _sorted_blank_nums(segments):
+    nums = [s['num'] for s in segments if s['type'] == 'blank']
+    return sorted(nums, key=lambda n: int(n) if str(n).isdigit() else str(n))
+
+
 def score_blanks(question, user_answer):
     """notes_completion, table_completion, summary_box — har blank uchun 0..1."""
     acceptable = _acceptable_blanks_list(question)
     blanks = _blank_map_from_user(user_answer)
+    segments = question.get_bracket_segments()
+    if question.question_type == 'summary_box':
+        segments = question.get_summary_segments()
+    blank_nums = _sorted_blank_nums(segments)
+    if not blank_nums:
+        blank_nums = [str(i) for i in range(1, len(acceptable) + 1)]
+
     if not acceptable:
         return 0.0, 0, '', ''
 
     got = 0
     user_parts = []
-    for i, ans in enumerate(acceptable, start=1):
-        user_val = blanks.get(str(i), blanks.get(i, ''))
+    for idx, ans in enumerate(acceptable):
+        num = blank_nums[idx] if idx < len(blank_nums) else str(idx + 1)
+        user_val = blanks.get(str(num), blanks.get(num, ''))
         user_parts.append(str(user_val).strip() or '—')
         if match_text_answer(user_val, [ans]):
             got += 1
@@ -82,6 +96,98 @@ def score_blanks(question, user_answer):
     display_correct = '; '.join(acceptable)
     fraction = got / total if total else 0.0
     return fraction, got, display_user, display_correct
+
+
+def _blank_slot_pairs(question):
+    """(blank_num, acceptable_answer) ro'yxati."""
+    acceptable = _acceptable_blanks_list(question)
+    segments = question.get_bracket_segments()
+    if question.question_type == 'summary_box':
+        segments = question.get_summary_segments()
+    blank_nums = _sorted_blank_nums(segments)
+    if not blank_nums:
+        blank_nums = [str(i) for i in range(1, len(acceptable) + 1)]
+    pairs = []
+    for idx, ans in enumerate(acceptable):
+        num = blank_nums[idx] if idx < len(blank_nums) else str(idx + 1)
+        pairs.append((str(num), str(ans)))
+    return pairs
+
+
+def _matching_slot_pairs(question):
+    correct = question.correct_answers_json if isinstance(question.correct_answers_json, dict) else {}
+    if correct:
+        return [(str(k), str(v)) for k, v in sorted(
+            correct.items(), key=lambda x: int(x[0]) if str(x[0]).isdigit() else str(x[0])
+        )]
+    fields = question.get_matching_fields()
+    return [(str(f['num']), '') for f in fields]
+
+
+def expand_question_details(question, user_answer):
+    """Har bir baholanadigan slot uchun alohida natija qatori."""
+    qtype = question.question_type
+    slot_pt = question_total_points(question) / max(question.gradable_slot_count(), 1)
+    rows = []
+
+    if qtype in ('notes_completion', 'table_completion', 'summary_box'):
+        blanks = _blank_map_from_user(user_answer)
+        for num, ans in _blank_slot_pairs(question):
+            user_val = blanks.get(num, blanks.get(int(num) if str(num).isdigit() else num, ''))
+            ok = match_text_answer(user_val, [ans])
+            rows.append({
+                'order': num,
+                'question_order': question.order,
+                'label': f'Savol {question.order} — [{num}]',
+                'is_correct': ok,
+                'earned_points': round(slot_pt if ok else 0.0, 2),
+                'max_points': round(slot_pt, 2),
+                'user_answer_display': str(user_val).strip() or '—',
+                'correct_answer': ans,
+                'explanation': question.explanation,
+            })
+        return rows
+
+    if qtype in MATCHING_TYPES:
+        from mock_tests.matching_utils import parse_user_matching_answer
+        user_map = parse_user_matching_answer(user_answer)
+        for num, corr in _matching_slot_pairs(question):
+            user_val = user_map.get(num, '')
+            ok = normalize_choice(user_val) == normalize_choice(corr) if corr else False
+            rows.append({
+                'order': num,
+                'question_order': question.order,
+                'label': f'Savol {question.order} — {num}',
+                'is_correct': ok,
+                'earned_points': round(slot_pt if ok else 0.0, 2),
+                'max_points': round(slot_pt, 2),
+                'user_answer_display': user_val or '—',
+                'correct_answer': corr or '—',
+                'explanation': question.explanation,
+            })
+        return rows
+
+    earned = score_question_points(question, user_answer)
+    is_correct, user_norm, correct_norm = check_question_answer(question, user_answer)
+    if not user_norm or user_norm == '—':
+        user_display = format_answer_display(user_answer)
+    else:
+        user_display = user_norm
+    if not correct_norm:
+        correct_norm = format_correct_display(question) or '—'
+    q_pt = question_total_points(question)
+    rows.append({
+        'order': question.order,
+        'question_order': question.order,
+        'label': f'Savol {question.order}',
+        'is_correct': is_correct,
+        'earned_points': round(earned, 2),
+        'max_points': round(q_pt, 2),
+        'user_answer_display': user_display,
+        'correct_answer': correct_norm,
+        'explanation': question.explanation,
+    })
+    return rows
 
 
 def score_matching_partial(question, user_answer):
@@ -126,12 +232,6 @@ def check_question_answer(question, user_answer):
         frac, _, user_disp, correct_disp = score_blanks(question, user_answer)
         return frac >= 1.0, user_disp, correct_disp
 
-    if qtype == 'speaking':
-        text = str(user_answer or '').strip()
-        frac = score_extended_text(text, min_words=20, target_words=120)
-        ok = frac >= 0.5
-        return ok, text[:120] or '—', 'Speaking (20+ so\'z)'
-
     if qtype == 'essay':
         text = str(user_answer or '').strip()
         frac = score_extended_text(text, min_words=50, target_words=250)
@@ -148,18 +248,14 @@ def score_question_points(question, user_answer):
 
     if qtype in MATCHING_TYPES:
         frac, _, _, _, _ = score_matching_partial(question, user_answer)
-        return points * frac
+        return question_total_points(question) * frac
 
     if qtype in ('notes_completion', 'table_completion', 'summary_box'):
         frac, _, _, _ = score_blanks(question, user_answer)
-        return points * frac
+        return question_total_points(question) * frac
 
     if qtype == 'essay':
         frac = score_extended_text(str(user_answer or ''), min_words=50, target_words=250)
-        return points * frac
-
-    if qtype == 'speaking':
-        frac = score_extended_text(str(user_answer or ''), min_words=20, target_words=120)
         return points * frac
 
     ok, _, _ = check_question_answer(question, user_answer)
@@ -170,47 +266,39 @@ def score_attempt(attempt, questions):
     answers = attempt.answers_json or {}
     total_points = 0.0
     earned_points = 0.0
-    fully_correct = 0
+    correct_slots = 0
     details = []
 
     for question in questions:
         qid = str(question.id)
         user_answer = answers.get(qid, '')
-        q_points = float(question.points or 1)
-        total_points += q_points
+        q_total = question_total_points(question)
+        total_points += q_total
 
         earned = score_question_points(question, user_answer)
         earned_points += earned
 
-        is_correct, user_norm, correct_norm = check_question_answer(question, user_answer)
-        if is_correct:
-            fully_correct += 1
+        for row in expand_question_details(question, user_answer):
+            if row['is_correct']:
+                correct_slots += 1
+            details.append({
+                'question_id': question.id,
+                'order': row['order'],
+                'question_order': row.get('question_order', question.order),
+                'label': row.get('label', f"Savol {row['order']}"),
+                'is_correct': row['is_correct'],
+                'earned_points': row['earned_points'],
+                'max_points': row['max_points'],
+                'user_answer_display': row['user_answer_display'],
+                'correct_answer': row['correct_answer'],
+                'explanation': row['explanation'],
+            })
 
-        if not user_norm or user_norm == '—':
-            user_display = format_answer_display(user_answer)
-        else:
-            user_display = user_norm
-
-        if not correct_norm:
-            correct_norm = format_correct_display(question) or '—'
-
-        details.append({
-            'question_id': question.id,
-            'order': question.order,
-            'is_correct': is_correct,
-            'earned_points': round(earned, 2),
-            'max_points': q_points,
-            'user_answer': user_answer,
-            'user_answer_display': user_display,
-            'correct_answer': correct_norm,
-            'explanation': question.explanation,
-        })
-
-    total_questions = len(questions)
+    total_questions = total_gradable_slots(questions)
     if total_points:
         score_percent = Decimal(earned_points * 100) / Decimal(total_points)
     elif total_questions:
-        score_percent = Decimal(fully_correct * 100) / Decimal(total_questions)
+        score_percent = Decimal(correct_slots * 100) / Decimal(total_questions)
     else:
         score_percent = Decimal('0')
 
@@ -219,7 +307,7 @@ def score_attempt(attempt, questions):
         band = earned_ratio_to_band(earned_points, total_points)
 
     return {
-        'correct_count': fully_correct,
+        'correct_count': correct_slots,
         'earned_points': round(earned_points, 2),
         'total_points': round(total_points, 2),
         'ielts_band': band,

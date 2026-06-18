@@ -3,13 +3,12 @@
 
 {% block title %}{{ test.title }} - Test{% endblock %}
 {% block body_class %}mock-exam-body{% if test.test_type == 'listening' %} mock-exam-body--listening{% endif %}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=7">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=9">{% endblock %}
 
 {% block content %}
 <div class="mock-exam-ambient" aria-hidden="true"><span></span><span></span><span></span></div>
 <div class="mock-exam-page">
 <div class="mock-exam-container">
-{% if test.test_type != 'listening' %}<div class="mock-offer-strip"><i class="fas fa-fire"></i> 24 Hours Only: Get 39% OFF on Our Premium Plan – Check Out Now!</div>{% endif %}
 <div class="mock-exam-shell{% if test.test_type == 'listening' %} mock-exam-shell--listening{% endif %}">
 <div class="mock-exam mock-exam--{{ test.test_type }}" id="mock-exam"
      data-test-id="{{ test.pk }}" data-test-type="{{ test.test_type }}"
@@ -26,25 +25,26 @@
                     {% if test.test_type == 'reading' %}<i class="fas fa-book-open"></i>
                     {% elif test.test_type == 'listening' %}<i class="fas fa-headphones"></i>
                     {% elif test.test_type == 'writing' %}<i class="fas fa-pen-fancy"></i>
-                    {% else %}<i class="fas fa-microphone"></i>{% endif %}
+                    {% endif %}
                 </div>
                 <div>
                     <h1 class="mock-topbar-title">{{ test.title }}</h1>
-                    <p class="mock-topbar-sub">{% if test.test_type == 'listening' %}{{ test.get_test_type_display }} · {{ test.get_test_type_display }}{% else %}{{ test.get_test_type_display }} · {{ total_questions }} savol · {{ duration_minutes }} daq{% endif %}</p>
+                    <p class="mock-topbar-sub">{{ test.get_test_type_display }} · {{ total_questions }} savol · {{ duration_minutes }} daq</p>
                 </div>
             </div>
             <div class="mock-topbar-actions">
                 <div class="mock-timer-pill" id="timer-container"><i class="fas fa-clock"></i><span id="exam-timer">{{ duration_minutes }}:00</span></div>
                 <button type="button" class="mock-topbar-btn" id="pause-btn"><i class="fas fa-pause" id="pause-icon"></i><span id="pause-label">To'xtatish</span></button>
-                <button type="button" class="mock-topbar-btn" id="exam-mode-btn"><i class="fas fa-expand"></i><span>Exam Mode</span></button>
+                <button type="button" class="mock-topbar-btn" id="exam-mode-btn"><i class="fas fa-expand"></i><span>To'liq ekran</span></button>
             </div>
         </div>
         <div class="mock-topbar-progress-meta">
-            <span>Question <strong id="current-q-label">0</strong> / <strong>{{ total_questions }}</strong></span>
+            <span>Savol <strong id="current-q-label">1</strong> / <strong>{{ total_questions }}</strong></span>
+            <span class="mock-topbar-answered"><strong id="answered-count-top">0</strong> ta javob</span>
             <span class="mock-topbar-pct" id="progress-pct">0%</span>
         </div>
         <div class="mock-topbar-progress"><div id="progress-fill" style="width:0%"></div></div>
-        <div class="mock-autosave-el mock-topbar-save" id="autosave-status">{% if test.test_type == 'listening' %}Javoblar serverga avtomatik saqlanadi{% else %}Auto-save: active{% endif %}</div>
+        <div class="mock-autosave-el mock-topbar-save" id="autosave-status">Avtomatik saqlash faol</div>
     </div>
 
     {% if test.test_type == 'listening' %}
@@ -52,7 +52,7 @@
     <div class="listening-main-card">
         {% for group in part_groups %}
         <p class="listening-part-ribbon listening-part-ribbon-panel {% if forloop.first %}is-active{% endif %}" data-part-ribbon="{{ group.part_number }}" role="status">
-            <span class="listening-part-ribbon__label">{{ group.title }}</span> Listen and answer questions <strong>{{ group.range_label }}</strong>
+            <span class="listening-part-ribbon__label">{{ group.title }}</span> Tinglang va savollar <strong>{{ group.range_label }}</strong> ga javob bering
         </p>
         {% endfor %}
         <div class="listening-audio-zone">
@@ -86,7 +86,7 @@
             <div class="listening-questions-header">
                 <div class="listening-qhead-block">
                     <p class="listening-questions-kicker">Savollar</p>
-                    <h2 class="listening-questions-main-title">Questions {{ questions_range_display }}</h2>
+                    <h2 class="listening-questions-main-title">Savollar {{ questions_range_display }}</h2>
                 </div>
                 <div class="listening-parts-strip" aria-label="Listening partlari">
                     {% for group in part_groups %}
@@ -109,11 +109,11 @@
                 <section class="mock-part-panel {% if forloop.first %}is-active{% endif %}" data-part-panel="{{ group.part_number }}" data-part-section="{{ group.part_number }}">
                     <div class="listening-part-content-box">
                         <header class="listening-part-section-header">
-                            <p class="listening-part-heading-text">{{ group.title }}: savollar {{ group.range_label }} — {{ group.question_count }} ta. Listen and answer questions {{ group.range_label }}.</p>
+                            <p class="listening-part-heading-text">{{ group.title }}: savollar {{ group.range_label }} — {{ group.question_count }} ta.</p>
                             {% if test.audio_file %}
                             <div class="listening-part-listen-row">
                                 <button type="button" class="listening-listen-from-here mock-listen-from-here" data-part="{{ group.part_number }}" data-audio-ts="{{ group.audio_start_time }}">
-                                    <i class="fas fa-headphones"></i> Listen From Here
+                                    <i class="fas fa-headphones"></i> Shu yerdan tinglash
                                 </button>
                             </div>
                             {% endif %}
@@ -162,18 +162,18 @@
                             <button type="button" class="mock-zoom-btn mock-tool-btn" data-font="dec">−</button>
                             <button type="button" class="mock-zoom-btn mock-tool-btn" data-font="inc">+</button>
                         </div>
-                        <p class="mock-muted-small">Read the text and answer questions {{ group.range_label }}.</p>
+                        <p class="mock-muted-small">Matnni o'qing va savollar {{ group.range_label }} ga javob bering.</p>
                         {% if group.passage %}
                         <h4 class="mock-passage-title">{{ group.passage.title|default:"Passage" }}</h4>
                         <div class="mock-passage-text selectable-text" id="reading-passage-text">{{ group.passage.text|linebreaks }}</div>
                         {% else %}<p class="mock-muted-small">Passage admin orqali qo'shiladi.</p>{% endif %}
                     </div>
                     <div class="mock-notes-block">
-                        <h6 class="mock-notes-title">My Reading Notes</h6>
+                        <h6 class="mock-notes-title">Reading qaydlarim</h6>
                         <div id="reading-notes-panel"><div class="mock-notes-empty">Hozircha note yo'q.</div></div>
                     </div>
                 </div>
-                {% else %}
+                {% elif test.test_type == 'writing' %}
                 <div class="mock-writing-left">
                     <div class="mock-writing-bar">Task {{ group.part_number }}</div>
                     <div class="mock-writing-prompt-inner">
@@ -194,7 +194,7 @@
                 {% if test.test_type != 'writing' %}
                 <div class="mock-q-head">
                     <div class="mock-q-head-top">
-                        <h2 class="mock-q-title">Questions {{ questions_range_display }}</h2>
+                        <h2 class="mock-q-title">Savollar {{ questions_range_display }}</h2>
                         <span class="mock-answered-pill"><span id="answered-count">0</span>/{{ total_questions }} javob</span>
                     </div>
                     <div class="mock-hl-row">
@@ -208,13 +208,13 @@
                     {% for group in part_groups %}
                     <section class="mock-part-panel {% if forloop.first %}is-active{% endif %}" data-part-panel="{{ group.part_number }}" data-part-section="{{ group.part_number }}">
                         {% if test.test_type == 'reading' %}
-                        <header class="mock-section-head">Part {{ group.part_number }}: Questions {{ group.range_label }}</header>
+                        <header class="mock-section-head">Part {{ group.part_number }}: Savollar {{ group.range_label }}</header>
                         {% endif %}
 
                         {% if test.test_type == 'writing' %}
                         {% for question in group.questions %}
                         <div class="mock-writing-answer-wrap mock-writing-answer-card" id="q-card-{{ question.id }}" data-qid="{{ question.id }}">
-                            <div class="mock-writing-answer-label"><strong>Task {{ question.order }}</strong><span>Task {{ question.order }} — answer</span></div>
+                            <div class="mock-writing-answer-label"><strong>Task {{ question.order }}</strong><span>Task {{ question.order }} — javob</span></div>
                             {% include 'mock_tests/_question_fields.html' with question=question %}
                         </div>
                         {% endfor %}
@@ -224,7 +224,7 @@
                         {% if block.grouper %}
                         <div class="mock-shart-block">{{ block.grouper }}</div>
                         {% endif %}
-                        <div class="mock-range-title">Questions {{ block.list.0.order }}{% if block.list|length > 1 %}{% with last_q=block.list|last %}-{{ last_q.order }}{% endwith %}{% endif %}</div>
+                        <div class="mock-range-title">Savollar {{ block.list.0.order }}{% if block.list|length > 1 %}{% with last_q=block.list|last %}-{{ last_q.order }}{% endwith %}{% endif %}</div>
                         {% for question in block.list %}
                         {% if question.question_type == 'true_false_not_given' and forloop.first and not block.grouper %}
                         <div class="mock-tfng-block">
@@ -289,7 +289,7 @@
                     <button type="button" class="mock-nav-arrow" id="nav-prev" title="Oldingi savol"><i class="fas fa-arrow-left"></i></button>
                     <button type="button" class="mock-nav-arrow mock-nav-arrow--next is-active" id="nav-next" title="Keyingi savol"><i class="fas fa-arrow-right"></i></button>
                 </div>
-                <button type="button" class="mock-btn-submit listening-submit-btn" id="finish-test-btn"><i class="fas fa-paper-plane"></i> Submit</button>
+                <button type="button" class="mock-btn-submit listening-submit-btn" id="finish-test-btn"><i class="fas fa-paper-plane"></i> Yuborish</button>
             </div>
             <div class="listening-dock-track">
                 {% for group in part_groups %}
@@ -303,12 +303,12 @@
                                 data-part="{{ group.part_number }}"
                                 data-order="{{ bb.num }}">{{ bb.num }}</button>
                         {% endfor %}
-                        <span class="listening-dock-qty"><em>{{ group.question_count }} question{{ group.question_count|pluralize }} ({{ group.range_label }})</em></span>
+                        <span class="listening-dock-qty"><em>{{ group.question_count }} savol ({{ group.range_label }})</em></span>
                     </div>
                 </div>
                 {% endfor %}
             </div>
-            <div class="listening-dock-autosave mock-autosave-el" id="autosave-status-footer">Auto-save: active</div>
+            <div class="listening-dock-autosave mock-autosave-el" id="autosave-status-footer">Avtomatik saqlash faol</div>
         </div>
         <div class="mock-part-tabs-bar listening-part-tabs-bar">
             <span class="mock-part-tabs-label">Partga o'tish:</span>
@@ -332,7 +332,7 @@
                     <div class="dock-part-wrap part-q-buttons {% if part_groups|length == 1 or forloop.first %}dock-active{% endif %}" data-part-number="{{ group.part_number }}">
                         {% if part_groups|length > 1 %}
                         <button type="button" class="dock-part-summary mock-part-switch" data-part="{{ group.part_number }}">
-                            {{ group.title }}: {{ group.question_count }} question{{ group.question_count|pluralize }}
+                            {{ group.title }}: {{ group.question_count }} savol
                         </button>
                         {% endif %}
                         <div class="dock-part-expanded">
@@ -345,16 +345,16 @@
                                     data-order="{{ bb.num }}">{{ bb.num }}</button>
                             {% endfor %}
                             <span class="dock-q-count dock-questions-count">
-                                <em>{{ group.question_count }} question{{ group.question_count|pluralize }}</em>
+                                <em>{{ group.question_count }} savol</em>
                             </span>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                <button type="button" class="mock-btn-submit" id="finish-test-btn"><i class="fas fa-paper-plane"></i> Submit</button>
+                <button type="button" class="mock-btn-submit" id="finish-test-btn"><i class="fas fa-paper-plane"></i> Yuborish</button>
             </div>
         </div>
-        <div class="mock-dock-autosave-row mock-autosave-el">Auto-save: active</div>
+        <div class="mock-dock-autosave-row mock-autosave-el">Avtomatik saqlash faol</div>
         {% if part_groups|length > 1 %}
         <div class="mock-part-tabs-bar reading-part-tabs-fullwidth">
             <span class="mock-part-tabs-label reading-dock-part-row">{% if test.test_type == 'writing' %}Taskga o'tish:{% else %}Partga o'tish:{% endif %}</span>
@@ -364,7 +364,7 @@
                     {% if test.test_type == 'writing' %}
                     {{ group.title }} ({{ group.range_label }})
                     {% else %}
-                    {{ group.title }}: {{ group.question_count }} question{{ group.question_count|pluralize }}
+                    {{ group.title }}: {{ group.question_count }} savol
                     {% endif %}
                 </button>
                 {% endfor %}
@@ -415,7 +415,13 @@
                 </div>
             </div>
             <p class="mock-submit-warn" id="submit-warn" hidden>
-                <i class="fas fa-info-circle"></i> Ba'zi savollarga javob bermadingiz — baribir yuborish mumkin.
+                <i class="fas fa-info-circle"></i> Quyidagi savollarga javob bermadingiz:
+            </p>
+            <div class="mock-submit-unanswered" id="submit-unanswered-wrap" hidden>
+                <ul class="mock-submit-unanswered-list" id="submit-unanswered-list"></ul>
+            </div>
+            <p class="mock-submit-timeup" id="submit-timeup" hidden>
+                <i class="fas fa-clock"></i> Vaqt tugadi. Testni yuborishni tasdiqlang yoki davom eting.
             </p>
             <div class="mock-submit-actions">
                 <button type="button" class="btn btn-outline" data-close-submit>Davom etish</button>
@@ -440,4 +446,4 @@
 {{ saved_answers|json_script:"saved-answers-data" }}
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'js/mock-test-take.js' %}?v=7"></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/mock-test-take.js' %}?v=10"></script>{% endblock %}
