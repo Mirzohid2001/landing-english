@@ -81,16 +81,16 @@
 {% if rows %}
 <div class="mock-sc-block selectable-text">
     {% for row in rows %}
-    <div class="mock-sc-row">
-        <span class="mock-q-num-box">{{ row.num }}</span>
-        <div class="mock-sc-body">
-            {% if row.before %}<span class="mock-sc-text">{{ row.before }}</span>{% endif %}
-            <input type="text" class="mock-inline-fill mock-fill-input mock-inline-input"
+    <p class="mock-sc-row">
+        <span class="mock-sc-num" aria-hidden="true">{{ row.num }}</span>
+        {% if row.before %}<span class="mock-sc-text">{{ row.before }}</span>{% endif %}
+        <span class="mock-sc-blank">
+            <input type="text" class="mock-sc-input mock-fill-input mock-inline-input"
                    data-question-id="{{ question.id }}" data-blank="{{ row.num }}" autocomplete="off"
                    aria-label="Javob {{ row.num }}">
-            {% if row.after %}<span class="mock-sc-text">{{ row.after }}</span>{% endif %}
-        </div>
-    </div>
+        </span>
+        {% if row.after %}<span class="mock-sc-text">{{ row.after }}</span>{% endif %}
+    </p>
     {% endfor %}
 </div>
 {% elif question.ui_bracket_segments %}
@@ -98,10 +98,9 @@
     {% for seg in question.ui_bracket_segments %}
         {% if seg.type == 'text' %}{{ seg.value }}{% else %}
         <span class="mock-inline-blank">
-            <span class="mock-summary-num">{{ seg.num }}</span>
-            <input type="text" class="mock-fill-input mock-inline-input"
-                   data-question-id="{{ question.id }}" data-blank="{{ seg.num }}" autocomplete="off"
-                   aria-label="Javob {{ seg.num }}">
+            <input type="text" class="mock-summary-input mock-fill-input mock-inline-input"
+                   data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
+                   placeholder="{{ seg.num }}" autocomplete="off" aria-label="Javob {{ seg.num }}">
         </span>
         {% endif %}
     {% endfor %}
@@ -140,10 +139,9 @@
         {% for seg in question.get_summary_segments %}
             {% if seg.type == 'text' %}{{ seg.value }}{% else %}
             <span class="mock-inline-blank">
-                <span class="mock-summary-num">{{ seg.num }}</span>
-                <input type="text" class="mock-fill-input mock-inline-input"
+                <input type="text" class="mock-summary-input mock-fill-input mock-inline-input"
                        data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
-                       placeholder="" autocomplete="off" aria-label="Javob {{ seg.num }}">
+                       placeholder="{{ seg.num }}" autocomplete="off" aria-label="Javob {{ seg.num }}">
             </span>
             {% endif %}
         {% endfor %}
