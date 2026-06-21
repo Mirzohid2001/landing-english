@@ -16,31 +16,38 @@
     </div>
     {% endif %}
     {% if question.question_type == 'matching_headings' %}
-    <p class="mock-matching-hint">Choose the correct heading for each paragraph.</p>
+    <p class="mock-matching-hint">Har bir paragraf uchun mos sarlavhani tanlang.</p>
     {% endif %}
     {% for mf in question.ui_matching_fields %}
     <div class="mock-matching-row">
         <span class="mock-q-num-box">{{ mf.num }}</span>
         <span class="mock-matching-label">{{ mf.label }}</span>
-        <select class="mock-matching-select" data-question-id="{{ question.id }}" data-match-num="{{ mf.num }}" aria-label="Answer {{ mf.num }}">
+        <select class="mock-matching-select" data-question-id="{{ question.id }}" data-match-num="{{ mf.num }}" aria-label="Javob {{ mf.num }}">
             <option value="">—</option>
             {% for op in mf.options %}
             <option value="{{ op.letter|lower }}" {% if mf.value|lower == op.letter|lower %}selected{% endif %}>
-                {% if question.question_type == 'matching_headings' %}{{ op.letter }}{% else %}{{ op.letter|upper }}{% endif %}
+                {% if question.question_type == 'matching_headings' %}{{ op.letter }}{% else %}{{ op.letter|upper }}{% endif %}{% if op.text %} — {{ op.text|truncatechars:48 }}{% endif %}
             </option>
             {% endfor %}
         </select>
     </div>
-    {% empty %}
-    <p class="mock-matching-warn">Admin: Matching itemlar va to'g'ri javoblarni to'ldiring.</p>
     {% endfor %}
 </div>
 
 {% elif question.question_type == 'mcq' or question.question_type == 'matching' %}
-<div class="mock-options mock-options--inline">
+<div class="mock-options mock-options--inline{% if question.question_type == 'mcq' and question.get_mcq_select_count > 1 %} mock-options--multi{% endif %}"
+     {% if question.question_type == 'mcq' %}data-question-id="{{ question.id }}" data-max-select="{{ question.get_mcq_select_count }}"{% endif %}>
+    {% if question.question_type == 'mcq' and question.get_mcq_select_count > 1 %}
+    <p class="mock-mcq-multi-hint"><i class="fas fa-check-double"></i> {{ question.get_mcq_select_count }} ta javob tanlang</p>
+    {% endif %}
     {% for opt in question.get_choice_options %}
     <label class="mock-option mock-option--inline">
+        {% if question.question_type == 'mcq' and question.get_mcq_select_count > 1 %}
+        <input type="checkbox" class="mock-mcq-check" name="q_{{ question.id }}" value="{{ opt.letter }}"
+               data-question-id="{{ question.id }}">
+        {% else %}
         <input type="radio" name="q_{{ question.id }}" value="{{ opt.letter }}" data-question-id="{{ question.id }}">
+        {% endif %}
         <span class="mock-option-letter">{{ opt.letter|lower }}</span>
         <span class="mock-option-text">{{ opt.text }}</span>
     </label>
@@ -69,15 +76,32 @@
     {% endfor %}
 </div>
 
-{% elif question.question_type == 'notes_completion' or question.question_type == 'table_completion' %}
-{% if question.ui_bracket_segments %}
+{% elif question.question_type == 'notes_completion' or question.question_type == 'table_completion' or question.uses_bracket_blanks %}
+{% with rows=question.get_bracket_completion_rows %}
+{% if rows %}
+<div class="mock-sc-block selectable-text">
+    {% for row in rows %}
+    <div class="mock-sc-row">
+        <span class="mock-q-num-box">{{ row.num }}</span>
+        <div class="mock-sc-body">
+            {% if row.before %}<span class="mock-sc-text">{{ row.before }}</span>{% endif %}
+            <input type="text" class="mock-inline-fill mock-fill-input mock-inline-input"
+                   data-question-id="{{ question.id }}" data-blank="{{ row.num }}" autocomplete="off"
+                   aria-label="Javob {{ row.num }}">
+            {% if row.after %}<span class="mock-sc-text">{{ row.after }}</span>{% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% elif question.ui_bracket_segments %}
 <div class="mock-notes-inline selectable-text">
     {% for seg in question.ui_bracket_segments %}
         {% if seg.type == 'text' %}{{ seg.value }}{% else %}
         <span class="mock-inline-blank">
             <span class="mock-summary-num">{{ seg.num }}</span>
             <input type="text" class="mock-fill-input mock-inline-input"
-                   data-question-id="{{ question.id }}" data-blank="{{ seg.num }}" autocomplete="off">
+                   data-question-id="{{ question.id }}" data-blank="{{ seg.num }}" autocomplete="off"
+                   aria-label="Javob {{ seg.num }}">
         </span>
         {% endif %}
     {% endfor %}
@@ -88,17 +112,30 @@
            placeholder="Javobingiz" data-question-id="{{ question.id }}" autocomplete="off">
 </div>
 {% endif %}
+{% endwith %}
 
 {% elif question.question_type == 'essay' %}
 <div class="mock-essay-answer">
     <textarea name="q_{{ question.id }}" class="mock-essay-input mock-writing-answer-ta" rows="14"
-              placeholder="Enter your task {{ question.order }} answer..."
+              placeholder="Task {{ question.order }} javobingizni yozing..."
               data-question-id="{{ question.id }}"></textarea>
-    <div class="mock-word-count"><strong>Word count:</strong> <span class="essay-chars" data-for="{{ question.id }}">0</span></div>
+    <div class="mock-word-count"><strong>So'zlar soni:</strong> <span class="essay-chars" data-for="{{ question.id }}">0</span></div>
 </div>
 
 {% elif question.question_type == 'summary_box' %}
 <div class="mock-summary-box">
+    {% with words=question.get_summary_word_bank %}
+    {% if words %}
+    <div class="mock-word-list">
+        <span class="mock-word-list-label">So'zlar ro'yxati:</span>
+        {% for item in words %}
+        <span class="mock-word-chip">
+            <span class="mock-word-letter">{{ item.letter }}</span><span class="mock-word-sep">|</span>{{ item.text }}
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
     <div class="mock-summary-inline selectable-text">
         {% for seg in question.get_summary_segments %}
             {% if seg.type == 'text' %}{{ seg.value }}{% else %}
@@ -106,19 +143,11 @@
                 <span class="mock-summary-num">{{ seg.num }}</span>
                 <input type="text" class="mock-fill-input mock-inline-input"
                        data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
-                       placeholder="" autocomplete="off">
+                       placeholder="" autocomplete="off" aria-label="Javob {{ seg.num }}">
             </span>
             {% endif %}
         {% endfor %}
     </div>
-    {% with words=question.get_summary_option_list %}
-    {% if words %}
-    <div class="mock-word-list">
-        <strong>Word list:</strong>
-        {% for w in words %}<span class="mock-word-chip">{{ w }}</span>{% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
 </div>
 
 {% else %}

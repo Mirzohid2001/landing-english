@@ -6,6 +6,9 @@
 {% if question_type_rules_json %}
 <script>window.QUESTION_TYPE_RULES = {{ question_type_rules_json|safe }};</script>
 {% endif %}
-<script src="{% static 'admin/mock_tests/question_admin.js' %}?v=4"></script>
-<link rel="stylesheet" href="{% static 'admin/mock_tests/question_admin.css' %}?v=4">
+{% if mock_question_test_type %}
+<script>window.MOCK_QUESTION_TEST_TYPE = "{{ mock_question_test_type|escapejs }}";</script>
+{% endif %}
+<script src="{% static 'admin/mock_tests/question_admin.js' %}?v=8"></script>
+<link rel="stylesheet" href="{% static 'admin/mock_tests/question_admin.css' %}?v=7">
 {% endblock %}

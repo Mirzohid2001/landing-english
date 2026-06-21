@@ -6,6 +6,7 @@ from mock_tests.matching_utils import (
     is_multi_matching_type,
     parse_user_matching_answer,
 )
+from mock_tests.mcq_utils import score_mcq
 
 from .answer_normalizer import (
     collect_acceptable_answers,
@@ -16,6 +17,14 @@ from .answer_normalizer import (
 )
 from .band_score import earned_ratio_to_band
 from .gradable import question_total_points, total_gradable_slots
+
+
+def _scores_as_blanks(question):
+    if question.question_type in ('notes_completion', 'table_completion', 'summary_box'):
+        return True
+    if question.question_type in ('sentence_completion', 'summary_completion'):
+        return question.uses_bracket_blanks()
+    return False
 
 
 def format_answer_display(user_answer):
@@ -124,13 +133,22 @@ def _matching_slot_pairs(question):
     return [(str(f['num']), '') for f in fields]
 
 
+def _question_detail_meta(question):
+    return {
+        'question_type': question.question_type,
+        'question_type_label': question.get_result_type_label(),
+    }
+
+
 def expand_question_details(question, user_answer):
     """Har bir baholanadigan slot uchun alohida natija qatori."""
     qtype = question.question_type
     slot_pt = question_total_points(question) / max(question.gradable_slot_count(), 1)
     rows = []
 
-    if qtype in ('notes_completion', 'table_completion', 'summary_box'):
+    if qtype in ('notes_completion', 'table_completion', 'summary_box') or (
+        qtype in ('sentence_completion', 'summary_completion') and question.uses_bracket_blanks()
+    ):
         blanks = _blank_map_from_user(user_answer)
         for num, ans in _blank_slot_pairs(question):
             user_val = blanks.get(num, blanks.get(int(num) if str(num).isdigit() else num, ''))
@@ -145,7 +163,30 @@ def expand_question_details(question, user_answer):
                 'user_answer_display': str(user_val).strip() or '—',
                 'correct_answer': ans,
                 'explanation': question.explanation,
+                **_question_detail_meta(question),
             })
+        return rows
+
+    if qtype == 'essay':
+        from mock_tests.services.answer_normalizer import count_words, score_extended_text
+
+        text = str(user_answer or '').strip()
+        earned = score_question_points(question, user_answer)
+        words = count_words(text)
+        target = score_extended_text(text, min_words=50, target_words=250)
+        rows.append({
+            'order': question.order,
+            'question_order': question.order,
+            'label': f'Task {question.order}',
+            'is_correct': target >= 0.5,
+            'earned_points': round(earned, 2),
+            'max_points': round(question_total_points(question), 2),
+            'user_answer_display': text or '—',
+            'correct_answer': f'Kamida 50 so\'z (yozilgan: {words})',
+            'explanation': question.explanation,
+            'is_essay': True,
+            **_question_detail_meta(question),
+        })
         return rows
 
     if qtype in MATCHING_TYPES:
@@ -164,6 +205,7 @@ def expand_question_details(question, user_answer):
                 'user_answer_display': user_val or '—',
                 'correct_answer': corr or '—',
                 'explanation': question.explanation,
+                **_question_detail_meta(question),
             })
         return rows
 
@@ -186,6 +228,7 @@ def expand_question_details(question, user_answer):
         'user_answer_display': user_display,
         'correct_answer': correct_norm,
         'explanation': question.explanation,
+        **_question_detail_meta(question),
     })
     return rows
 
@@ -212,7 +255,11 @@ def check_question_answer(question, user_answer):
     """Bitta savol: (to'liq to'g'rimi, user_display, correct_display)."""
     qtype = question.question_type
 
-    if qtype in ('mcq', 'true_false_not_given', 'yes_no_not_given', 'matching'):
+    if qtype == 'mcq':
+        _, ok, user_disp, correct_disp = score_mcq(question, user_answer)
+        return ok, user_disp, correct_disp
+
+    if qtype in ('true_false_not_given', 'yes_no_not_given', 'matching'):
         correct = normalize_choice(question.correct_answer)
         user = normalize_choice(user_answer)
         ok = bool(correct) and user == correct
@@ -222,13 +269,13 @@ def check_question_answer(question, user_answer):
         frac, _, _, user_disp, correct_disp = score_matching_partial(question, user_answer)
         return frac >= 1.0, user_disp, correct_disp
 
-    if qtype in ('fill_blank', 'sentence_completion', 'summary_completion'):
+    if qtype in ('fill_blank', 'sentence_completion', 'summary_completion') and not _scores_as_blanks(question):
         acceptable = collect_acceptable_answers(question)
         user = normalize_text(user_answer)
         ok = match_text_answer(user_answer, acceptable)
         return ok, user or '—', ' / '.join(acceptable)
 
-    if qtype in ('notes_completion', 'table_completion', 'summary_box'):
+    if _scores_as_blanks(question):
         frac, _, user_disp, correct_disp = score_blanks(question, user_answer)
         return frac >= 1.0, user_disp, correct_disp
 
@@ -250,9 +297,13 @@ def score_question_points(question, user_answer):
         frac, _, _, _, _ = score_matching_partial(question, user_answer)
         return question_total_points(question) * frac
 
-    if qtype in ('notes_completion', 'table_completion', 'summary_box'):
+    if _scores_as_blanks(question):
         frac, _, _, _ = score_blanks(question, user_answer)
         return question_total_points(question) * frac
+
+    if qtype == 'mcq':
+        frac, _, _, _ = score_mcq(question, user_answer)
+        return points * frac
 
     if qtype == 'essay':
         frac = score_extended_text(str(user_answer or ''), min_words=50, target_words=250)
@@ -286,12 +337,15 @@ def score_attempt(attempt, questions):
                 'order': row['order'],
                 'question_order': row.get('question_order', question.order),
                 'label': row.get('label', f"Savol {row['order']}"),
+                'question_type': row.get('question_type', question.question_type),
+                'question_type_label': row.get('question_type_label', question.get_result_type_label()),
                 'is_correct': row['is_correct'],
                 'earned_points': row['earned_points'],
                 'max_points': row['max_points'],
                 'user_answer_display': row['user_answer_display'],
                 'correct_answer': row['correct_answer'],
                 'explanation': row['explanation'],
+                'is_essay': row.get('is_essay', False),
             })
 
     total_questions = total_gradable_slots(questions)

@@ -11,6 +11,7 @@ from .matching_utils import (
     is_multi_matching_type,
     matching_ref_title,
 )
+from .mcq_utils import MCQ_LETTERS
 
 
 class MockTest(models.Model):
@@ -77,7 +78,7 @@ class MockPassage(models.Model):
 
 class MockQuestion(models.Model):
     QUESTION_TYPES = [
-        ('mcq', 'Multiple Choice (A/B/C/D)'),
+        ('mcq', 'Multiple Choice (A–H)'),
         ('true_false_not_given', 'True / False / Not Given'),
         ('yes_no_not_given', 'Yes / No / Not Given'),
         ('fill_blank', "Bo'sh joyni to'ldirish"),
@@ -107,7 +108,19 @@ class MockQuestion(models.Model):
     option_b = models.CharField(max_length=500, blank=True, verbose_name='Variant B')
     option_c = models.CharField(max_length=500, blank=True, verbose_name='Variant C')
     option_d = models.CharField(max_length=500, blank=True, verbose_name='Variant D')
-    correct_answer = models.CharField(max_length=200, blank=True, verbose_name="To'g'ri javob")
+    option_e = models.CharField(max_length=500, blank=True, verbose_name='Variant E')
+    option_f = models.CharField(max_length=500, blank=True, verbose_name='Variant F')
+    option_g = models.CharField(max_length=500, blank=True, verbose_name='Variant G')
+    option_h = models.CharField(max_length=500, blank=True, verbose_name='Variant H')
+    mcq_select_count = models.PositiveSmallIntegerField(
+        default=1,
+        verbose_name='Tanlash soni',
+        help_text='MCQ: 1, 2 yoki 3 ta to\'g\'ri javob (masalan «2 ta javob tanlang»)',
+    )
+    correct_answer = models.CharField(
+        max_length=200, blank=True, verbose_name="To'g'ri javob",
+        help_text='MCQ: bitta harf (a) yoki vergul bilan (a,c)',
+    )
     correct_answers_json = models.JSONField(default=list, blank=True)
     options_json = models.JSONField(
         default=dict, blank=True,
@@ -121,6 +134,13 @@ class MockQuestion(models.Model):
         null=True, blank=True, verbose_name='Audio vaqti (soniya)',
         help_text='Listening: shu soniyadan audio ijro etiladi',
     )
+    image = models.ImageField(
+        upload_to='mock_tests/questions/',
+        blank=True,
+        null=True,
+        verbose_name='Rasm',
+        help_text='Listening: xarita/jadval — birinchi savolga yuklang, butun blokda ko\'rinadi (JPG/PNG, max 5 MB)',
+    )
 
     class Meta:
         ordering = ['order', 'pk']
@@ -130,18 +150,59 @@ class MockQuestion(models.Model):
     def __str__(self):
         return f'{self.test.title} — #{self.order}'
 
+    def get_result_type_label(self):
+        """Natija sahifasida ko'rsatiladigan qisqa tur nomi."""
+        labels = {
+            'mcq': 'Ko\'p tanlovli (MCQ)',
+            'true_false_not_given': 'True / False / Not Given',
+            'yes_no_not_given': 'Yes / No / Not Given',
+            'fill_blank': 'Bo\'sh joy',
+            'sentence_completion': 'Sentence Completion',
+            'summary_completion': 'Summary Completion',
+            'summary_box': 'Summary + so\'zlar ro\'yxati',
+            'matching': 'Matching',
+            'matching_headings': 'Matching Headings',
+            'matching_features': 'Matching Features',
+            'matching_info': 'Matching Information',
+            'matching_sentences': 'Matching Sentence Endings',
+            'classification': 'Classification',
+            'notes_completion': 'Notes Completion',
+            'table_completion': 'Jadval to\'ldirish',
+            'essay': 'Insho (Writing)',
+        }
+        return labels.get(self.question_type, self.get_question_type_display())
+
     def get_choice_options(self):
         opts = self.options_json or {}
+        if self.question_type == 'mcq':
+            custom = opts.get('mcq_options')
+            if isinstance(custom, list) and custom:
+                return custom
+            return self.get_mcq_options()
         if isinstance(opts, dict) and opts.get('options'):
             return opts['options']
         return self.get_mcq_options()
 
     def get_mcq_options(self):
+        letters = MCQ_LETTERS
+        field_vals = [
+            self.option_a, self.option_b, self.option_c, self.option_d,
+            self.option_e, self.option_f, self.option_g, self.option_h,
+        ]
         options = []
-        for letter, value in [('a', self.option_a), ('b', self.option_b), ('c', self.option_c), ('d', self.option_d)]:
-            if value:
-                options.append({'letter': letter, 'text': value})
+        for letter, value in zip(letters, field_vals):
+            if value and str(value).strip():
+                options.append({'letter': letter, 'text': str(value).strip()})
         return options
+
+    def get_mcq_select_count(self):
+        if self.question_type != 'mcq':
+            return 1
+        try:
+            count = int(self.mcq_select_count or 1)
+        except (TypeError, ValueError):
+            count = 1
+        return max(1, min(count, 3))
 
     def get_tfng_options(self):
         return [
@@ -219,8 +280,11 @@ class MockQuestion(models.Model):
         return []
 
     def get_bracket_segments(self):
-        """[1], [2] bo'sh joylari — summary_box, notes_completion, table_completion."""
-        if self.question_type not in ('summary_box', 'notes_completion', 'table_completion'):
+        """[1], [2] bo'sh joylari — fill turlari."""
+        if self.question_type not in (
+            'summary_box', 'notes_completion', 'table_completion',
+            'sentence_completion', 'summary_completion',
+        ):
             return []
         pattern = re.compile(r'\[(\d+)\]')
         segments = []
@@ -245,7 +309,7 @@ class MockQuestion(models.Model):
             if isinstance(answers, list) and answers:
                 return len(answers)
             return len([s for s in self.get_bracket_segments() if s['type'] == 'blank']) or 1
-        if self.question_type in ('notes_completion', 'table_completion'):
+        if self.question_type in ('notes_completion', 'table_completion', 'sentence_completion', 'summary_completion'):
             answers = self.correct_answers_json or []
             blanks = [s for s in self.get_bracket_segments() if s['type'] == 'blank']
             n_answers = len(answers) if isinstance(answers, list) and answers else 0
@@ -258,6 +322,34 @@ class MockQuestion(models.Model):
                 return n_answers
             return 1
         return 1
+
+    def uses_bracket_blanks(self):
+        """Matnda [7], [8] kabi inline bo'sh joylar bormi (summary_box dan tashqari)."""
+        if self.question_type in (
+            'notes_completion', 'table_completion',
+            'sentence_completion', 'summary_completion',
+        ):
+            return bool([s for s in self.get_bracket_segments() if s['type'] == 'blank'])
+        return False
+
+    def get_bracket_completion_rows(self):
+        """Reading: har [N] uchun alohida qator — matn + input yonma-yon."""
+        if not self.uses_bracket_blanks():
+            return []
+        pattern = re.compile(r'\[(\d+)\]')
+        rows = []
+        for line in (self.question_text or '').split('\n'):
+            line = line.strip()
+            if not line or not pattern.search(line):
+                continue
+            matches = list(pattern.finditer(line))
+            last = 0
+            for i, match in enumerate(matches):
+                before = line[last:match.start()].strip()
+                after = line[match.end():matches[i + 1].start()].strip() if i + 1 < len(matches) else line[match.end():].strip()
+                rows.append({'num': match.group(1), 'before': before, 'after': after})
+                last = match.end()
+        return rows
 
     def get_summary_segments(self):
         """Matn ichidagi [1], [2] bo'sh joylarni ajratadi."""
@@ -278,6 +370,13 @@ class MockQuestion(models.Model):
     def get_summary_option_list(self):
         opts = self.options_json or {}
         return opts.get('word_list', [])
+
+    def get_summary_word_bank(self):
+        """Word list — A, B, C… harf bilan (summary_box UI)."""
+        return [
+            {'letter': chr(ord('A') + i), 'text': str(word)}
+            for i, word in enumerate(self.get_summary_option_list())
+        ]
 
 
 class MockAttempt(models.Model):

@@ -4,7 +4,7 @@
 {% block title %}Natija - {{ test.title }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=7">
+<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=18">
 {% endblock %}
 
 {% block content %}
@@ -57,18 +57,23 @@
         <div class="mock-result-details">
             <div class="mock-result-details-head">
                 <h2>Javoblar tahlili</h2>
-                <div class="mock-result-filters" role="tablist">
-                    <button type="button" class="mock-result-filter is-active" data-filter="all">Barchasi</button>
-                    <button type="button" class="mock-result-filter" data-filter="correct">To'g'ri</button>
-                    <button type="button" class="mock-result-filter" data-filter="partial">Qisman</button>
-                    <button type="button" class="mock-result-filter" data-filter="incorrect">Noto'g'ri</button>
+                <div class="mock-result-filters" role="tablist" aria-label="Natija filtrlari">
+                    <button type="button" class="mock-result-filter is-active" role="tab" aria-selected="true" data-filter="all">Barchasi</button>
+                    <button type="button" class="mock-result-filter" role="tab" aria-selected="false" data-filter="correct">To'g'ri</button>
+                    <button type="button" class="mock-result-filter" role="tab" aria-selected="false" data-filter="partial">Qisman</button>
+                    <button type="button" class="mock-result-filter" role="tab" aria-selected="false" data-filter="incorrect">Noto'g'ri</button>
                 </div>
             </div>
             {% for item in result.details %}
             <div class="mock-result-item {% if item.is_correct %}correct{% elif item.earned_points > 0 %}partial{% else %}incorrect{% endif %}"
                  data-result-type="{% if item.is_correct %}correct{% elif item.earned_points > 0 %}partial{% else %}incorrect{% endif %}">
                 <div class="mock-result-item-head">
-                    <span class="mock-result-qnum">{% if item.label %}{{ item.label }}{% else %}#{{ item.order }}{% endif %}</span>
+                    <div class="mock-result-item-title">
+                        <span class="mock-result-qnum">{% if item.label %}{{ item.label }}{% else %}#{{ item.order }}{% endif %}</span>
+                        {% if item.question_type_label %}
+                        <span class="mock-result-qtype">{{ item.question_type_label }}</span>
+                        {% endif %}
+                    </div>
                     <div class="mock-result-item-badges">
                         {% if item.max_points > 1 %}
                         <span class="mock-result-points-badge">{{ item.earned_points }}/{{ item.max_points }}</span>
@@ -82,11 +87,25 @@
                         {% endif %}
                     </div>
                 </div>
-                <p><strong>Sizning javobingiz:</strong> {{ item.user_answer_display|default:"—" }}</p>
-                {% if not item.is_correct %}
-                <p><strong>To'g'ri javob:</strong> {{ item.correct_answer|default:"—" }}</p>
-                {% endif %}
-                {% if item.explanation %}<p class="mock-result-explanation">{{ item.explanation }}</p>{% endif %}
+                <div class="mock-result-item-body">
+                    <div class="mock-result-answer-row">
+                        <strong>Sizning javobingiz:</strong>
+                        {% if item.is_essay %}
+                        <div class="mock-result-essay">{{ item.user_answer_display|default:"—"|linebreaks }}</div>
+                        {% else %}
+                        <span>{{ item.user_answer_display|default:"—" }}</span>
+                        {% endif %}
+                    </div>
+                    {% if item.correct_answer and item.correct_answer != "—" %}
+                    <div class="mock-result-answer-row mock-result-correct-row">
+                        <strong>{% if item.is_correct %}Mezon / to'g'ri javob{% else %}To'g'ri javob{% endif %}:</strong>
+                        <span>{{ item.correct_answer }}</span>
+                    </div>
+                    {% endif %}
+                    {% if item.explanation %}
+                    <p class="mock-result-explanation"><i class="fas fa-lightbulb"></i> {{ item.explanation }}</p>
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -95,5 +114,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/mock-test-result.js' %}"></script>
+<script src="{% static 'js/mock-test-result.js' %}?v=2"></script>
 {% endblock %}

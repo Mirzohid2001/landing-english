@@ -29,8 +29,9 @@ class Command(BaseCommand):
             (1, 1, 'notes_completion', 0, 'Hotel booking: Name [1], Check-in [2]', ['riverside', '15 march'], 'ONE WORD AND/OR A NUMBER'),
             (2, 1, 'fill_blank', 45, 'The tour starts at ______ AM.', ['9', 'nine'], 'NO MORE THAN ONE WORD'),
             (3, 1, 'mcq', 90, 'The guide recommends visiting:', [], ''),
-            (4, 2, 'notes_completion', 120, 'Workshop venue: Room [1], Floor [2]', ['b', '3'], ''),
-            (5, 2, 'fill_blank', 180, 'Participants must bring ______.', ['laptop', 'a laptop'], ''),
+            (4, 1, 'mcq', 120, 'Which TWO facilities are included in the ticket?', [], 'Choose TWO answers.'),
+            (5, 2, 'notes_completion', 150, 'Workshop venue: Room [1], Floor [2]', ['b', '3'], ''),
+            (6, 2, 'fill_blank', 180, 'Participants must bring ______.', ['laptop', 'a laptop'], ''),
         ]
         for order, part, qtype, ts, text, answers, instr in specs:
             q = MockQuestion(
@@ -43,12 +44,24 @@ class Command(BaseCommand):
                 audio_timestamp=ts,
                 points=1,
             )
-            if qtype == 'mcq':
+            if qtype == 'mcq' and order == 3:
                 q.option_a = 'The museum'
                 q.option_b = 'The park'
                 q.option_c = 'The library'
                 q.option_d = 'The stadium'
+                q.option_e = 'The cinema'
+                q.option_f = 'The gallery'
+                q.option_g = 'The sports centre'
+                q.option_h = 'The market'
                 q.correct_answer = 'b'
+            elif qtype == 'mcq' and order == 4:
+                q.mcq_select_count = 2
+                q.option_a = 'Audio guide'
+                q.option_b = 'Free map'
+                q.option_c = 'Lunch voucher'
+                q.option_d = 'Parking pass'
+                q.option_e = 'Gift shop discount'
+                q.correct_answer = 'a,c'
             else:
                 q.correct_answers_json = answers
             q.save()

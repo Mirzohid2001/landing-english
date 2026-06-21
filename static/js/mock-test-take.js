@@ -33,6 +33,7 @@
         });
         exam.querySelectorAll('[data-question-id]').forEach((el) => {
             if (el.classList.contains('mock-matching-select')) return;
+            if (el.classList.contains('mock-mcq-check')) return;
             const qid = el.dataset.questionId;
             if (el.classList.contains('mock-inline-input') && el.dataset.blank) {
                 if (!answers[qid] || typeof answers[qid] !== 'object') answers[qid] = {};
@@ -43,9 +44,16 @@
                 if (el.checked) answers[qid] = el.value;
             } else if (el.tagName === 'TEXTAREA') {
                 answers[qid] = el.value.trim();
-            } else if (el.tagName === 'INPUT') {
+            } else             if (el.tagName === 'INPUT') {
                 answers[qid] = el.value.trim();
             }
+        });
+        exam.querySelectorAll('.mock-options--multi[data-question-id]').forEach((group) => {
+            const qid = group.dataset.questionId;
+            const vals = Array.from(group.querySelectorAll('.mock-mcq-check:checked'))
+                .map((cb) => cb.value)
+                .sort();
+            if (vals.length) answers[qid] = vals.join(',');
         });
         return answers;
     }
@@ -108,6 +116,12 @@
     function updateCurrentQuestionLabel(order) {
         const qLabel = document.getElementById('current-q-label');
         if (qLabel && order != null) qLabel.textContent = order;
+    }
+
+    function trapFocus(modal, focusSelector) {
+        if (!modal) return;
+        const focusEl = modal.querySelector(focusSelector) || modal.querySelector('button, [href], input, textarea, select');
+        if (focusEl) focusEl.focus();
     }
 
     function getAllNavButtons() {
@@ -217,11 +231,13 @@
             modal.classList.add('is-open');
             if (opts.timeUp) modal.classList.add('is-time-up');
             else modal.classList.remove('is-time-up');
+            trapFocus(modal, '#confirm-submit-btn');
         }
     }
 
     function closeSubmitModal() {
         const modal = document.getElementById('submit-modal');
+        const wasTimeUp = modal && modal.classList.contains('is-time-up');
         if (modal) {
             modal.hidden = true;
             modal.setAttribute('aria-hidden', 'true');
@@ -231,6 +247,12 @@
         const titleEl = document.getElementById('submit-modal-title');
         if (timeUpEl) timeUpEl.hidden = true;
         if (titleEl) titleEl.textContent = 'Testni yakunlaysizmi?';
+        if (wasTimeUp) {
+            exam.classList.add('mock-exam-overtime');
+            const banner = document.getElementById('mock-overtime-banner');
+            if (banner) banner.hidden = false;
+            setAutosaveStatus('Vaqt tugadi — hali yuborishingiz mumkin', false);
+        }
     }
 
     function restoreAnswers() {
@@ -250,6 +272,16 @@
             }
             const radio = exam.querySelector(`input[type="radio"][data-question-id="${qid}"][value="${value}"]`);
             if (radio) { radio.checked = true; return; }
+            if (typeof value === 'string' && value.includes(',')) {
+                value.split(',').forEach((letter) => {
+                    const trimmed = letter.trim();
+                    const cb = exam.querySelector(
+                        `input.mock-mcq-check[data-question-id="${qid}"][value="${trimmed}"]`
+                    );
+                    if (cb) cb.checked = true;
+                });
+                return;
+            }
             const textarea = exam.querySelector(`textarea[data-question-id="${qid}"]`);
             if (textarea) { textarea.value = value; updateEssayCount(textarea); return; }
             const input = exam.querySelector(`input[data-question-id="${qid}"]`);
@@ -442,12 +474,18 @@
             if (!el.contains(range.commonAncestorContainer)) return;
             const mark = document.createElement('mark');
             mark.className = 'mock-highlight';
-            try { range.surroundContents(mark); } catch (e) {}
+            try { range.surroundContents(mark); } catch (e) {
+                toast('Bu matnni ajratib bo\'lmadi — bitta qator ichida tanlang.', 'info');
+            }
             sel.removeAllRanges();
         });
     });
 
     /* Reading notes */
+    function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
     function renderNotes() {
         const panel = document.getElementById('reading-notes-panel');
         if (!panel) return;
@@ -458,31 +496,60 @@
             return;
         }
         panel.innerHTML = notes.map(n =>
-            '<div class="mock-note-item"><strong>Text:</strong> ' + escapeHtml(n.text) +
+            '<div class="mock-note-item"><strong>Matn:</strong> ' + escapeHtml(n.text) +
             '<div class="mock-muted-small" style="margin-top:0.25rem">' + escapeHtml(n.note) + '</div></div>'
         ).join('');
     }
 
-    function escapeHtml(s) {
-        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    let pendingNoteText = '';
+
+    function openNoteModal(selectedText) {
+        pendingNoteText = selectedText;
+        const modal = document.getElementById('mock-note-modal');
+        const quote = document.getElementById('mock-note-modal-quote');
+        const input = document.getElementById('mock-note-modal-input');
+        if (!modal || !quote || !input) return;
+        quote.textContent = selectedText;
+        input.value = '';
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        modal.classList.add('is-open');
+        trapFocus(modal, '#mock-note-modal-input');
+    }
+
+    function closeNoteModal() {
+        const modal = document.getElementById('mock-note-modal');
+        if (!modal) return;
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        modal.classList.remove('is-open');
+        pendingNoteText = '';
+    }
+
+    function saveNoteFromModal() {
+        const input = document.getElementById('mock-note-modal-input');
+        const note = (input && input.value || '').trim();
+        if (!note || !pendingNoteText) return;
+        let notes = [];
+        try { notes = JSON.parse(localStorage.getItem(notesKey) || '[]'); } catch (e) {}
+        notes.unshift({ text: pendingNoteText.slice(0, 180), note: note.slice(0, 400), ts: Date.now() });
+        localStorage.setItem(notesKey, JSON.stringify(notes.slice(0, 30)));
+        renderNotes();
+        setAutosaveStatus('Qayd saqlandi', true);
+        closeNoteModal();
     }
 
     document.getElementById('btn-add-note')?.addEventListener('click', () => {
         const pane = document.querySelector('.mock-passage-text');
         const sel = window.getSelection();
         if (!pane || !sel || !sel.toString().trim() || !pane.contains(sel.anchorNode)) {
-            alert('Avval matndan so\'z yoki qismni tanlang.');
+            toast('Avval matndan so\'z yoki qismni tanlang.', 'info');
             return;
         }
-        const note = window.prompt('Qisqa note yozing:');
-        if (!note) return;
-        let notes = [];
-        try { notes = JSON.parse(localStorage.getItem(notesKey) || '[]'); } catch (e) {}
-        notes.unshift({ text: sel.toString().trim().slice(0, 180), note: note.slice(0, 400), ts: Date.now() });
-        localStorage.setItem(notesKey, JSON.stringify(notes.slice(0, 30)));
-        renderNotes();
-        setAutosaveStatus('Note saved', true);
+        openNoteModal(sel.toString().trim().slice(0, 180));
     });
+    document.getElementById('mock-note-modal-save')?.addEventListener('click', saveNoteFromModal);
+    document.querySelectorAll('[data-close-note]').forEach(el => el.addEventListener('click', closeNoteModal));
     renderNotes();
 
     /* Split resize */
@@ -676,15 +743,74 @@
     }
 
     document.getElementById('exam-mode-btn')?.addEventListener('click', () => {
-        document.body.classList.toggle('mock-exam-fullscreen');
+        const on = document.body.classList.toggle('mock-exam-fullscreen');
+        const btn = document.getElementById('exam-mode-btn');
+        const label = btn && btn.querySelector('span');
+        if (label) label.textContent = on ? 'Oddiy ko\'rinish' : 'To\'liq ekran';
     });
+
+    function initImageLightbox() {
+        const lightbox = document.getElementById('mock-image-lightbox');
+        const lightboxImg = document.getElementById('mock-image-lightbox-img');
+        if (!lightbox || !lightboxImg) return;
+
+        function openLightbox(url) {
+            if (!url) return;
+            lightboxImg.src = url;
+            lightbox.hidden = false;
+            lightbox.setAttribute('aria-hidden', 'false');
+            lightbox.classList.add('is-open');
+            document.body.classList.add('mock-image-lightbox-open');
+        }
+
+        function closeLightbox() {
+            lightbox.hidden = true;
+            lightbox.setAttribute('aria-hidden', 'true');
+            lightbox.classList.remove('is-open');
+            document.body.classList.remove('mock-image-lightbox-open');
+            lightboxImg.removeAttribute('src');
+        }
+
+        exam.addEventListener('click', (e) => {
+            const btn = e.target.closest('.mock-image-zoom-btn');
+            if (!btn) return;
+            e.preventDefault();
+            openLightbox(btn.dataset.imageUrl);
+        });
+
+        document.getElementById('mock-image-lightbox-close')?.addEventListener('click', closeLightbox);
+        document.getElementById('mock-image-lightbox-backdrop')?.addEventListener('click', closeLightbox);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && lightbox.classList.contains('is-open')) closeLightbox();
+        });
+    }
+    initImageLightbox();
+
+    function initMcqMultiSelect() {
+        exam.querySelectorAll('.mock-options--multi[data-max-select]').forEach((group) => {
+            const max = parseInt(group.dataset.maxSelect, 10) || 2;
+            group.querySelectorAll('.mock-mcq-check').forEach((cb) => {
+                cb.addEventListener('change', () => {
+                    const checked = group.querySelectorAll('.mock-mcq-check:checked');
+                    if (checked.length > max) {
+                        cb.checked = false;
+                        toast('Faqat ' + max + ' ta javob tanlash mumkin.', 'info');
+                    }
+                    updateProgress();
+                });
+            });
+        });
+    }
+    initMcqMultiSelect();
 
     document.getElementById('pause-btn')?.addEventListener('click', () => {
         isPaused = !isPaused;
         const icon = document.getElementById('pause-icon');
         const label = document.getElementById('pause-label');
+        const timerPill = document.getElementById('timer-container');
         if (icon) icon.className = isPaused ? 'fas fa-play' : 'fas fa-pause';
         if (label) label.textContent = isPaused ? 'Davom ettirish' : "To'xtatish";
+        if (timerPill) timerPill.classList.toggle('is-paused', isPaused);
         if (audioEl) {
             if (isPaused) audioEl.pause();
             else audioEl.play().catch(() => {});
@@ -715,6 +841,8 @@
     document.addEventListener('keydown', (e) => {
         const modal = document.getElementById('submit-modal');
         if (e.key === 'Escape' && modal && !modal.hidden) closeSubmitModal();
+        const noteModal = document.getElementById('mock-note-modal');
+        if (e.key === 'Escape' && noteModal && !noteModal.hidden) closeNoteModal();
     });
 
     document.getElementById('mock-tip-dismiss')?.addEventListener('click', () => {

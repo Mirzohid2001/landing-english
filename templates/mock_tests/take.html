@@ -3,7 +3,7 @@
 
 {% block title %}{{ test.title }} - Test{% endblock %}
 {% block body_class %}mock-exam-body{% if test.test_type == 'listening' %} mock-exam-body--listening{% endif %}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=9">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=18">{% endblock %}
 
 {% block content %}
 <div class="mock-exam-ambient" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -40,7 +40,7 @@
         </div>
         <div class="mock-topbar-progress-meta">
             <span>Savol <strong id="current-q-label">1</strong> / <strong>{{ total_questions }}</strong></span>
-            <span class="mock-topbar-answered"><strong id="answered-count-top">0</strong> ta javob</span>
+            <span class="mock-topbar-answered"><strong id="answered-count-top">0</strong> / {{ total_questions }} javob</span>
             <span class="mock-topbar-pct" id="progress-pct">0%</span>
         </div>
         <div class="mock-topbar-progress"><div id="progress-fill" style="width:0%"></div></div>
@@ -118,14 +118,20 @@
                             </div>
                             {% endif %}
                         </header>
-                        {% regroup group.questions by instruction as instr_groups %}
-                        {% for block in instr_groups %}
-                        {% if block.grouper %}
-                        <div class="listening-instruction-block">{{ block.grouper }}</div>
+                        {% for block in group.instruction_groups %}
+                        {% if block.display_instruction %}
+                        <div class="listening-instruction-block">{{ block.display_instruction }}</div>
+                        {% endif %}
+                        {% if block.image %}
+                        {% include 'mock_tests/_listening_image_panel.html' with image=block.image caption=group.title %}
                         {% endif %}
                         <div class="listening-notes-block">
-                        {% for question in block.list %}
-                        {% include 'mock_tests/_listening_question.html' with question=question block_grouper=block.grouper %}
+                        {% for question in block.questions %}
+                        {% if question.image and not block.image %}
+                        {% include 'mock_tests/_listening_question.html' with question=question block_grouper=block.instruction show_question_image=True %}
+                        {% else %}
+                        {% include 'mock_tests/_listening_question.html' with question=question block_grouper=block.instruction show_question_image=False %}
+                        {% endif %}
                         {% endfor %}
                         </div>
                         {% endfor %}
@@ -147,24 +153,24 @@
                     <div class="mock-reading-head">
                         <span class="mock-muted-label">Reading</span>
                         <div class="mock-zoom-group">
-                            <button type="button" class="mock-zoom-btn mock-tool-btn" data-font="dec">−</button>
-                            <button type="button" class="mock-zoom-btn mock-tool-btn" data-font="inc">+</button>
+                            <button type="button" class="mock-zoom-btn mock-tool-btn" data-font="dec" aria-label="Matnni kichraytirish">−</button>
+                            <button type="button" class="mock-zoom-btn mock-tool-btn" data-font="inc" aria-label="Matnni kattalashtirish">+</button>
                         </div>
                     </div>
                     <div class="mock-tool-row">
                         <button type="button" class="mock-btn-hl mock-tool-btn" data-highlight="toggle"><i class="fas fa-highlighter"></i> Ajratish</button>
-                        <button type="button" class="mock-btn-note" id="btn-add-note"><i class="fas fa-note-sticky"></i> Add Note</button>
+                        <button type="button" class="mock-btn-note" id="btn-add-note"><i class="fas fa-note-sticky"></i> Qayd qo'shish</button>
                     </div>
                     <div class="mock-passage-scroll" id="reading-passage-scroll">
                         <h3 class="mock-passage-part-title">Part {{ group.part_number }}</h3>
                         <div class="mock-skimming-line">
-                            <span class="mock-muted-small">Practice Skimming (1x)</span>
+                            <span class="mock-muted-small">Tez o'qish (1x)</span>
                             <button type="button" class="mock-zoom-btn mock-tool-btn" data-font="dec">−</button>
                             <button type="button" class="mock-zoom-btn mock-tool-btn" data-font="inc">+</button>
                         </div>
                         <p class="mock-muted-small">Matnni o'qing va savollar {{ group.range_label }} ga javob bering.</p>
                         {% if group.passage %}
-                        <h4 class="mock-passage-title">{{ group.passage.title|default:"Passage" }}</h4>
+                        <h4 class="mock-passage-title">{{ group.passage.title|default:"Matn" }}</h4>
                         <div class="mock-passage-text selectable-text" id="reading-passage-text">{{ group.passage.text|linebreaks }}</div>
                         {% else %}<p class="mock-muted-small">Passage admin orqali qo'shiladi.</p>{% endif %}
                     </div>
@@ -186,7 +192,7 @@
             </div>
             {% endfor %}
         </div>
-        <div class="mock-split-divider" id="mock-split-handle" aria-hidden="true"></div>
+        <div class="mock-split-divider" id="mock-split-handle" role="separator" aria-label="Panellarni kengaytirish" tabindex="0"></div>
         {% endif %}
 
         <div class="mock-right-pane mock-right-pane--{{ test.test_type }}">
@@ -214,19 +220,17 @@
                         {% if test.test_type == 'writing' %}
                         {% for question in group.questions %}
                         <div class="mock-writing-answer-wrap mock-writing-answer-card" id="q-card-{{ question.id }}" data-qid="{{ question.id }}">
-                            <div class="mock-writing-answer-label"><strong>Task {{ question.order }}</strong><span>Task {{ question.order }} — javob</span></div>
+                            <div class="mock-writing-answer-label"><strong>Task {{ question.order }}</strong><span>Javobingizni yozing</span></div>
                             {% include 'mock_tests/_question_fields.html' with question=question %}
                         </div>
                         {% endfor %}
                         {% else %}
-                        {% regroup group.questions by instruction as instr_groups %}
-                        {% for block in instr_groups %}
-                        {% if block.grouper %}
-                        <div class="mock-shart-block">{{ block.grouper }}</div>
+                        {% for block in group.instruction_groups %}
+                        {% if block.display_instruction %}
+                        <div class="mock-shart-block">{{ block.display_instruction }}</div>
                         {% endif %}
-                        <div class="mock-range-title">Savollar {{ block.list.0.order }}{% if block.list|length > 1 %}{% with last_q=block.list|last %}-{{ last_q.order }}{% endwith %}{% endif %}</div>
-                        {% for question in block.list %}
-                        {% if question.question_type == 'true_false_not_given' and forloop.first and not block.grouper %}
+                        {% for question in block.questions %}
+                        {% if question.question_type == 'true_false_not_given' and forloop.first and not block.display_instruction %}
                         <div class="mock-tfng-block">
                             <p><strong>Do the following statements agree with the information given in the reading passage?</strong></p>
                             <ul>
@@ -237,7 +241,11 @@
                         </div>
                         {% endif %}
                         <article class="mock-q-card" id="q-card-{{ question.id }}" data-qid="{{ question.id }}" data-order="{{ question.order }}">
-                            {% if question.question_type == 'fill_blank' or question.question_type == 'sentence_completion' or question.question_type == 'summary_completion' %}
+                            {% if question.uses_bracket_blanks %}
+                            <div class="mock-q-main mock-q-main--full">
+                                {% include 'mock_tests/_question_fields.html' with question=question %}
+                            </div>
+                            {% elif question.question_type == 'fill_blank' or question.question_type == 'sentence_completion' or question.question_type == 'summary_completion' %}
                             <div class="mock-fill-row selectable-text">
                                 <span class="mock-q-num-box">{{ question.order }}</span>
                                 <span class="mock-fill-text">{{ question.question_text }}</span>
@@ -253,7 +261,9 @@
                             {% elif question.is_multi_matching %}
                             <div class="mock-q-row mock-q-row--matching">
                                 <div class="mock-q-main mock-q-main--full">
-                                    {% if question.instruction %}<div class="mock-shart-inline">{{ question.instruction }}</div>{% endif %}
+                                    {% if question.instruction and question.instruction != block.display_instruction %}
+                                    <div class="mock-shart-inline">{{ question.instruction }}</div>
+                                    {% endif %}
                                     {% if question.question_text %}<div class="mock-q-text selectable-text">{{ question.question_text|linebreaks }}</div>{% endif %}
                                     {% include 'mock_tests/_question_fields.html' with question=question %}
                                 </div>
@@ -383,7 +393,7 @@
     <div class="mock-onboarding" id="mock-onboarding" hidden aria-hidden="true">
         <div class="mock-onboarding-backdrop" id="mock-onboarding-backdrop"></div>
         <div class="mock-onboarding-spotlight" id="mock-onboarding-spotlight"></div>
-        <div class="mock-onboarding-tooltip" id="mock-onboarding-tooltip" role="dialog" aria-live="polite">
+        <div class="mock-onboarding-tooltip" id="mock-onboarding-tooltip" role="dialog" aria-modal="true" aria-labelledby="mock-onboarding-title" aria-live="polite">
             <span class="mock-onboarding-step" id="mock-onboarding-step">1 / 3</span>
             <h4 id="mock-onboarding-title"></h4>
             <p id="mock-onboarding-text"></p>
@@ -396,7 +406,7 @@
 
     <div class="mock-submit-modal" id="submit-modal" hidden aria-hidden="true">
         <div class="mock-submit-modal-backdrop" data-close-submit></div>
-        <div class="mock-submit-modal-panel" role="dialog" aria-labelledby="submit-modal-title">
+        <div class="mock-submit-modal-panel" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
             <div class="mock-submit-modal-icon"><i class="fas fa-flag-checkered"></i></div>
             <h3 id="submit-modal-title">Testni yakunlaysizmi?</h3>
             <p class="mock-submit-modal-lead">Javoblaringiz tekshiriladi va natija darhol ko'rsatiladi.</p>
@@ -407,7 +417,7 @@
                 </div>
                 <div class="mock-submit-stat">
                     <strong id="submit-total">{{ total_questions }}</strong>
-                    <span>jami savol</span>
+                    <span>jami slot</span>
                 </div>
                 <div class="mock-submit-stat mock-submit-stat--time">
                     <strong id="submit-time-left">—</strong>
@@ -421,7 +431,7 @@
                 <ul class="mock-submit-unanswered-list" id="submit-unanswered-list"></ul>
             </div>
             <p class="mock-submit-timeup" id="submit-timeup" hidden>
-                <i class="fas fa-clock"></i> Vaqt tugadi. Testni yuborishni tasdiqlang yoki davom eting.
+                <i class="fas fa-clock"></i> Vaqt tugadi. Hali ham yuborishingiz mumkin — tayyor bo'lsangiz tasdiqlang.
             </p>
             <div class="mock-submit-actions">
                 <button type="button" class="btn btn-outline" data-close-submit>Davom etish</button>
@@ -432,12 +442,38 @@
         </div>
     </div>
 
+    <div class="mock-note-modal" id="mock-note-modal" hidden aria-hidden="true">
+        <div class="mock-note-modal-backdrop" data-close-note></div>
+        <div class="mock-note-modal-panel" role="dialog" aria-modal="true" aria-labelledby="mock-note-modal-title">
+            <h4 id="mock-note-modal-title">Qayd qo'shish</h4>
+            <p class="mock-note-modal-quote" id="mock-note-modal-quote"></p>
+            <label for="mock-note-modal-input" class="mock-note-modal-label">Qisqa qayd</label>
+            <textarea id="mock-note-modal-input" class="mock-note-modal-input" rows="3" maxlength="400" placeholder="Eslatma matni..."></textarea>
+            <div class="mock-note-modal-actions">
+                <button type="button" class="btn btn-outline" data-close-note>Bekor</button>
+                <button type="button" class="btn btn-primary" id="mock-note-modal-save">Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mock-overtime-banner" id="mock-overtime-banner" hidden role="status">
+        <i class="fas fa-hourglass-end"></i> Vaqt tugadi — javoblaringizni yuborishingiz mumkin.
+    </div>
+
     <div class="form-loader-overlay" id="exam-loader" hidden>
         <div class="form-loader-panel form-loader-panel--loading">
             <div class="form-loader-orbit"><span class="form-loader-ring"></span><span class="form-loader-core"><i class="fas fa-paper-plane"></i></span></div>
             <p class="form-loader-title">Test yuborilmoqda...</p>
             <p class="form-loader-subtitle">Iltimos, kuting</p>
         </div>
+    </div>
+
+    <div class="mock-image-lightbox" id="mock-image-lightbox" hidden aria-hidden="true">
+        <button type="button" class="mock-image-lightbox-close" id="mock-image-lightbox-close" aria-label="Yopish">&times;</button>
+        <div class="mock-image-lightbox-backdrop" id="mock-image-lightbox-backdrop"></div>
+        <figure class="mock-image-lightbox-panel">
+            <img src="" alt="Kattalashtirilgan rasm" id="mock-image-lightbox-img">
+        </figure>
     </div>
 </div>
 </div>
@@ -446,4 +482,4 @@
 {{ saved_answers|json_script:"saved-answers-data" }}
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'js/mock-test-take.js' %}?v=10"></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/mock-test-take.js' %}?v=13"></script>{% endblock %}

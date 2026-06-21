@@ -4,11 +4,11 @@
 {% block title %}{{ test.title }} - Demo Test{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=7">
+<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=18">
 {% endblock %}
 
 {% block content %}
-<section class="mock-hero" style="padding-bottom: 1.5rem;">
+<section class="mock-hero mock-hero--compact">
     <div class="container mock-hero-inner">
         <span class="mock-hero-badge">{{ test.get_test_type_display }}</span>
         <h1>{{ test.title }}</h1>
@@ -67,6 +67,10 @@
                 {% if attempts_remaining > 0 %}
                 <a href="{% url 'mock_tests:test_take' test.pk %}" class="btn btn-primary btn-lg">
                     <i class="fas fa-rocket"></i> Testni Boshlash
+                </a>
+                {% elif last_attempt %}
+                <a href="{% url 'mock_tests:test_result' test.pk last_attempt.pk %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-chart-bar"></i> Oxirgi natijani ko'rish
                 </a>
                 {% endif %}
                 <a href="{% url 'mock_tests:test_list' %}" class="btn btn-outline">Orqaga</a>

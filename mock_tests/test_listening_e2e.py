@@ -189,3 +189,151 @@ class ListeningFlowE2ETests(StaticLiveServerTestCase, MockTestFixturesMixin):
         self.wait.until(EC.url_contains('/result/'))
         self.assertIn('Test natijasi', self.driver.page_source)
         self.assertIn('mock-result-card', self.driver.page_source)
+
+
+@unittest.skipUnless(SELENIUM_AVAILABLE, 'selenium not installed (pip install -r requirements-dev.txt)')
+class McqExtendedE2ETests(StaticLiveServerTestCase, MockTestFixturesMixin):
+    """8 variantli va 2 javobli MCQ brauzer oqimi."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.driver = _chrome_driver()
+        cls.driver.implicitly_wait(3)
+        cls.wait = WebDriverWait(cls.driver, 12)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.driver.quit()
+        super().tearDownClass()
+
+    def setUp(self):
+        self.test = self._create_listening_mcq_extended_test()
+        self.single_q = self.test.questions.get(order=1)
+        self.multi_q = self.test.questions.get(order=2)
+        self.take_url = self.live_server_url + reverse(
+            'mock_tests:test_take', kwargs={'pk': self.test.pk}
+        )
+
+    def _open_take_page(self):
+        self.driver.get(self.live_server_url + '/')
+        self.driver.execute_script("localStorage.removeItem('mock_onboarding_v1_done');")
+        self.driver.get(self.take_url)
+        self._dismiss_onboarding_if_visible()
+        self._dismiss_ui_overlays()
+
+    def _dismiss_onboarding_if_visible(self):
+        try:
+            overlay = self.driver.find_element(By.ID, 'mock-onboarding')
+            if overlay.is_displayed():
+                self.driver.execute_script(
+                    "arguments[0].click();",
+                    self.driver.find_element(By.ID, 'mock-onboarding-skip'),
+                )
+                self.wait.until(
+                    EC.invisibility_of_element_located((By.CSS_SELECTOR, '.mock-onboarding.is-open'))
+                )
+        except Exception:
+            pass
+
+    def _dismiss_ui_overlays(self):
+        self.driver.execute_script(
+            """
+            document.getElementById('mock-tip-bar')?.classList.add('is-dismissed');
+            const ob = document.getElementById('mock-onboarding');
+            if (ob && !ob.hidden) {
+                ob.hidden = true;
+                ob.classList.remove('is-open');
+            }
+            """
+        )
+
+    def _click_js(self, element):
+        self.driver.execute_script(
+            "arguments[0].scrollIntoView({block:'center', inline:'nearest'});", element
+        )
+        self.driver.execute_script("arguments[0].click();", element)
+
+    def test_mcq_eight_options_rendered(self):
+        self._open_take_page()
+        radios = self.driver.find_elements(
+            By.CSS_SELECTOR,
+            f'input[type="radio"][data-question-id="{self.single_q.pk}"]',
+        )
+        self.assertEqual(len(radios), 8)
+        values = sorted(r.get_attribute('value') for r in radios)
+        self.assertEqual(values, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+
+    def test_mcq_eight_option_select_updates_count(self):
+        self._open_take_page()
+        radio = self.wait.until(
+            EC.presence_of_element_located((
+                By.CSS_SELECTOR,
+                f'input[type="radio"][data-question-id="{self.single_q.pk}"][value="b"]',
+            ))
+        )
+        self._click_js(radio)
+        self.wait.until(
+            lambda d: d.find_element(By.ID, 'answered-count').text.strip() == '1'
+        )
+
+    def test_mcq_two_answer_checkboxes_and_hint(self):
+        self._open_take_page()
+        group = self.wait.until(
+            EC.presence_of_element_located((
+                By.CSS_SELECTOR,
+                f'.mock-options--multi[data-question-id="{self.multi_q.pk}"]',
+            ))
+        )
+        self.assertIn('2 ta javob tanlang', group.text)
+        checks = group.find_elements(By.CSS_SELECTOR, 'input.mock-mcq-check')
+        self.assertEqual(len(checks), 5)
+
+    def test_mcq_two_answer_select_updates_count(self):
+        self._open_take_page()
+        for letter in ('a', 'c'):
+            cb = self.driver.find_element(
+                By.CSS_SELECTOR,
+                f'input.mock-mcq-check[data-question-id="{self.multi_q.pk}"][value="{letter}"]',
+            )
+            self._click_js(cb)
+        self.wait.until(
+            lambda d: d.find_element(By.ID, 'answered-count').text.strip() == '1'
+        )
+
+    def test_mcq_two_answer_max_three_prevented(self):
+        self._open_take_page()
+        group = self.wait.until(
+            EC.presence_of_element_located((
+                By.CSS_SELECTOR,
+                f'.mock-options--multi[data-question-id="{self.multi_q.pk}"]',
+            ))
+        )
+        for letter in ('a', 'c', 'b'):
+            cb = group.find_element(
+                By.CSS_SELECTOR, f'input.mock-mcq-check[value="{letter}"]'
+            )
+            self._click_js(cb)
+        checked = group.find_elements(By.CSS_SELECTOR, 'input.mock-mcq-check:checked')
+        self.assertEqual(len(checked), 2)
+        checked_vals = sorted(cb.get_attribute('value') for cb in checked)
+        self.assertEqual(checked_vals, ['a', 'c'])
+
+    def test_mcq_extended_full_flow_finish_to_result(self):
+        self._open_take_page()
+        self._click_js(self.driver.find_element(
+            By.CSS_SELECTOR,
+            f'input[type="radio"][data-question-id="{self.single_q.pk}"][value="b"]',
+        ))
+        for letter in ('a', 'c'):
+            self._click_js(self.driver.find_element(
+                By.CSS_SELECTOR,
+                f'input.mock-mcq-check[data-question-id="{self.multi_q.pk}"][value="{letter}"]',
+            ))
+        self.wait.until(
+            lambda d: d.find_element(By.ID, 'answered-count').text.strip() == '2'
+        )
+        self._click_js(self.driver.find_element(By.ID, 'finish-test-btn'))
+        self._click_js(self.wait.until(EC.element_to_be_clickable((By.ID, 'confirm-submit-btn'))))
+        self.wait.until(EC.url_contains('/result/'))
+        self.assertIn('Test natijasi', self.driver.page_source)

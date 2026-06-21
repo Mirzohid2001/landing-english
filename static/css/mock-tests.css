@@ -311,8 +311,14 @@
 .mock-result-item.correct { border-left: 4px solid var(--mock-emerald); }
 .mock-result-item.incorrect { border-left: 4px solid var(--mock-rose); }
 .mock-result-item-head {
-    display: flex; justify-content: space-between; align-items: center;
-    font-weight: 800; margin-bottom: 0.5rem; color: var(--mock-ink);
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 0.75rem; margin-bottom: 0.5rem; color: var(--mock-ink);
+}
+.mock-result-item-title { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.mock-result-qnum { font-weight: 800; font-size: 0.98rem; line-height: 1.3; }
+.mock-result-qtype {
+    font-size: 0.78rem; font-weight: 700; color: #64748b;
+    letter-spacing: 0.01em;
 }
 .mock-result-item-head .fa-check { color: var(--mock-emerald); }
 .mock-result-item-head .fa-times { color: var(--mock-rose); }
@@ -1012,6 +1018,114 @@
 }
 
 .listening-q-card { margin: 0; padding: 0; }
+.mock-question-figure {
+    margin: 0 0 1rem;
+    padding: 0.65rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    text-align: center;
+}
+.mock-question-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 10px;
+}
+.listening-question-figure { margin-bottom: 1.1rem; }
+.listening-reference-figure {
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+}
+.listening-reference-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+}
+.listening-reference-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.listening-reference-label i { color: #f59e0b; margin-right: 0.35rem; }
+.listening-image-zoom-btn {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.listening-image-zoom-btn:hover { background: #eef2ff; border-color: #c7d2fe; color: #4338ca; }
+.listening-image-hitarea {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: zoom-in;
+}
+.listening-image-hitarea:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 3px;
+    border-radius: 10px;
+}
+.mock-image-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+.mock-image-lightbox[hidden] { display: none !important; }
+.mock-image-lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(4px);
+}
+.mock-image-lightbox-panel {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    max-width: min(96vw, 1100px);
+    max-height: 90vh;
+}
+.mock-image-lightbox-panel img {
+    display: block;
+    max-width: 100%;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+.mock-image-lightbox-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    color: #0f172a;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.mock-image-lightbox-close:hover { background: #fff; }
 .listening-notes-line {
     position: relative;
     padding: 0.15rem 0 0.15rem 1.1rem;
@@ -1285,6 +1399,27 @@
     transition: background 0.2s;
 }
 .mock-q-card:hover { background: rgba(248, 250, 252, 0.6); }
+.mock-right-pane--reading .mock-q-card {
+    border: 1px solid var(--mock-border); border-radius: 12px;
+    padding: 0.85rem 0.95rem; margin-bottom: 0.65rem; background: #fff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.mock-right-pane--reading .mock-q-card:last-child { margin-bottom: 0; }
+.mock-right-pane--reading .mock-q-main--full { width: 100%; }
+.mock-sc-block { display: flex; flex-direction: column; gap: 0.5rem; }
+.mock-sc-row {
+    display: flex; align-items: center; gap: 0.55rem; flex-wrap: nowrap;
+    padding: 0.35rem 0; line-height: 1.75;
+}
+.mock-sc-body {
+    display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+    flex: 1; min-width: 0;
+}
+.mock-sc-text { font-size: 0.94rem; color: #1e293b; }
+.mock-sc-row .mock-inline-fill {
+    width: 148px; min-width: 100px; flex-shrink: 0;
+    margin: 0;
+}
 .mock-right-pane--listening .mock-q-card {
     border: 1px solid var(--mock-border); border-radius: 12px;
     padding: 0.95rem; margin-bottom: 0.7rem; background: #fafbfc;
@@ -1317,6 +1452,20 @@
     transition: background 0.2s;
 }
 .mock-option--inline:hover { background: #f5f3ff; }
+.mock-mcq-multi-hint {
+    width: 100%;
+    margin: 0 0 0.65rem;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+}
+.mock-mcq-multi-hint i { margin-right: 0.35rem; }
+.mock-options--multi { flex-wrap: wrap; }
+.mock-options--multi .mock-option { flex: 1 1 45%; min-width: 180px; }
 .mock-option--inline input:checked + .mock-option-letter {
     background: var(--mock-gradient-hero); color: #fff; border-color: transparent;
     box-shadow: 0 3px 10px rgba(102, 126, 234, 0.35);
@@ -1341,6 +1490,7 @@
 .mock-summary-inline {
     line-height: 2.3; padding: 0.85rem; background: linear-gradient(180deg, #fff, #f8fafc);
     border: 1px solid var(--mock-border); border-radius: 12px;
+    white-space: pre-wrap;
 }
 .mock-summary-num {
     display: inline-flex; align-items: center; justify-content: center;
@@ -1353,11 +1503,23 @@
     padding: 0.3rem 0.5rem; vertical-align: middle; transition: all 0.2s;
 }
 .mock-inline-blank input:focus { border-color: var(--mock-purple); box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12); outline: none; }
+.mock-word-list {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.45rem;
+    margin-bottom: 0.75rem; padding: 0.15rem 0;
+}
+.mock-word-list-label {
+    flex: 0 0 auto; font-size: 0.84rem; font-weight: 700; color: var(--mock-muted);
+    margin-right: 0.15rem;
+}
 .mock-word-chip {
-    display: inline-block; padding: 0.2rem 0.55rem; margin: 0.15rem;
+    display: inline-flex; align-items: center; flex: 0 0 auto;
+    padding: 0.28rem 0.65rem;
     background: linear-gradient(135deg, #eff6ff, #eef2ff); border: 1px solid #c7d2fe;
     border-radius: 999px; font-size: 0.82rem; font-weight: 600; color: #3730a3;
+    white-space: nowrap;
 }
+.mock-word-letter { font-weight: 800; }
+.mock-word-sep { opacity: 0.55; margin: 0 0.2rem; font-weight: 500; }
 .mock-highlight, mark.mock-highlight { background: #fde047; padding: 0 2px; border-radius: 2px; }
 .selectable-text { user-select: text; cursor: text; }
 
@@ -1915,7 +2077,7 @@ body.mock-exam-fullscreen .mock-split-layout--writing .mock-right-pane { top: 8p
     cursor: pointer;
 }
 .mock-q-listen-btn:hover { background: #bae6fd; }
-.mock-notes-inline { font-size: 0.95rem; line-height: 1.65; }
+.mock-notes-inline { font-size: 0.95rem; line-height: 1.65; white-space: pre-wrap; }
 .mock-shart-inline {
     font-size: 0.84rem;
     color: #991b1b;
@@ -1927,8 +2089,127 @@ body.mock-exam-fullscreen .mock-split-layout--writing .mock-right-pane { top: 8p
 }
 .mock-q-row--matching .mock-q-main--full { width: 100%; }
 
+/* ===== UX polish v18 ===== */
+.mock-hero--compact { padding-bottom: 1.5rem; }
+.mock-result-item-body { display: flex; flex-direction: column; gap: 0.55rem; }
+.mock-result-answer-row { font-size: 0.95rem; line-height: 1.55; }
+.mock-result-answer-row strong { display: block; margin-bottom: 0.2rem; color: #334155; }
+.mock-result-correct-row span { color: #166534; }
+.mock-result-essay {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 0.65rem 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+.mock-result-explanation {
+    margin: 0;
+    padding: 0.55rem 0.7rem;
+    background: #eff6ff;
+    border-left: 3px solid #3b82f6;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.88rem;
+    color: #1e40af;
+}
+.mock-timer-pill.is-paused {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fcd34d;
+}
+.mock-timer-pill.is-paused::after {
+    content: ' · to\'xtatilgan';
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+.mock-overtime-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1200;
+    padding: 0.55rem 1rem;
+    text-align: center;
+    background: #fef2f2;
+    color: #991b1b;
+    border-bottom: 1px solid #fecaca;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.mock-exam-overtime .mock-topbar-card { margin-top: 2.2rem; }
+.mock-note-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.mock-note-modal[hidden] { display: none !important; }
+.mock-note-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+}
+.mock-note-modal-panel {
+    position: relative;
+    width: min(420px, 100%);
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+}
+.mock-note-modal-quote {
+    font-size: 0.88rem;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+    margin: 0.5rem 0 0.75rem;
+    max-height: 80px;
+    overflow-y: auto;
+}
+.mock-note-modal-label { display: block; font-size: 0.85rem; margin-bottom: 0.35rem; }
+.mock-note-modal-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0.55rem 0.65rem;
+    font: inherit;
+    resize: vertical;
+}
+.mock-note-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+}
+.q-num-btn.answered {
+    background: #059669 !important;
+    border-color: #047857 !important;
+    color: #fff !important;
+}
+.q-num-btn.active {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2563eb;
+}
+@media (max-width: 767px) {
+    .listening-parts-strip { display: none; }
+    .mock-inline-input, .mock-notes-inline .mock-fill-input {
+        min-width: 120px;
+        flex: 1 1 120px;
+    }
+    .mock-split-layout .mock-left-pane { max-height: 38vh; }
+    .mock-split-layout .mock-q-body { max-height: 48vh; }
+}
 @media print {
-    .navbar, footer, .mock-footer-dock, .mock-offer-strip, .mock-tip-bar, .mock-exam-ambient { display: none !important; }
+    .navbar, footer, .mock-footer-dock, .mock-offer-strip, .mock-tip-bar, .mock-exam-ambient,
+    .mock-result-filters, .mock-result-actions .btn-outline { display: none !important; }
+    .mock-result-page, .mock-result-card, .mock-result-item { break-inside: avoid; }
+    .mock-result-essay { max-height: none; overflow: visible; }
 }
 
 @media (prefers-reduced-motion: reduce) {

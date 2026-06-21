@@ -2,6 +2,10 @@
 <article class="listening-q-card" id="q-card-{{ question.id }}" data-qid="{{ question.id }}"
          data-order="{{ question.order }}" {% if question.audio_timestamp %}data-audio-ts="{{ question.audio_timestamp }}"{% endif %}>
 
+    {% if show_question_image %}
+    {% include 'mock_tests/_question_image.html' with question=question %}
+    {% endif %}
+
     {% if question.question_type == 'fill_blank' or question.question_type == 'sentence_completion' or question.question_type == 'summary_completion' or question.question_type == 'notes_completion' or question.question_type == 'table_completion' %}
         {% with parts=question.get_listening_inline_parts %}
         {% if parts %}
@@ -43,6 +47,9 @@
             </div>
             {% include 'mock_tests/_question_fields.html' with question=question %}
         </div>
+
+    {% elif question.question_type == 'summary_box' %}
+        {% include 'mock_tests/_question_fields.html' with question=question %}
 
     {% else %}
         <div class="listening-notes-line listening-sa-row selectable-text">

@@ -39,15 +39,31 @@ def _get_or_create_attempt(request, test):
 
 
 def _build_blank_buttons(questions, start_num=0):
-    """Footer dock tugmalari — ketma-ket raqamlash (1, 2, 3…)."""
+    """Footer dock — IELTS/qavs raqamlari; ziddiyat bo'lsa ketma-ket fallback."""
     buttons = []
-    display_num = start_num
+    seq_fallback = start_num
+    used_nums = set()
 
-    def _append(question_id, is_blank, blank_key=''):
-        nonlocal display_num
-        display_num += 1
+    def _pick_num(preferred):
+        nonlocal seq_fallback
+        if preferred is not None and preferred not in used_nums:
+            used_nums.add(preferred)
+            return preferred
+        seq_fallback += 1
+        while seq_fallback in used_nums:
+            seq_fallback += 1
+        used_nums.add(seq_fallback)
+        return seq_fallback
+
+    def _append(question_id, is_blank, blank_key='', question_order=None):
+        if is_blank and blank_key:
+            num = int(blank_key) if str(blank_key).isdigit() else blank_key
+        elif question_order is not None:
+            num = question_order
+        else:
+            num = None
         buttons.append({
-            'num': display_num,
+            'num': _pick_num(num),
             'question_id': question_id,
             'is_blank': is_blank,
             'blank_key': blank_key,
@@ -68,7 +84,7 @@ def _build_blank_buttons(questions, start_num=0):
                     _append(q.pk, True, str(mf['num']))
             else:
                 _append(q.pk, False)
-        elif q.question_type in ('notes_completion', 'table_completion'):
+        elif q.question_type in ('notes_completion', 'table_completion', 'sentence_completion', 'summary_completion'):
             blanks = [s for s in q.get_bracket_segments() if s['type'] == 'blank']
             if blanks:
                 for seg in blanks:
@@ -76,8 +92,42 @@ def _build_blank_buttons(questions, start_num=0):
             else:
                 _append(q.pk, False)
         else:
-            _append(q.pk, False)
-    return buttons, display_num
+            _append(q.pk, False, question_order=q.order)
+    return buttons, seq_fallback
+
+
+def _build_instruction_groups(questions):
+    """Instruction bo'yicha guruhlar — har blok uchun birinchi rasm."""
+    from mock_tests.question_admin_helpers import sanitize_block_instruction
+
+    if not questions:
+        return []
+    sorted_qs = sorted(questions, key=lambda q: (q.order, q.pk))
+    groups = []
+    current_instr = None
+    bucket = []
+
+    def flush():
+        if not bucket:
+            return
+        block_image = next((q.image for q in bucket if q.image), None)
+        instr = current_instr or ''
+        groups.append({
+            'instruction': instr,
+            'display_instruction': sanitize_block_instruction(instr, bucket),
+            'questions': list(bucket),
+            'image': block_image,
+        })
+
+    for q in sorted_qs:
+        instr = q.instruction or ''
+        if bucket and instr != current_instr:
+            flush()
+            bucket = []
+        current_instr = instr
+        bucket.append(q)
+    flush()
+    return groups
 
 
 def _build_part_groups(test, questions, passages):
@@ -114,6 +164,7 @@ def _build_part_groups(test, questions, passages):
             'part_number': part_num,
             'passage': passage_map.get(part_num),
             'questions': qs,
+            'instruction_groups': _build_instruction_groups(qs),
             'blank_buttons': blank_buttons,
             'question_count': question_count,
             'start_order': start_order,
@@ -187,10 +238,12 @@ def test_detail(request, pk):
     session_key = _ensure_session(request)
     today_count = _count_today_attempts(session_key, test)
     attempts_remaining = max(0, MAX_DAILY_ATTEMPTS - today_count)
+    last_attempts = _latest_finished_attempts(session_key, [test.pk])
     context = {
         'test': test,
         'attempts_remaining': attempts_remaining,
         'max_daily_attempts': MAX_DAILY_ATTEMPTS,
+        'last_attempt': last_attempts.get(test.pk),
     }
     return render(request, 'mock_tests/detail.html', context)
 

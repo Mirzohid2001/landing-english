@@ -1,0 +1,14 @@
+{% comment %}Listening xarita/jadval — kattalashtirish mumkin{% endcomment %}
+{% if image %}
+<figure class="mock-question-figure listening-question-figure listening-reference-figure" data-reference-image>
+    <div class="listening-reference-head">
+        <span class="listening-reference-label"><i class="fas fa-map"></i> Ma'lumot rasmi</span>
+        <button type="button" class="listening-image-zoom-btn mock-image-zoom-btn" data-image-url="{{ image.url }}" aria-label="Rasmni kattalashtirish">
+            <i class="fas fa-expand"></i> Kattalashtirish
+        </button>
+    </div>
+    <button type="button" class="listening-image-hitarea mock-image-zoom-btn" data-image-url="{{ image.url }}" aria-label="Rasmni kattalashtirish">
+        <img src="{{ image.url }}" alt="{{ caption|default:'Listening ma\'lumot rasmi' }}" class="mock-question-image" loading="lazy">
+    </button>
+</figure>
+{% endif %}

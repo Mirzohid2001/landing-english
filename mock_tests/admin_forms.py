@@ -1,22 +1,25 @@
 """Admin: savol formasi — JSON o'rniga oddiy matn maydonlari."""
 import json
+import os
 import re
 
 from django import forms
 from django.core.exceptions import ValidationError
 
+from mock_tests.question_admin_helpers import fix_misplaced_instruction, sync_points_from_slots
 from mock_tests.matching_utils import MATCHING_TYPES, parse_matching_correct, parse_matching_items, parse_matching_options
+from mock_tests.mcq_utils import parse_mcq_letters, parse_mcq_options_lines
 from mock_tests.models import MockPassage, MockQuestion
 
 QUESTION_TYPE_RULES = {
-    "mcq": "Variant A–D ni to'ldiring. «To'g'ri javob» da bitta harf: a, b, c yoki d.",
+    "mcq": "Variant A–H ni to'ldiring. «Tanlash soni» 2 bo'lsa — «To'g'ri javob»: a,c (vergul bilan).",
     "true_false_not_given": "Odatda A=True, B=False, C=Not Given. To'g'ri javob: a, b yoki c.",
     "yes_no_not_given": "Odatda A=Yes, B=No, C=Not Given. To'g'ri javob: a, b yoki c.",
     "fill_blank": "Savol matnida ______ yoki [1] ishlatishingiz mumkin. «To'g'ri javoblar» — vergul bilan.",
-    "sentence_completion": "Bitta yoki bir nechta to'g'ri javob — vergul bilan.",
+    "sentence_completion": "Bitta gap: ______ va bitta javob. Bir nechta gap: matnda [7], [8] — javoblar vergul bilan tartibda.",
     "summary_completion": "Matnda [1], [2] bo'lsa, javoblarni tartib bilan vergul bilan yozing.",
-    "notes_completion": "Listening notes: matnda [1], [2]. Javoblar vergul bilan. Audio vaqti (soniya) kiriting.",
-    "table_completion": "Jadval: matnda [1], [2]. Javoblar vergul bilan.",
+    "notes_completion": "Listening notes: matnda [1], [2]. Javoblar vergul bilan. Xarita uchun rasm — blokdagi birinchi savolga.",
+    "table_completion": "Jadval: matnda [1], [2]. Jadval rasmi — blokdagi birinchi savolga yuklang.",
     "summary_box": "Savol matnida [1], [2]. Javoblar vergul bilan. So'zlar ro'yxati — har satrda bitta so'z.",
     "matching": "Eski: bitta tanlov — variantlar a|Matn, to'g'ri javob bitta harf.",
     "matching_headings": "Itemlar: 14|Paragraph A. Variantlar: i|Sarlavha. To'g'ri: 14:ii (har satr).",
@@ -30,6 +33,10 @@ QUESTION_TYPE_RULES = {
 
 def question_type_rules_json():
     return json.dumps(QUESTION_TYPE_RULES, ensure_ascii=False)
+
+
+ALLOWED_QUESTION_IMAGE_EXT = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+MAX_QUESTION_IMAGE_BYTES = 5 * 1024 * 1024
 
 
 class MockPassageAdminForm(forms.ModelForm):
@@ -106,56 +113,107 @@ class MockQuestionAdminForm(forms.ModelForm):
             }
         ),
     )
+    mcq_options_lines = forms.CharField(
+        required=False,
+        label="MCQ variantlar (ro'yxat — ixtiyoriy)",
+        help_text="8 tadan ortiq yoki maxsus tartib: har satr a:Matn (a–h)",
+        widget=forms.Textarea(
+            attrs={
+                "rows": 5,
+                "data-role": "qt-mcq",
+                "data-qt-field": "mcq_options_lines",
+                "placeholder": "a:Birinchi variant\nb:Ikkinchi variant\nc:Uchinchi",
+            }
+        ),
+    )
+    mcq_select_count = forms.TypedChoiceField(
+        required=False,
+        label="Tanlash soni",
+        choices=[(1, '1 ta javob'), (2, '2 ta javob'), (3, '3 ta javob')],
+        coerce=int,
+        initial=1,
+        widget=forms.Select(attrs={"data-role": "qt-mcq", "data-qt-field": "mcq_select_count"}),
+    )
+    points = forms.IntegerField(
+        min_value=1,
+        label="Ball",
+        help_text="Ko'p blank/matching slotlarida saqlashda avtomatik slot soniga tenglashtiriladi.",
+        widget=forms.NumberInput(attrs={"data-qt-field": "points", "min": "1"}),
+    )
 
     class Meta:
         model = MockQuestion
         fields = "__all__"
         widgets = {
             "question_text": forms.Textarea(attrs={"rows": 8}),
-            "instruction": forms.TextInput(attrs={"style": "width: 100%;"}),
+            "instruction": forms.Textarea(
+                attrs={
+                    "rows": 2,
+                    "style": "width: 100%;",
+                    "placeholder": "Qisqa ko'rsatma (summary matni emas!) — masalan: Choose NO MORE THAN ONE WORD...",
+                }
+            ),
             "option_a": forms.TextInput(attrs={"data-role": "qt-mcq"}),
             "option_b": forms.TextInput(attrs={"data-role": "qt-mcq"}),
             "option_c": forms.TextInput(attrs={"data-role": "qt-mcq"}),
             "option_d": forms.TextInput(attrs={"data-role": "qt-mcq"}),
-            "correct_answer": forms.TextInput(attrs={"data-role": "qt-mcq"}),
+            "option_e": forms.TextInput(attrs={"data-role": "qt-mcq"}),
+            "option_f": forms.TextInput(attrs={"data-role": "qt-mcq"}),
+            "option_g": forms.TextInput(attrs={"data-role": "qt-mcq"}),
+            "option_h": forms.TextInput(attrs={"data-role": "qt-mcq"}),
+            "correct_answer": forms.TextInput(
+                attrs={"data-role": "qt-mcq", "placeholder": "a yoki a,c"}
+            ),
             "audio_timestamp": forms.NumberInput(attrs={"step": "0.1", "min": "0", "data-qt-field": "audio_timestamp"}),
+            "image": forms.ClearableFileInput(attrs={"data-qt-field": "image", "accept": "image/jpeg,image/png,image/gif,image/webp"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         inst = self.instance
-        if not inst or not inst.pk:
-            return
-        answers = inst.correct_answers_json
-        if isinstance(answers, list) and answers:
-            self.fields["fill_answers"].initial = ", ".join(str(a) for a in answers)
-        elif isinstance(answers, dict) and answers:
-            lines = [f"{k}:{v}" for k, v in sorted(
-                answers.items(), key=lambda x: int(x[0]) if str(x[0]).isdigit() else str(x[0])
-            )]
-            self.fields["matching_correct"].initial = "\n".join(lines)
-        opts = inst.options_json or {}
-        if isinstance(opts, dict):
-            items = opts.get("items", [])
-            if items:
-                item_lines = []
-                for it in items:
-                    if isinstance(it, dict):
-                        item_lines.append(f"{it.get('num', '')}|{it.get('label', '')}")
-                self.fields["matching_items"].initial = "\n".join(item_lines)
-            headings = opts.get("headings", [])
-            options = headings or opts.get("options", [])
-            if options:
-                lines = []
-                for item in options:
-                    if isinstance(item, dict):
-                        letter = (item.get("letter") or "").strip()
-                        text = (item.get("text") or "").strip()
-                        if letter:
-                            lines.append(f"{letter}|{text}")
-                self.fields["matching_options_lines"].initial = "\n".join(lines)
-            if opts.get("word_list"):
-                self.fields["word_list_lines"].initial = "\n".join(str(w) for w in opts["word_list"])
+        if inst and inst.pk:
+            answers = inst.correct_answers_json
+            if isinstance(answers, list) and answers:
+                self.fields["fill_answers"].initial = ", ".join(str(a) for a in answers)
+            elif isinstance(answers, dict) and answers:
+                lines = [f"{k}:{v}" for k, v in sorted(
+                    answers.items(), key=lambda x: int(x[0]) if str(x[0]).isdigit() else str(x[0])
+                )]
+                self.fields["matching_correct"].initial = "\n".join(lines)
+            opts = inst.options_json or {}
+            if isinstance(opts, dict):
+                items = opts.get("items", [])
+                if items:
+                    item_lines = []
+                    for it in items:
+                        if isinstance(it, dict):
+                            item_lines.append(f"{it.get('num', '')}|{it.get('label', '')}")
+                    self.fields["matching_items"].initial = "\n".join(item_lines)
+                headings = opts.get("headings", [])
+                options = headings or opts.get("options", [])
+                if options and inst.question_type != 'mcq':
+                    lines = []
+                    for item in options:
+                        if isinstance(item, dict):
+                            letter = (item.get("letter") or "").strip()
+                            text = (item.get("text") or "").strip()
+                            if letter:
+                                lines.append(f"{letter}|{text}")
+                    self.fields["matching_options_lines"].initial = "\n".join(lines)
+                mcq_opts = opts.get("mcq_options", [])
+                if mcq_opts:
+                    self.fields["mcq_options_lines"].initial = "\n".join(
+                        f"{o.get('letter', '')}:{o.get('text', '')}" for o in mcq_opts if isinstance(o, dict)
+                    )
+                if opts.get("word_list"):
+                    self.fields["word_list_lines"].initial = "\n".join(str(w) for w in opts["word_list"])
+            if inst.mcq_select_count:
+                self.fields["mcq_select_count"].initial = inst.mcq_select_count
+            slots = max(1, inst.gradable_slot_count())
+            self.fields["points"].help_text = (
+                f"Baholanadigan slotlar: {slots}. "
+                "Saqlashda ball avtomatik shu songa tenglashtiriladi."
+            )
 
     def clean_correct_answers_json(self):
         value = self.cleaned_data.get("correct_answers_json")
@@ -182,6 +240,17 @@ class MockQuestionAdminForm(forms.ModelForm):
     @staticmethod
     def _parse_word_list(text):
         return [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if not image:
+            return image
+        if hasattr(image, 'size') and image.size > MAX_QUESTION_IMAGE_BYTES:
+            raise ValidationError('Rasm hajmi 5 MB dan oshmasin.')
+        ext = os.path.splitext(getattr(image, 'name', '') or '')[1].lower()
+        if ext and ext not in ALLOWED_QUESTION_IMAGE_EXT:
+            raise ValidationError('Faqat JPG, PNG, GIF yoki WEBP formatlari qabul qilinadi.')
+        return image
 
     def clean(self):
         cleaned = super().clean()
@@ -234,11 +303,57 @@ class MockQuestionAdminForm(forms.ModelForm):
             options_json["word_list"] = self._parse_word_list(word_lines)
             cleaned["options_json"] = options_json
 
+        if qtype == "summary_box":
+            instr = (cleaned.get("instruction") or "").strip()
+            qtext = (cleaned.get("question_text") or "").strip()
+            if instr and re.search(r"\[\d+\]", instr):
+                raise ValidationError({
+                    "instruction": (
+                        "Ko'rsatma qisqa bo'lishi kerak. Summary matnini "
+                        "'Savol matni' maydoniga yozing ([11] kabi qavslar u yerda)."
+                    ),
+                })
+            if instr and qtext and " ".join(instr.split()) == " ".join(qtext.split()):
+                raise ValidationError({
+                    "instruction": "Ko'rsatma va savol matni bir xil bo'lmasligi kerak.",
+                })
+
         mcq_types = ("mcq", "true_false_not_given", "yes_no_not_given")
         if has_text and qtype == "matching" and not cleaned.get("correct_answer"):
             raise ValidationError({"correct_answer": "Eski matching: bitta harf kiriting."})
         if has_text and qtype in mcq_types and not cleaned.get("correct_answer"):
             raise ValidationError({"correct_answer": "To'g'ri javob (harf) kiriting."})
+
+        if has_text and qtype == "mcq":
+            select_count = int(cleaned.get("mcq_select_count") or 1)
+            select_count = max(1, min(select_count, 3))
+            cleaned["mcq_select_count"] = select_count
+            correct_letters = parse_mcq_letters(cleaned.get("correct_answer", ""))
+            if len(correct_letters) != select_count:
+                raise ValidationError({
+                    "correct_answer": (
+                        f"Tanlash soni {select_count} — {select_count} ta harf kiriting "
+                        f"(masalan: {'a,c' if select_count == 2 else 'a'})"
+                    ),
+                })
+            mcq_lines = (cleaned.get("mcq_options_lines") or "").strip()
+            field_options = [
+                cleaned.get(f"option_{letter}") for letter in "abcdefgh"
+            ]
+            has_options = any(str(v or "").strip() for v in field_options)
+            if mcq_lines:
+                parsed = parse_mcq_options_lines(mcq_lines)
+                if not parsed:
+                    raise ValidationError({"mcq_options_lines": "Format: a:Matn (har satr)"})
+                options_json = dict(cleaned.get("options_json") or {})
+                options_json["mcq_options"] = parsed
+                cleaned["options_json"] = options_json
+            elif not has_options:
+                raise ValidationError("Kamida bitta variant (A–H) yoki MCQ ro'yxatini to'ldiring.")
+            elif len([v for v in field_options if str(v or "").strip()]) < select_count + 1:
+                raise ValidationError(
+                    f"Kamida {select_count + 1} ta variant kerak ({select_count} ta javob tanlanadi)."
+                )
 
         bracket_types = (
             "summary_completion", "summary_box", "notes_completion", "table_completion",
@@ -265,9 +380,31 @@ class MockQuestionAdminForm(forms.ModelForm):
                     ),
                 })
 
+        if has_text and qtype in ("sentence_completion", "summary_completion"):
+            qtext = cleaned.get("question_text") or ""
+            brackets = re.findall(r"\[(\d+)\]", qtext)
+            if brackets:
+                answers = cleaned.get("correct_answers_json")
+                if not answers and fill_text:
+                    answers = self._parse_fill_answers(fill_text)
+                if not answers:
+                    raise ValidationError({
+                        "fill_answers": "Bracket soniga mos javoblarni vergul bilan kiriting.",
+                    })
+                if len(answers) != len(brackets):
+                    raise ValidationError({
+                        "fill_answers": (
+                            f"Javoblar soni ({len(answers)}) bracket soni "
+                            f"({len(brackets)}) bilan mos kelishi kerak."
+                        ),
+                    })
+
         test = cleaned.get("test") or getattr(self.instance, "test", None)
         if test and test.test_type == "reading" and qtype in ("notes_completion", "table_completion"):
             raise ValidationError("Notes/Table faqat Listening test uchun.")
+
+        if cleaned.get("image") and test and test.test_type != "listening":
+            raise ValidationError({"image": "Rasm faqat Listening test savollariga biriktiriladi."})
 
         return cleaned
 
@@ -306,6 +443,21 @@ class MockQuestionAdminForm(forms.ModelForm):
             opts = dict(obj.options_json or {})
             opts["word_list"] = self._parse_word_list(word_lines)
             obj.options_json = opts
+
+        if qtype == "mcq":
+            mcq_lines = (self.cleaned_data.get("mcq_options_lines") or "").strip()
+            opts = dict(obj.options_json or {})
+            if mcq_lines:
+                opts["mcq_options"] = parse_mcq_options_lines(mcq_lines)
+            else:
+                opts.pop("mcq_options", None)
+            obj.options_json = opts
+            select = self.cleaned_data.get("mcq_select_count")
+            if select:
+                obj.mcq_select_count = int(select)
+
+        fix_misplaced_instruction(obj)
+        sync_points_from_slots(obj)
 
         if commit:
             obj.save()

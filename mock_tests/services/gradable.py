@@ -24,7 +24,7 @@ def count_filled_slots(question, user_answer):
     if not isinstance(user_answer, dict):
         return 0
 
-    if question.question_type in ('notes_completion', 'table_completion', 'summary_box'):
+    if question.question_type in ('notes_completion', 'table_completion', 'summary_box', 'sentence_completion', 'summary_completion'):
         blank_nums = [
             s['num'] for s in question.get_bracket_segments() if s['type'] == 'blank'
         ]

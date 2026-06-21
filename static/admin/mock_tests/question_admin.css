@@ -238,3 +238,34 @@
     padding-left: 10px;
     margin-bottom: 14px;
 }
+
+.form-row.field-image input[type="file"] {
+    max-width: 100%;
+}
+
+.form-row.field-image .file-upload {
+    font-size: 13px;
+}
+
+.form-row.field-image img {
+    max-height: 120px;
+    margin-top: 8px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.mock-admin-image-preview {
+    display: block;
+    max-height: 140px;
+    max-width: 100%;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+}
+
+.mock-image-hint {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #78716c;
+    line-height: 1.45;
+}

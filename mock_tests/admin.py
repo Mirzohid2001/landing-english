@@ -15,7 +15,7 @@ from .admin_forms import (
     question_type_rules_json,
 )
 from .models import MockAttempt, MockPassage, MockQuestion, MockTest
-from .services.stats import get_dashboard_stats
+from .question_admin_helpers import fix_misplaced_instruction, sync_points_from_slots
 
 
 class MockPassageInline(admin.StackedInline):
@@ -58,13 +58,22 @@ QUESTION_FIELDSETS = [
                 ("order", "part_number", "question_type", "points"),
                 "instruction",
                 "question_text",
+                "image",
             ],
         },
     ),
     (
-        "Variantlar (MCQ / True–False / Yes–No)",
+        "Variantlar (MCQ — A dan H gacha)",
         {
-            "fields": [("option_a", "option_b"), ("option_c", "option_d")],
+            "fields": [
+                "mcq_select_count",
+                ("option_a", "option_b"),
+                ("option_c", "option_d"),
+                ("option_e", "option_f"),
+                ("option_g", "option_h"),
+                "mcq_options_lines",
+                "correct_answer",
+            ],
             "classes": ["question-mcq-fields"],
         },
     ),
@@ -77,7 +86,6 @@ QUESTION_FIELDSETS = [
                 "matching_options_lines",
                 "matching_correct",
                 "word_list_lines",
-                "correct_answer",
                 "audio_timestamp",
                 "explanation",
             ],
@@ -116,7 +124,7 @@ class MockTestAdmin(admin.ModelAdmin):
     save_as = True
     save_on_top = True
     list_per_page = 25
-    actions = ["duplicate_tests", "activate_tests", "deactivate_tests"]
+    actions = ["duplicate_tests", "activate_tests", "deactivate_tests", "fix_test_questions"]
 
     class Media:
         js = ("admin/mock_tests/question_admin.js",)
@@ -325,6 +333,23 @@ class MockTestAdmin(admin.ModelAdmin):
             request, f"{n} ta test nusxalandi.", messages.SUCCESS
         )
 
+    @admin.action(description="Savollarni tuzatish (ball + ko'rsatma)")
+    def fix_test_questions(self, request, queryset):
+        instr_fixed = 0
+        points_fixed = 0
+        for test in queryset:
+            for q in test.questions.all():
+                if fix_misplaced_instruction(q):
+                    instr_fixed += 1
+                if sync_points_from_slots(q):
+                    points_fixed += 1
+                q.save(update_fields=['instruction', 'question_text', 'points'])
+        self.message_user(
+            request,
+            f"Ko'rsatma: {instr_fixed} ta, ball: {points_fixed} ta savol yangilandi.",
+            messages.SUCCESS,
+        )
+
     @admin.action(description="Faollashtirish")
     def activate_tests(self, request, queryset):
         n = queryset.update(is_active=True)
@@ -368,11 +393,23 @@ class MockQuestionAdmin(admin.ModelAdmin):
         css = {"all": ("admin/mock_tests/question_admin.css",)}
 
     def get_fieldsets(self, request, obj=None):
-        return [("Test", {"fields": ["test"]})] + QUESTION_FIELDSETS
+        fieldsets = [("Test", {"fields": ["test"]})]
+        for i, (title, opts) in enumerate(QUESTION_FIELDSETS):
+            if i == 0:
+                fields = list(opts["fields"])
+                if obj and obj.image:
+                    fields = fields + ["image_preview"]
+                fieldsets.append((title, {**opts, "fields": fields}))
+            else:
+                fieldsets.append((title, opts))
+        return fieldsets
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
         extra_context["question_type_rules_json"] = question_type_rules_json()
+        obj = self.get_object(request, object_id)
+        if obj and obj.test_id:
+            extra_context["mock_question_test_type"] = obj.test.test_type
         return super().change_view(
             request, object_id, form_url, extra_context=extra_context
         )
@@ -388,6 +425,24 @@ class MockQuestionAdmin(admin.ModelAdmin):
 
     question_text_short.short_description = "Savol"
 
+    def image_preview(self, obj):
+        if obj and obj.image:
+            return format_html(
+                '<a href="{}" target="_blank" rel="noopener">'
+                '<img src="{}" alt="Rasm" style="max-height:140px;max-width:100%;border-radius:8px;border:1px solid #ddd"></a>',
+                obj.image.url,
+                obj.image.url,
+            )
+        return "—"
+
+    image_preview.short_description = "Rasm ko'rinishi"
+
+    def get_readonly_fields(self, request, obj=None):
+        ro = list(super().get_readonly_fields(request, obj))
+        if obj and obj.image:
+            ro.append("image_preview")
+        return ro
+
     @admin.action(description="Savolni nusxalash (oxirgi order + 1)")
     def duplicate_questions(self, request, queryset):
         n = 0
@@ -399,6 +454,9 @@ class MockQuestionAdmin(admin.ModelAdmin):
                 by_test[test.pk] = last or 0
             by_test[test.pk] += 1
             new_order = by_test[test.pk]
+            image_data = None
+            if q.image:
+                image_data = (q.image.name, q.image.read())
             q.pk = None
             q._state.adding = True
             q.order = new_order
@@ -413,7 +471,11 @@ class MockQuestionAdmin(admin.ModelAdmin):
                     q.part_number = 3
                 else:
                     q.part_number = 4
+            q.image = None
             q.save()
+            if image_data:
+                from django.core.files.base import ContentFile
+                q.image.save(image_data[0], ContentFile(image_data[1]), save=True)
             n += 1
         self.message_user(request, f"{n} ta savol nusxalandi.", messages.SUCCESS)
 

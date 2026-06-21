@@ -6,7 +6,11 @@
     filters.forEach(btn => {
         btn.addEventListener('click', () => {
             const filter = btn.dataset.filter;
-            filters.forEach(b => b.classList.toggle('is-active', b === btn));
+            filters.forEach(b => {
+                const active = b === btn;
+                b.classList.toggle('is-active', active);
+                b.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
             items.forEach(item => {
                 const type = item.dataset.resultType;
                 const show = filter === 'all' || type === filter;

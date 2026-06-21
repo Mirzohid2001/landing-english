@@ -44,6 +44,11 @@
         );
     }
 
+    function getQuestionTypeSelect(container) {
+        if (!container) return null;
+        return container.querySelector('select[name$="-question_type"], select[name="question_type"]');
+    }
+
     function toggleFieldset(fieldset, show) {
         if (!fieldset) return;
         fieldset.style.display = show ? '' : 'none';
@@ -73,7 +78,7 @@
     }
 
     function ensureShartDiv(container) {
-        var select = container.querySelector('select[name$="-question_type"]');
+        var select = getQuestionTypeSelect(container);
         if (!select || !window.QUESTION_TYPE_RULES) return null;
         var shartDiv = container.querySelector('.question-type-shart-box');
         if (!shartDiv) {
@@ -118,8 +123,10 @@
             'matching_options_lines',
             'matching_correct',
             'word_list_lines',
+            'correct_answer',
             'explanation',
             'audio_timestamp',
+            'image',
             'correct_answers_json',
             'options_json',
         ].forEach(function (name) {
@@ -136,7 +143,7 @@
 
     function toggleByQuestionType(container) {
         if (!container) return;
-        var select = container.querySelector('select[name$="-question_type"]');
+        var select = getQuestionTypeSelect(container);
         if (!select) return;
 
         var qType = (select.value || '').trim();
@@ -154,6 +161,9 @@
         var isSummaryBox = qType === 'summary_box';
         var isFill =
             FILL_TYPES.indexOf(qType) >= 0 && qType !== 'summary_box';
+        var isMcq = qType === 'mcq';
+        var testType = getTestType();
+        var showImage = testType === 'listening' && qType && qType !== 'essay';
         var isEssay = qType === 'essay';
 
         ['instruction', 'question_text', 'explanation', 'part_number', 'points'].forEach(
@@ -169,21 +179,34 @@
         toggleFieldRow(container, 'option_a', showMcqFields);
         toggleFieldRow(container, 'option_b', showMcqFields);
         toggleFieldRow(container, 'option_c', showMcqFields && (qType === 'mcq' || qType.indexOf('not_given') >= 0));
-        toggleFieldRow(container, 'option_d', showMcqFields && qType === 'mcq');
+        toggleFieldRow(container, 'option_d', showMcqFields && (isMcq || qType === 'mcq'));
+        toggleFieldRow(container, 'option_e', isMcq);
+        toggleFieldRow(container, 'option_f', isMcq);
+        toggleFieldRow(container, 'option_g', isMcq);
+        toggleFieldRow(container, 'option_h', isMcq);
+        toggleFieldRow(container, 'mcq_select_count', isMcq);
+        toggleFieldRow(container, 'mcq_options_lines', isMcq);
 
         toggleFieldRow(container, 'fill_answers', isFill || isSummaryBox || qType === 'notes_completion' || qType === 'table_completion');
         toggleFieldRow(container, 'matching_items', isMultiMatching);
         toggleFieldRow(container, 'matching_options_lines', isMatching || isMultiMatching);
         toggleFieldRow(container, 'matching_correct', isMultiMatching);
         toggleFieldRow(container, 'word_list_lines', isSummaryBox);
-        toggleFieldRow(container, 'audio_timestamp', !isEssay);
+        toggleFieldRow(container, 'audio_timestamp', !isEssay && testType === 'listening');
+        toggleFieldRow(container, 'image', showImage);
+        if (showImage) {
+            ensureImageHint(container);
+        }
         toggleFieldRow(
             container,
             'correct_answer',
             showMcqFields || isMatching || (isFill && !isMultiMatching) || isSummaryBox
         );
+        if (isMcq) {
+            toggleFieldRow(container, 'correct_answer', true);
+        }
 
-        if (isEssay || isSpeaking) {
+        if (isEssay) {
             toggleFieldRow(container, 'fill_answers', false);
             toggleFieldRow(container, 'matching_items', false);
             toggleFieldRow(container, 'matching_options_lines', false);
@@ -191,6 +214,7 @@
             toggleFieldRow(container, 'word_list_lines', false);
             toggleFieldRow(container, 'correct_answer', false);
             toggleFieldRow(container, 'audio_timestamp', false);
+            toggleFieldRow(container, 'image', false);
         }
         if (isMultiMatching) {
             toggleFieldRow(container, 'correct_answer', false);
@@ -209,7 +233,84 @@
 
         toggleFieldRow(container, 'correct_answers_json', false);
         toggleFieldRow(container, 'options_json', false);
+        updatePointsField(container);
         refreshRowCollapse(container);
+    }
+
+    function countBracketSlots(text) {
+        var matches = (text || '').match(/\[\d+\]/g);
+        return matches ? matches.length : 0;
+    }
+
+    function countCommaAnswers(text) {
+        if (!text || !String(text).trim()) return 0;
+        return String(text).replace(/\n/g, ',').split(',').filter(function (s) {
+            return s.trim();
+        }).length;
+    }
+
+    function estimateGradableSlots(container) {
+        var qType = fieldValue(container, 'question_type') || '';
+        var qtext = fieldValue(container, 'question_text') || '';
+        var fill = fieldValue(container, 'fill_answers') || '';
+        var brackets = countBracketSlots(qtext);
+
+        if (
+            qType === 'summary_box' ||
+            qType === 'notes_completion' ||
+            qType === 'table_completion' ||
+            qType === 'sentence_completion' ||
+            qType === 'summary_completion'
+        ) {
+            if (brackets) return brackets;
+            if (fill) return countCommaAnswers(fill);
+            return 1;
+        }
+        if (MULTI_MATCHING.indexOf(qType) >= 0) {
+            var corr = fieldValue(container, 'matching_correct') || '';
+            var corrLines = corr.split('\n').filter(function (l) { return l.trim(); });
+            if (corrLines.length) return corrLines.length;
+            var items = fieldValue(container, 'matching_items') || '';
+            var itemLines = items.split('\n').filter(function (l) { return l.trim(); });
+            return itemLines.length || 1;
+        }
+        return 1;
+    }
+
+    function ensurePointsHint(container, slots) {
+        var row = container.querySelector('.form-row.field-points');
+        if (!row) return;
+        var hint = row.querySelector('.mock-points-slot-hint');
+        if (!hint) {
+            hint = document.createElement('p');
+            hint.className = 'mock-points-slot-hint help';
+            row.appendChild(hint);
+        }
+        if (slots > 1) {
+            hint.textContent =
+                'Baholanadigan slotlar: ' + slots +
+                ' — ball saqlashda avtomatik shu songa tenglashtiriladi';
+        } else {
+            hint.textContent = '1 ta slot.';
+        }
+    }
+
+    function updatePointsField(container) {
+        if (!container) return;
+        var pointsInp = container.querySelector('[name$="-points"]');
+        if (!pointsInp) return;
+        var slots = estimateGradableSlots(container);
+        if (slots < 1) slots = 1;
+        ensurePointsHint(container, slots);
+        if (slots > 1) {
+            pointsInp.value = String(slots);
+            pointsInp.readOnly = true;
+            pointsInp.classList.add('mock-points-auto');
+        } else {
+            pointsInp.readOnly = false;
+            pointsInp.classList.remove('mock-points-auto');
+            if (!pointsInp.value || parseInt(pointsInp.value, 10) < 1) pointsInp.value = '1';
+        }
     }
 
     function autofillIfEmpty(container, field, value) {
@@ -217,9 +318,40 @@
         if (el && !String(el.value || '').trim()) el.value = value;
     }
 
+    function ensureImageHint(container) {
+        if (!container || container.querySelector('.mock-image-hint')) return;
+        var row = container.querySelector('.form-row.field-image');
+        if (!row) return;
+        var hint = document.createElement('p');
+        hint.className = 'mock-image-hint';
+        hint.textContent =
+            'Xarita/jadval uchun bitta rasm yetadi — shu blokdagi birinchi savolga yuklang, testda bir marta ko\'rinadi.';
+        row.appendChild(hint);
+    }
+
+    function bindImagePreview(container) {
+        if (!container) return;
+        var input = container.querySelector('input[type="file"][name$="-image"], input[type="file"][name="image"]');
+        if (!input || input.dataset.mockImgPreviewBound) return;
+        input.dataset.mockImgPreviewBound = '1';
+        input.addEventListener('change', function () {
+            var row = input.closest('.form-row.field-image');
+            if (!row) return;
+            var old = row.querySelector('.mock-admin-image-preview');
+            if (old) old.remove();
+            var file = input.files && input.files[0];
+            if (!file || !file.type.match(/^image\//)) return;
+            var img = document.createElement('img');
+            img.className = 'mock-admin-image-preview';
+            img.alt = 'Tanlangan rasm';
+            img.src = URL.createObjectURL(file);
+            row.appendChild(img);
+        });
+    }
+
     function initQuestionForm(container) {
         if (!container) return;
-        var select = container.querySelector('select[name$="-question_type"]');
+        var select = getQuestionTypeSelect(container);
         if (!select) return;
 
         if (!select.dataset.mockQtBound) {
@@ -229,6 +361,7 @@
             });
         }
         toggleByQuestionType(container);
+        bindImagePreview(container);
     }
 
     function runInit() {
@@ -244,7 +377,7 @@
             if (
                 e.target &&
                 e.target.matches &&
-                e.target.matches('select[name$="-question_type"]')
+                e.target.matches('select[name$="-question_type"], select[name="question_type"]')
             ) {
                 var container = getInlineContainer(e.target);
                 toggleByQuestionType(container);
@@ -263,11 +396,24 @@
     var QUICK_TEMPLATES = {
         mcq: {
             question_type: 'mcq',
+            mcq_select_count: 1,
             question_text: 'Choose the correct answer.',
             option_a: 'Option A',
             option_b: 'Option B',
             option_c: 'Option C',
             option_d: 'Option D',
+            correct_answer: 'b',
+        },
+        mcq_multi: {
+            question_type: 'mcq',
+            mcq_select_count: 2,
+            question_text: 'Choose TWO correct answers.',
+            option_a: 'First answer',
+            option_b: 'Second answer',
+            option_c: 'Third answer',
+            option_d: 'Fourth answer',
+            option_e: 'Fifth answer',
+            correct_answer: 'a,c',
         },
         notes: {
             question_type: 'notes_completion',
@@ -306,6 +452,9 @@
     function getTestType() {
         if (window.MOCK_TEST_META && window.MOCK_TEST_META.type) {
             return window.MOCK_TEST_META.type;
+        }
+        if (window.MOCK_QUESTION_TEST_TYPE) {
+            return window.MOCK_QUESTION_TEST_TYPE;
         }
         var el = document.getElementById('id_test_type');
         return el && el.value ? el.value : 'reading';
@@ -351,7 +500,7 @@
         if (!container) return;
         var orderInp = container.querySelector('input[name$="-order"]');
         var partInp = container.querySelector('input[name$="-part_number"]');
-        var typeSelect = container.querySelector('select[name$="-question_type"]');
+        var typeSelect = getQuestionTypeSelect(container);
         var deleteCheck = container.querySelector('input[name$="-DELETE"]');
         if (deleteCheck && deleteCheck.checked) return;
 
@@ -369,11 +518,15 @@
         }
     }
 
+    function getQuestionGroup() {
+        return document.getElementById('questions-group') || document.getElementById('mockquestion_set-group');
+    }
+
     function getInlineRows() {
-        return Array.prototype.slice.call(
-            document.querySelectorAll('#mockquestion_set-group .inline-related')
-        ).filter(function (row) {
-            return row.querySelector('select[name$="-question_type"]');
+        var group = getQuestionGroup();
+        var root = group ? group.querySelectorAll('.inline-related') : document.querySelectorAll('#content-main .inline-related');
+        return Array.prototype.slice.call(root).filter(function (row) {
+            return getQuestionTypeSelect(row);
         });
     }
 
@@ -414,6 +567,8 @@
         var copyFields = [
             'question_type', 'part_number', 'points', 'instruction',
             'option_a', 'option_b', 'option_c', 'option_d',
+            'option_e', 'option_f', 'option_g', 'option_h',
+            'mcq_select_count', 'mcq_options_lines',
             'fill_answers', 'matching_items', 'matching_options_lines',
             'matching_correct', 'word_list_lines', 'explanation', 'audio_timestamp',
         ];
@@ -424,7 +579,7 @@
         setFieldValue(container, 'part_number', partFromOrder(nextOrder, testType));
         setFieldValue(container, 'question_text', '');
         setFieldValue(container, 'correct_answer', '');
-        var typeSelect = container.querySelector('select[name$="-question_type"]');
+        var typeSelect = getQuestionTypeSelect(container);
         if (typeSelect) toggleByQuestionType(container);
         container.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -493,7 +648,7 @@
             setFieldValue(container, key, tpl[key]);
         });
         suggestRowDefaults(container, true);
-        var typeSelect = container.querySelector('select[name$="-question_type"]');
+        var typeSelect = getQuestionTypeSelect(container);
         if (typeSelect) toggleByQuestionType(container);
         container.classList.add('mock-inline-expanded');
         container.classList.remove('mock-inline-collapsed');
@@ -503,7 +658,11 @@
     }
 
     function clickAddQuestion() {
-        var link = document.querySelector('#mockquestion_set-group .add-row a');
+        var group = getQuestionGroup();
+        var link = group ? group.querySelector('.add-row a') : null;
+        if (!link) {
+            link = document.querySelector('#mockquestion_set-group .add-row a');
+        }
         if (link) link.click();
     }
 
@@ -569,7 +728,7 @@
     }
 
     function injectQuickToolbar() {
-        var group = document.getElementById('mockquestion_set-group');
+        var group = getQuestionGroup();
         if (!group || group.querySelector('.mock-quick-toolbar')) return;
 
         var bar = document.createElement('div');
@@ -577,6 +736,7 @@
         bar.innerHTML =
             '<span class="mock-quick-label">Tez qo\'shish:</span>' +
             '<button type="button" class="button mock-tpl-btn" data-tpl="mcq">+ MCQ</button>' +
+            '<button type="button" class="button mock-tpl-btn" data-tpl="mcq_multi">+ MCQ (2 javob)</button>' +
             '<button type="button" class="button mock-tpl-btn" data-tpl="notes">+ Notes</button>' +
             '<button type="button" class="button mock-tpl-btn" data-tpl="tfng">+ T/F/NG</button>' +
             '<button type="button" class="button mock-tpl-btn" data-tpl="ynng">+ Y/N/NG</button>' +
@@ -600,7 +760,7 @@
     function injectListeningAudio() {
         var meta = window.MOCK_TEST_META;
         if (!meta || meta.type !== 'listening' || !meta.audioUrl) return;
-        var group = document.getElementById('mockquestion_set-group');
+        var group = getQuestionGroup();
         if (!group || group.querySelector('.mock-admin-audio-bar')) return;
 
         var wrap = document.createElement('div');
@@ -627,17 +787,29 @@
     function initAll() {
         injectQuickToolbar();
         injectListeningAudio();
-        document
-            .querySelectorAll('#mockquestion_set-group .inline-related, #content-main .inline-related')
-            .forEach(function (el) {
-                if (el.querySelector('select[name$="-question_type"]')) {
-                    enhanceInlineRow(el);
-                }
-            });
+        var group = getQuestionGroup();
+        var inlineSelector = group
+            ? '#questions-group .inline-related, #mockquestion_set-group .inline-related'
+            : '#content-main .inline-related';
+        document.querySelectorAll(inlineSelector).forEach(function (el) {
+            if (el.querySelector('select[name$="-question_type"], select[name="question_type"]')) {
+                enhanceInlineRow(el);
+            }
+        });
         var qForm = document.getElementById('mockquestion_form');
         if (qForm) initQuestionForm(qForm);
         updateQuestionStats();
     }
+
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.id === 'id_test_type') {
+            document.querySelectorAll('#questions-group .inline-related, #mockquestion_set-group .inline-related, #mockquestion_form').forEach(function (el) {
+                if (getQuestionTypeSelect(el) || el.id === 'mockquestion_form') {
+                    toggleByQuestionType(el);
+                }
+            });
+        }
+    });
 
     if (typeof django !== 'undefined' && django.jQuery) {
         django.jQuery(document).on('formset:added', function (event, $row, name) {
@@ -649,16 +821,30 @@
 
     document.addEventListener('input', function (e) {
         if (!e.target || !e.target.matches) return;
-        if (e.target.matches('input[name$="-order"], input[name$="-part_number"], textarea[name$="-question_text"]')) {
+        if (e.target.matches(
+            'input[name$="-order"], input[name$="-part_number"], textarea[name$="-question_text"], ' +
+            'input[name$="-fill_answers"], textarea[name$="-matching_items"], textarea[name$="-matching_correct"]'
+        )) {
             updateQuestionStats();
             var row = getInlineContainer(e.target);
-            if (row) refreshRowCollapse(row);
+            if (row) {
+                refreshRowCollapse(row);
+                updatePointsField(row);
+            }
+        }
+    });
+
+    document.addEventListener('change', function (e) {
+        if (!e.target || !e.target.matches) return;
+        if (e.target.matches('select[name$="-question_type"]')) {
+            var row = getInlineContainer(e.target);
+            if (row) updatePointsField(row);
         }
     });
 
     if (window.MutationObserver) {
         var timer;
-        var group = document.getElementById('mockquestion_set-group');
+        var group = getQuestionGroup();
         if (group) {
             new MutationObserver(function () {
                 clearTimeout(timer);
