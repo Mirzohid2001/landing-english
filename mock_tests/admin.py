@@ -34,8 +34,9 @@ class MockPassageInline(admin.StackedInline):
 class MockQuestionInline(admin.StackedInline):
     model = MockQuestion
     form = MockQuestionAdminForm
-    extra = 1
+    extra = 0
     min_num = 0
+    can_delete = True
     ordering = ["order", "pk"]
     show_change_link = True
     classes = []
@@ -44,7 +45,7 @@ class MockQuestionInline(admin.StackedInline):
         js = ("admin/mock_tests/question_admin.js",)
         css = {"all": ("admin/mock_tests/question_admin.css",)}
     verbose_name = "Savol"
-    verbose_name_plural = "Savollar — tez shablon yoki «Yana bir Savol qo'shish»"
+    verbose_name_plural = "Savollar — «Yana bir Savol qo'shish» yoki tez shablon"
 
     def get_fieldsets(self, request, obj=None):
         return QUESTION_FIELDSETS

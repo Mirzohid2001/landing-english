@@ -6,7 +6,7 @@ from mock_tests.matching_utils import (
     is_multi_matching_type,
     parse_user_matching_answer,
 )
-from mock_tests.mcq_utils import score_mcq
+from mock_tests.mcq_utils import format_mcq_letters, get_mcq_correct_letters, parse_mcq_letters, score_mcq
 
 from .answer_normalizer import (
     collect_acceptable_answers,
@@ -17,12 +17,13 @@ from .answer_normalizer import (
 )
 from .band_score import earned_ratio_to_band
 from .gradable import question_total_points, total_gradable_slots
+from .slots import list_gradable_slots, slot_correct_for_scoring
 
 
 def _scores_as_blanks(question):
     if question.question_type in ('notes_completion', 'table_completion', 'summary_box'):
         return True
-    if question.question_type in ('sentence_completion', 'summary_completion'):
+    if question.question_type in ('sentence_completion', 'summary_completion', 'fill_blank'):
         return question.uses_bracket_blanks()
     return False
 
@@ -41,6 +42,10 @@ def format_answer_display(user_answer):
 
 
 def format_correct_display(question):
+    if question.question_type == 'mcq':
+        letters = get_mcq_correct_letters(question)
+        if letters:
+            return format_mcq_letters(letters)
     if is_multi_matching_type(question.question_type):
         correct = question.correct_answers_json if isinstance(question.correct_answers_json, dict) else {}
         if correct:
@@ -77,60 +82,106 @@ def _sorted_blank_nums(segments):
     return sorted(nums, key=lambda n: int(n) if str(n).isdigit() else str(n))
 
 
+def _summary_word_bank(question):
+    if question.question_type != 'summary_box':
+        return []
+    return question.get_summary_option_list()
+
+
+def _summary_letter_to_word(question, letter):
+    bank = _summary_word_bank(question)
+    if not letter or not bank:
+        return letter
+    s = str(letter).strip().lower()
+    if len(s) == 1 and s.isalpha():
+        idx = ord(s) - ord('a')
+        if 0 <= idx < len(bank):
+            return str(bank[idx])
+    return letter
+
+
+def _summary_acceptable_variants(question, ans):
+    variants = [str(ans)]
+    bank = _summary_word_bank(question)
+    ans_s = str(ans).strip()
+    if not bank:
+        return variants
+    if len(ans_s) == 1 and ans_s.lower().isalpha():
+        word = _summary_letter_to_word(question, ans_s)
+        if word != ans_s:
+            variants.append(str(word))
+    else:
+        for i, word in enumerate(bank):
+            if str(word).strip().lower() == ans_s.lower():
+                variants.append(chr(ord('a') + i))
+                break
+    return variants
+
+
+def format_summary_box_answer_display(question, ans):
+    """Natija: A–I harfi yoki matn."""
+    bank = _summary_word_bank(question)
+    ans_s = str(ans).strip()
+    if not ans_s:
+        return '—'
+    if len(ans_s) == 1 and ans_s.lower().isalpha():
+        return ans_s.lower()
+    for i, word in enumerate(bank):
+        if str(word).strip().lower() == ans_s.lower():
+            return chr(ord('a') + i)
+    return ans_s
+
+
+def _match_summary_blank(question, user_val, correct_ans):
+    user_word = _summary_letter_to_word(question, user_val)
+    acceptable = _summary_acceptable_variants(question, correct_ans)
+    return match_text_answer(user_word, acceptable) or match_text_answer(user_val, acceptable)
+
+
 def score_blanks(question, user_answer):
     """notes_completion, table_completion, summary_box — har blank uchun 0..1."""
-    acceptable = _acceptable_blanks_list(question)
-    blanks = _blank_map_from_user(user_answer)
-    segments = question.get_bracket_segments()
-    if question.question_type == 'summary_box':
-        segments = question.get_summary_segments()
-    blank_nums = _sorted_blank_nums(segments)
-    if not blank_nums:
-        blank_nums = [str(i) for i in range(1, len(acceptable) + 1)]
-
-    if not acceptable:
+    slots = [s for s in list_gradable_slots(question) if s.kind == 'blank']
+    if not slots:
         return 0.0, 0, '', ''
 
+    blanks = _blank_map_from_user(user_answer)
     got = 0
     user_parts = []
-    for idx, ans in enumerate(acceptable):
-        num = blank_nums[idx] if idx < len(blank_nums) else str(idx + 1)
-        user_val = blanks.get(str(num), blanks.get(num, ''))
+    correct_parts = []
+    for slot in slots:
+        user_val = blanks.get(slot.key, blanks.get(int(slot.key) if slot.key.isdigit() else slot.key, ''))
         user_parts.append(str(user_val).strip() or '—')
-        if match_text_answer(user_val, [ans]):
+        raw_correct = slot_correct_for_scoring(question, slot)
+        correct_parts.append(slot.correct)
+        if question.question_type == 'summary_box':
+            ok = _match_summary_blank(question, user_val, raw_correct)
+        else:
+            ok = match_text_answer(user_val, [raw_correct]) if raw_correct else False
+        if ok:
             got += 1
 
-    total = len(acceptable)
+    total = len(slots)
     display_user = '; '.join(user_parts)
-    display_correct = '; '.join(acceptable)
+    display_correct = '; '.join(correct_parts)
     fraction = got / total if total else 0.0
     return fraction, got, display_user, display_correct
 
 
 def _blank_slot_pairs(question):
-    """(blank_num, acceptable_answer) ro'yxati."""
-    acceptable = _acceptable_blanks_list(question)
-    segments = question.get_bracket_segments()
-    if question.question_type == 'summary_box':
-        segments = question.get_summary_segments()
-    blank_nums = _sorted_blank_nums(segments)
-    if not blank_nums:
-        blank_nums = [str(i) for i in range(1, len(acceptable) + 1)]
-    pairs = []
-    for idx, ans in enumerate(acceptable):
-        num = blank_nums[idx] if idx < len(blank_nums) else str(idx + 1)
-        pairs.append((str(num), str(ans)))
-    return pairs
+    """(blank_num, display_correct) — list_gradable_slots ga mos."""
+    return [
+        (slot.key, slot.correct)
+        for slot in list_gradable_slots(question)
+        if slot.kind == 'blank'
+    ]
 
 
 def _matching_slot_pairs(question):
-    correct = question.correct_answers_json if isinstance(question.correct_answers_json, dict) else {}
-    if correct:
-        return [(str(k), str(v)) for k, v in sorted(
-            correct.items(), key=lambda x: int(x[0]) if str(x[0]).isdigit() else str(x[0])
-        )]
-    fields = question.get_matching_fields()
-    return [(str(f['num']), '') for f in fields]
+    return [
+        (slot.key, slot.correct)
+        for slot in list_gradable_slots(question)
+        if slot.kind == 'matching'
+    ]
 
 
 def _question_detail_meta(question):
@@ -146,22 +197,27 @@ def expand_question_details(question, user_answer):
     slot_pt = question_total_points(question) / max(question.gradable_slot_count(), 1)
     rows = []
 
-    if qtype in ('notes_completion', 'table_completion', 'summary_box') or (
-        qtype in ('sentence_completion', 'summary_completion') and question.uses_bracket_blanks()
-    ):
+    blank_slots = [s for s in list_gradable_slots(question) if s.kind == 'blank']
+    if blank_slots:
         blanks = _blank_map_from_user(user_answer)
-        for num, ans in _blank_slot_pairs(question):
-            user_val = blanks.get(num, blanks.get(int(num) if str(num).isdigit() else num, ''))
-            ok = match_text_answer(user_val, [ans])
+        for slot in blank_slots:
+            user_val = blanks.get(slot.key, blanks.get(int(slot.key) if slot.key.isdigit() else slot.key, ''))
+            raw_correct = slot_correct_for_scoring(question, slot)
+            if question.question_type == 'summary_box':
+                ok = _match_summary_blank(question, user_val, raw_correct)
+                user_display = format_summary_box_answer_display(question, user_val) if user_val else '—'
+            else:
+                ok = match_text_answer(user_val, [raw_correct]) if raw_correct else False
+                user_display = str(user_val).strip() or '—'
             rows.append({
-                'order': num,
+                'order': int(slot.display_num) if str(slot.display_num).isdigit() else slot.display_num,
                 'question_order': question.order,
-                'label': f'Savol {question.order} — [{num}]',
+                'label': f'Savol {question.order} — [{slot.display_num}]',
                 'is_correct': ok,
                 'earned_points': round(slot_pt if ok else 0.0, 2),
                 'max_points': round(slot_pt, 2),
-                'user_answer_display': str(user_val).strip() or '—',
-                'correct_answer': ans,
+                'user_answer_display': user_display,
+                'correct_answer': slot.correct,
                 'explanation': question.explanation,
                 **_question_detail_meta(question),
             })
@@ -192,18 +248,42 @@ def expand_question_details(question, user_answer):
     if qtype in MATCHING_TYPES:
         from mock_tests.matching_utils import parse_user_matching_answer
         user_map = parse_user_matching_answer(user_answer)
-        for num, corr in _matching_slot_pairs(question):
-            user_val = user_map.get(num, '')
+        matching_slots = [s for s in list_gradable_slots(question) if s.kind == 'matching']
+        for slot in matching_slots:
+            user_val = user_map.get(slot.key, '')
+            corr = slot.correct
             ok = normalize_choice(user_val) == normalize_choice(corr) if corr else False
             rows.append({
-                'order': num,
+                'order': int(slot.display_num) if str(slot.display_num).isdigit() else slot.display_num,
                 'question_order': question.order,
-                'label': f'Savol {question.order} — {num}',
+                'label': f'Savol {question.order} — {slot.display_num}',
                 'is_correct': ok,
                 'earned_points': round(slot_pt if ok else 0.0, 2),
                 'max_points': round(slot_pt, 2),
                 'user_answer_display': user_val or '—',
                 'correct_answer': corr or '—',
+                'explanation': question.explanation,
+                **_question_detail_meta(question),
+            })
+        return rows
+
+    mcq_slots = [s for s in list_gradable_slots(question) if s.kind == 'mcq_letter']
+    if mcq_slots:
+        user_letters = parse_mcq_letters(user_answer)
+        wrong_picks = [letter for letter in user_letters if letter not in {s.correct for s in mcq_slots if s.correct}]
+        wrong_iter = iter(wrong_picks)
+        for slot in mcq_slots:
+            letter = slot.correct
+            ok = bool(letter) and letter in user_letters
+            rows.append({
+                'order': int(slot.display_num) if str(slot.display_num).isdigit() else slot.display_num,
+                'question_order': question.order,
+                'label': f'Savol {slot.display_num}',
+                'is_correct': ok,
+                'earned_points': round(slot_pt if ok else 0.0, 2),
+                'max_points': round(slot_pt, 2),
+                'user_answer_display': letter if ok else next(wrong_iter, '—'),
+                'correct_answer': letter or '—',
                 'explanation': question.explanation,
                 **_question_detail_meta(question),
             })
@@ -215,7 +295,7 @@ def expand_question_details(question, user_answer):
         user_display = format_answer_display(user_answer)
     else:
         user_display = user_norm
-    if not correct_norm:
+    if not correct_norm or correct_norm == '—':
         correct_norm = format_correct_display(question) or '—'
     q_pt = question_total_points(question)
     rows.append({
@@ -234,20 +314,21 @@ def expand_question_details(question, user_answer):
 
 
 def score_matching_partial(question, user_answer):
-    correct = question.correct_answers_json if isinstance(question.correct_answers_json, dict) else {}
-    if not correct:
-        user_map = parse_user_matching_answer(user_answer)
+    slots = [s for s in list_gradable_slots(question) if s.kind == 'matching']
+    user_map = parse_user_matching_answer(user_answer)
+    if not slots:
         return 0.0, 0, 0, format_answer_display(user_map), ''
 
-    user_map = parse_user_matching_answer(user_answer)
     got = 0
-    for k, v in correct.items():
-        user_val = user_map.get(str(k), '')
-        if normalize_choice(user_val) == normalize_choice(v):
+    for slot in slots:
+        user_val = user_map.get(slot.key, '')
+        if slot.correct and normalize_choice(user_val) == normalize_choice(slot.correct):
             got += 1
-    total = len(correct)
+    total = len(slots)
     fraction = got / total if total else 0.0
-    display_correct = format_correct_display(question) or str(correct)
+    display_correct = format_correct_display(question) or '; '.join(
+        f'{s.key} → {s.correct}' for s in slots if s.correct
+    )
     return fraction, got, total, format_answer_display(user_map), display_correct
 
 
@@ -271,8 +352,8 @@ def check_question_answer(question, user_answer):
 
     if qtype in ('fill_blank', 'sentence_completion', 'summary_completion') and not _scores_as_blanks(question):
         acceptable = collect_acceptable_answers(question)
-        user = normalize_text(user_answer)
-        ok = match_text_answer(user_answer, acceptable)
+        user = normalize_text(user_answer) if not isinstance(user_answer, dict) else format_answer_display(user_answer)
+        ok = match_text_answer(user_answer, acceptable) if not isinstance(user_answer, dict) else False
         return ok, user or '—', ' / '.join(acceptable)
 
     if _scores_as_blanks(question):

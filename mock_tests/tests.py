@@ -597,8 +597,9 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         html = self.client.get(url).content.decode()
         self.assertIn('Choose the correct answers, A-I', html)
         self.assertIn('mock-summary-box', html)
+        self.assertIn('mock-word-bank', html)
+        self.assertIn('mock-summary-select', html)
         self.assertIn('How to use City Cycle', html)
-        self.assertIn('mock-word-list', html)
         self.assertNotIn('listening-sa-text">How to use City Cycle', html)
         self.assertEqual(html.count('How to use City Cycle'), 1)
 
@@ -681,6 +682,43 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         q = form.save()
         self.assertEqual(q.points, 3)
 
+    def test_fill_blank_bracket_scoring_and_result_rows(self):
+        test = MockTest.objects.create(title='Fill multi', test_type='reading', is_active=True)
+        q = MockQuestion.objects.create(
+            test=test,
+            order=3,
+            part_number=1,
+            question_type='fill_blank',
+            question_text='Item [16] then [17] then [18] then [19] then [20].',
+            correct_answers_json=['e', 'f', 'a', 'h', 'b'],
+            points=5,
+        )
+        self.assertEqual(q.gradable_slot_count(), 5)
+        self.assertTrue(q.uses_bracket_blanks())
+
+        frac, got, user_disp, correct_disp = score_blanks(q, {'16': 'e', '17': 'a', '18': '', '19': '', '20': ''})
+        self.assertEqual(got, 1)
+        self.assertAlmostEqual(frac, 0.2)
+
+        attempt = MockAttempt.objects.create(
+            test=test,
+            session_key='fill-multi',
+            answers_json={str(q.pk): {'16': 'e', '17': 'a', '18': '', '19': '', '20': ''}},
+            is_finished=True,
+            correct_count=1,
+            total_questions=5,
+            score_percent=20,
+        )
+        result = score_attempt(attempt, [q])
+        self.assertEqual(len(result['details']), 5)
+        self.assertEqual(result['details'][0]['user_answer_display'], 'e')
+        self.assertEqual(result['details'][0]['correct_answer'], 'e')
+        self.assertNotIn("{'16'", str(result['details']))
+
+        url = reverse('mock_tests:test_take', kwargs={'pk': test.pk})
+        html = self.client.get(url).content.decode()
+        self.assertEqual(html.count('mock-sc-row'), 5)
+
     def test_sentence_completion_bracket_blanks_count_and_render(self):
         test = MockTest.objects.create(title='Reading SC', test_type='reading', is_active=True)
         q = MockQuestion.objects.create(
@@ -703,6 +741,34 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         self.assertEqual(html.count('mock-sc-row'), 3)
         self.assertEqual(html.count('mock-sc-block'), 1)
         self.assertIn('mock-sc-text', html)
+
+    def test_sentence_completion_multiline_underscore_before_bracket(self):
+        test = MockTest.objects.create(title='Reading SC multiline', test_type='reading', is_active=True)
+        q = MockQuestion.objects.create(
+            test=test,
+            order=2,
+            part_number=1,
+            question_type='sentence_completion',
+            instruction='Complete the sentences below with NO MORE THAN ONE WORD from the passage.',
+            question_text=(
+                "7 Sperm whales can't digest the\n"
+                "________ of the squids.\n"
+                "[7]\n"
+                "\n"
+                "8 Sperm whales drive the irritants out of\n"
+                "their intestines by ________.\n"
+                "[8]"
+            ),
+            correct_answers_json=['beaks', 'vomiting'],
+        )
+        rows = q.get_bracket_completion_rows()
+        self.assertEqual(len(rows), 2)
+        self.assertIn('Sperm whales', rows[0]['before'])
+        self.assertIn('squids', rows[0]['after'])
+        html = self.client.get(reverse('mock_tests:test_take', kwargs={'pk': test.pk})).content.decode()
+        self.assertIn('Sperm whales', html)
+        self.assertIn('digest the', html)
+        self.assertIn('of the squids', html)
 
     def test_sentence_completion_bracket_scoring_partial(self):
         test = MockTest.objects.create(title='Reading SC score', test_type='reading', is_active=True)
@@ -849,8 +915,8 @@ class ReadingSummaryBoxTests(TestCase):
         html = self.client.get(url).content.decode()
         self.assertIn('Complete the summary using the list of words', html)
         self.assertIn('mock-summary-box', html)
-        self.assertIn('mock-word-list', html)
-        self.assertIn('mock-word-chip', html)
+        self.assertIn('mock-word-bank', html)
+        self.assertIn('mock-summary-select', html)
         self.assertIn('Many birds migrate to', html)
         self.assertNotIn('mock-sc-block', html)
 
@@ -863,11 +929,16 @@ class ReadingSummaryBoxTests(TestCase):
             question_type='summary_box',
             question_text='Birds fly to [11] and [12].',
             correct_answers_json=['north', 'south'],
+            options_json={'word_list': ['north', 'south', 'east']},
         )
         frac, got, _, correct = score_blanks(q, {'11': 'north', '12': 'wrong'})
         self.assertEqual(got, 1)
         self.assertAlmostEqual(frac, 0.5)
-        self.assertIn('north', correct)
+        self.assertIn('a', correct)
+
+        frac_letters, got_letters, _, _ = score_blanks(q, {'11': 'a', '12': 'b'})
+        self.assertEqual(got_letters, 2)
+        self.assertAlmostEqual(frac_letters, 1.0)
 
 
 class SummaryCompletionTests(TestCase):
@@ -891,6 +962,24 @@ class SummaryCompletionTests(TestCase):
         html = self.client.get(reverse('mock_tests:test_take', kwargs={'pk': test.pk})).content.decode()
         self.assertEqual(html.count('mock-sc-row'), 3)
         self.assertEqual(html.count('mock-sc-block'), 1)
+
+    def test_summary_completion_multiline_underscore_before_bracket(self):
+        test = MockTest.objects.create(title='Summary multiline', test_type='reading', is_active=True)
+        MockQuestion.objects.create(
+            test=test,
+            order=2,
+            part_number=1,
+            question_type='summary_completion',
+            question_text=(
+                "7 Whales eat squid but cannot digest\n"
+                "________ inside their stomachs.\n"
+                "[7]"
+            ),
+            correct_answers_json=['beaks'],
+        )
+        html = self.client.get(reverse('mock_tests:test_take', kwargs={'pk': test.pk})).content.decode()
+        self.assertIn('Whales eat squid', html)
+        self.assertIn('inside their stomachs', html)
 
     def test_summary_completion_bracket_scoring_partial(self):
         test = MockTest.objects.create(title='Summary Comp score', test_type='reading', is_active=True)
@@ -936,6 +1025,68 @@ class SummaryCompletionTests(TestCase):
         self.assertEqual(q.points, 3)
 
 
+class SlotAlignmentTests(TestCase):
+    def test_summary_box_slots_follow_brackets_not_answer_count(self):
+        from mock_tests.services.slots import list_gradable_slots
+        from mock_tests.views import _build_blank_buttons
+
+        test = MockTest.objects.create(title='SB slots', test_type='reading', is_active=True)
+        q = MockQuestion.objects.create(
+            test=test,
+            order=1,
+            question_type='summary_box',
+            question_text='Birds fly to [11] only.',
+            correct_answers_json=['north', 'south', 'east'],
+        )
+        slots = list_gradable_slots(q)
+        self.assertEqual(len(slots), 1)
+        self.assertEqual(slots[0].key, '11')
+        self.assertEqual(q.gradable_slot_count(), 1)
+        buttons, _ = _build_blank_buttons([q])
+        self.assertEqual([b['num'] for b in buttons], [11])
+        self.assertEqual(len(buttons), 1)
+
+    def test_fill_blank_variants_are_single_slot(self):
+        test = MockTest.objects.create(title='Fill variants', test_type='listening', is_active=True)
+        q = MockQuestion.objects.create(
+            test=test,
+            order=2,
+            question_type='fill_blank',
+            question_text='Starts at ______',
+            correct_answers_json=['9', 'nine'],
+        )
+        self.assertEqual(q.gradable_slot_count(), 1)
+
+    def test_matching_slots_follow_ui_fields(self):
+        from mock_tests.services.slots import list_gradable_slots
+        from mock_tests.views import _build_blank_buttons
+
+        test = MockTestFixturesMixin._create_reading_matching_test()
+        q = test.questions.get(question_type='matching_headings')
+        slots = list_gradable_slots(q)
+        self.assertEqual(len(slots), 2)
+        buttons, _ = _build_blank_buttons([q])
+        self.assertEqual(len(buttons), 2)
+        self.assertEqual({b['blank_key'] for b in buttons}, {'14', '15'})
+
+    def test_dock_matches_result_rows_for_sentence_completion(self):
+        from mock_tests.views import _build_blank_buttons
+        from mock_tests.services.scoring import expand_question_details
+
+        test = MockTest.objects.create(title='Align SC', test_type='reading', is_active=True)
+        q = MockQuestion.objects.create(
+            test=test,
+            order=7,
+            question_type='sentence_completion',
+            question_text='One [7]. Two [8]. Three [9].',
+            correct_answers_json=['a', 'b', 'c'],
+        )
+        buttons, _ = _build_blank_buttons([q])
+        rows = expand_question_details(q, {'7': 'a', '8': 'x', '9': 'c'})
+        self.assertEqual(len(buttons), len(rows))
+        self.assertEqual(q.gradable_slot_count(), 3)
+
+
 class AdminEstimateSlotsTests(TestCase):
     def test_estimate_gradable_slots_matches_js_logic(self):
         from mock_tests.question_admin_helpers import estimate_gradable_slots
@@ -949,8 +1100,12 @@ class AdminEstimateSlotsTests(TestCase):
             2,
         )
         self.assertEqual(
-            estimate_gradable_slots('summary_box', fill_answers='a, b, c'),
+            estimate_gradable_slots('summary_box', question_text='A [11]. B [12]. C [13].'),
             3,
+        )
+        self.assertEqual(
+            estimate_gradable_slots('summary_box', fill_answers='a, b, c'),
+            1,
         )
         self.assertEqual(
             estimate_gradable_slots(
@@ -959,7 +1114,10 @@ class AdminEstimateSlotsTests(TestCase):
             ),
             2,
         )
-        self.assertEqual(estimate_gradable_slots('mcq'), 1)
+        self.assertEqual(
+            estimate_gradable_slots('fill_blank', question_text='A [16]. B [17].'),
+            2,
+        )
 
     def test_fix_mock_questions_command_syncs_points(self):
         from io import StringIO
@@ -1004,16 +1162,56 @@ class McqExtendedTests(TestCase):
             correct_answer='a,c',
         )
         from mock_tests.mcq_utils import score_mcq
-        frac_ok, ok, _, _ = score_mcq(q, 'a,c')
+        frac_ok, ok, _, correct_disp = score_mcq(q, 'a,c')
         self.assertTrue(ok)
         self.assertEqual(frac_ok, 1.0)
-        frac_bad, ok_bad, _, _ = score_mcq(q, 'a,b')
-        self.assertFalse(ok_bad)
+        self.assertEqual(correct_disp, 'a,c')
+
+        frac_partial, ok_partial, user_disp, _ = score_mcq(q, 'a,d')
+        self.assertFalse(ok_partial)
+        self.assertEqual(frac_partial, 0.5)
+        self.assertEqual(user_disp, 'a,d')
+
+        frac_one, ok_one, _, _ = score_mcq(q, 'a,b')
+        self.assertFalse(ok_one)
+        self.assertEqual(frac_one, 0.5)
+
+    def test_mcq_two_answers_result_rows(self):
+        from mock_tests.services.scoring import expand_question_details, score_attempt
+        from mock_tests.models import MockAttempt
+
+        test = MockTest.objects.create(title='MCQ result', test_type='reading', is_active=True)
+        q = MockQuestion.objects.create(
+            test=test, order=5, question_type='mcq', mcq_select_count=2,
+            question_text='Choose two',
+            option_a='A', option_b='B', option_c='C', option_d='D',
+            correct_answer='a,c', points=2,
+        )
+        rows = expand_question_details(q, 'a,d')
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]['order'], 5)
+        self.assertEqual(rows[1]['order'], 6)
+        self.assertEqual(rows[0]['label'], 'Savol 5')
+        self.assertEqual(rows[1]['label'], 'Savol 6')
+        self.assertTrue(rows[0]['is_correct'])
+        self.assertEqual(rows[0]['correct_answer'], 'a')
+        self.assertFalse(rows[1]['is_correct'])
+        self.assertEqual(rows[1]['correct_answer'], 'c')
+        self.assertEqual(rows[1]['user_answer_display'], 'd')
+
+        attempt = MockAttempt.objects.create(
+            test=test, session_key='mcq-res', answers_json={str(q.id): 'a,d'}, is_finished=True,
+        )
+        result = score_attempt(attempt, [q])
+        self.assertEqual(result['earned_points'], 1.0)
+        detail_rows = [d for d in result['details'] if d['question_id'] == q.id]
+        self.assertEqual(len(detail_rows), 2)
+        self.assertTrue(any(d['correct_answer'] == 'c' for d in detail_rows))
 
     def test_mcq_multi_renders_checkboxes(self):
         test = MockTest.objects.create(title='MCQ UI', test_type='reading', is_active=True)
         MockQuestion.objects.create(
-            test=test, order=1, question_type='mcq', mcq_select_count=2,
+            test=test, order=24, question_type='mcq', mcq_select_count=2,
             question_text='Choose two',
             option_a='A', option_b='B', option_c='C', option_d='D',
             correct_answer='a,b',
@@ -1022,6 +1220,22 @@ class McqExtendedTests(TestCase):
         html = Client().get(url).content.decode()
         self.assertIn('mock-mcq-check', html)
         self.assertIn('2 ta javob tanlang', html)
+        self.assertIn('mock-q-num-box--range', html)
+        self.assertIn('24-25', html)
+
+    def test_mcq_multi_order_display_and_dock(self):
+        from mock_tests.views import _build_blank_buttons
+
+        test = MockTest.objects.create(title='MCQ dock', test_type='listening', is_active=True)
+        q = MockQuestion.objects.create(
+            test=test, order=24, part_number=1, question_type='mcq', mcq_select_count=2,
+            question_text='Choose TWO', option_a='A', option_b='B', option_c='C',
+            correct_answer='a,c',
+        )
+        self.assertEqual(q.get_order_display_label(), '24-25')
+        self.assertEqual(q.gradable_slot_count(), 2)
+        buttons, _ = _build_blank_buttons([q])
+        self.assertEqual([b['num'] for b in buttons], [24, 25])
 
     def test_mcq_admin_validates_answer_count(self):
         from mock_tests.admin_forms import MockQuestionAdminForm
@@ -1057,3 +1271,159 @@ class StatsTests(MockTestFixturesMixin, TestCase):
         self.assertEqual(stats['finished_attempts'], 2)
         self.assertEqual(stats['in_progress'], 1)
         self.assertEqual(stats['total_attempts'], 3)
+
+
+class AdminFillValidationTests(TestCase):
+    def _base_form_data(self, test, **overrides):
+        data = {
+            'test': test.pk,
+            'order': 3,
+            'part_number': 1,
+            'question_type': 'fill_blank',
+            'points': 1,
+        }
+        data.update(overrides)
+        return data
+
+    def test_fill_blank_bracket_count_must_match_answers(self):
+        from mock_tests.admin_forms import MockQuestionAdminForm
+
+        test = MockTest.objects.create(title='Admin FB brackets', test_type='reading', is_active=True)
+        form = MockQuestionAdminForm(data=self._base_form_data(
+            test,
+            question_text='Item [16] then [17] then [18].',
+            fill_answers='e, f',
+        ))
+        self.assertFalse(form.is_valid())
+        self.assertIn('fill_answers', form.errors)
+
+    def test_fill_blank_comma_variants_without_brackets_valid(self):
+        from mock_tests.admin_forms import MockQuestionAdminForm
+
+        test = MockTest.objects.create(title='Admin FB variants', test_type='listening', is_active=True)
+        form = MockQuestionAdminForm(data=self._base_form_data(
+            test,
+            question_text='Starts at ______',
+            fill_answers='9, nine',
+        ))
+        self.assertTrue(form.is_valid(), form.errors)
+        q = form.save()
+        self.assertEqual(q.correct_answers_json, ['9', 'nine'])
+        self.assertEqual(q.gradable_slot_count(), 1)
+
+    def test_fill_blank_rejects_answers_without_question_text(self):
+        from mock_tests.admin_forms import MockQuestionAdminForm
+
+        test = MockTest.objects.create(title='Admin FB empty text', test_type='reading', is_active=True)
+        form = MockQuestionAdminForm(data=self._base_form_data(
+            test,
+            question_text='',
+            fill_answers='answer',
+        ))
+        self.assertFalse(form.is_valid())
+        self.assertIn('question_text', form.errors)
+
+    def test_fill_blank_requires_answers_when_question_text_present(self):
+        from mock_tests.admin_forms import MockQuestionAdminForm
+
+        test = MockTest.objects.create(title='Admin FB no answers', test_type='reading', is_active=True)
+        form = MockQuestionAdminForm(data=self._base_form_data(
+            test,
+            question_text='The answer is ______',
+            fill_answers='',
+        ))
+        self.assertFalse(form.is_valid())
+        self.assertIn('fill_answers', form.errors)
+
+    def test_summary_box_requires_brackets_in_question_text(self):
+        from mock_tests.admin_forms import MockQuestionAdminForm
+
+        test = MockTest.objects.create(title='Admin SB', test_type='reading', is_active=True)
+        form = MockQuestionAdminForm(data={
+            'test': test.pk,
+            'order': 1,
+            'part_number': 1,
+            'question_type': 'summary_box',
+            'question_text': 'No brackets here.',
+            'fill_answers': 'north',
+            'word_list_lines': 'north\nsouth',
+            'points': 1,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('question_text', form.errors)
+
+    def test_validate_fill_helpers_parse_and_brackets(self):
+        from mock_tests.question_admin_helpers import (
+            find_bracket_numbers,
+            parse_fill_answers,
+            validate_fill_type_fields,
+        )
+
+        self.assertEqual(parse_fill_answers('9, nine'), ['9', 'nine'])
+        self.assertEqual(find_bracket_numbers('A [7]. B [8].'), ['7', '8'])
+        errors = validate_fill_type_fields(
+            'fill_blank',
+            question_text='One [1]. Two [2].',
+            fill_answers='only',
+        )
+        self.assertIn('fill_answers', errors)
+        self.assertEqual(
+            validate_fill_type_fields(
+                'fill_blank',
+                question_text='Starts at ______',
+                fill_answers='9, nine',
+            ),
+            {},
+        )
+
+
+class ReadingParserBlankLineTests(TestCase):
+    """Bo'sh qator — blok chegarasi; intro `instruction` maydonida bo'lishi kerak."""
+
+    def test_blank_line_stops_backward_scan_intro_not_in_row(self):
+        test = MockTest.objects.create(title='Reading blank line', test_type='reading', is_active=True)
+        q = MockQuestion.objects.create(
+            test=test,
+            order=7,
+            part_number=1,
+            question_type='sentence_completion',
+            instruction='Complete the sentences below with NO MORE THAN ONE WORD from the passage.',
+            question_text=(
+                'The sperm whale is a large mammal.\n'
+                '\n'
+                "7 Sperm whales can't digest the\n"
+                '________ of the squids.\n'
+                '[7]\n'
+                '\n'
+                '8 Sperm whales drive the irritants out of\n'
+                'their intestines by ________.\n'
+                '[8]'
+            ),
+            correct_answers_json=['beaks', 'vomiting'],
+        )
+        rows = q.get_bracket_completion_rows()
+        self.assertEqual(len(rows), 2)
+        self.assertNotIn('large mammal', rows[0]['before'])
+        self.assertIn('Sperm whales', rows[0]['before'])
+        self.assertIn('squids', rows[0]['after'])
+        self.assertNotIn('large mammal', rows[1]['before'])
+        self.assertIn('irritants', rows[1]['before'])
+
+    def test_take_page_shows_instruction_not_question_text_intro(self):
+        test = MockTest.objects.create(title='Reading intro render', test_type='reading', is_active=True)
+        MockQuestion.objects.create(
+            test=test,
+            order=7,
+            part_number=1,
+            question_type='sentence_completion',
+            instruction='Background context for questions 7-8.',
+            question_text=(
+                "7 Sperm whales can't digest the\n"
+                '________ of the squids.\n'
+                '[7]'
+            ),
+            correct_answers_json=['beaks'],
+        )
+        html = self.client.get(reverse('mock_tests:test_take', kwargs={'pk': test.pk})).content.decode()
+        self.assertIn('Background context', html)
+        self.assertIn('digest the', html)

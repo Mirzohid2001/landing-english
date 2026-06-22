@@ -1,4 +1,5 @@
 """Testdagi baholanadigan birliklar (blank, matching qatori) — savol emas."""
+from .slots import list_gradable_slots
 
 
 def total_gradable_slots(questions):
@@ -13,8 +14,8 @@ def question_total_points(question):
 
 
 def count_filled_slots(question, user_answer):
-    slots = question.gradable_slot_count()
-    if slots <= 1:
+    slots = list_gradable_slots(question)
+    if len(slots) == 1 and slots[0].kind == 'single':
         if user_answer is None or user_answer == '':
             return 0
         if isinstance(user_answer, dict):
@@ -24,31 +25,13 @@ def count_filled_slots(question, user_answer):
     if not isinstance(user_answer, dict):
         return 0
 
-    if question.question_type in ('notes_completion', 'table_completion', 'summary_box', 'sentence_completion', 'summary_completion'):
-        blank_nums = [
-            s['num'] for s in question.get_bracket_segments() if s['type'] == 'blank'
-        ]
-        if not blank_nums and question.question_type == 'summary_box':
-            blank_nums = [
-                s['num'] for s in question.get_summary_segments() if s['type'] == 'blank'
-            ]
-        if not blank_nums:
-            answers = question.correct_answers_json or []
-            blank_nums = [str(i) for i in range(1, len(answers) + 1)]
-        return sum(
-            1 for num in blank_nums
-            if str(user_answer.get(str(num), user_answer.get(num, ''))).strip()
-        )
-
-    if question.is_multi_matching():
-        correct = question.correct_answers_json if isinstance(question.correct_answers_json, dict) else {}
-        keys = list(correct.keys()) if correct else [f['num'] for f in question.get_matching_fields()]
-        return sum(
-            1 for k in keys
-            if str(user_answer.get(str(k), user_answer.get(k, ''))).strip()
-        )
-
-    return sum(1 for v in user_answer.values() if v and str(v).strip())
+    filled = 0
+    for slot in slots:
+        if slot.kind in ('blank', 'matching'):
+            val = user_answer.get(slot.key, user_answer.get(int(slot.key) if slot.key.isdigit() else slot.key, ''))
+            if val and str(val).strip():
+                filled += 1
+    return filled
 
 
 def count_filled_slots_for_test(questions, answers):

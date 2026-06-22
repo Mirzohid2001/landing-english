@@ -11,8 +11,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
 try:
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
@@ -21,32 +19,27 @@ try:
 except ImportError:
     SELENIUM_AVAILABLE = False
 
+from mock_tests.e2e_helpers import create_chrome_driver, quit_driver
 from mock_tests.tests import MockTestFixturesMixin
-
-
-def _chrome_driver():
-    opts = Options()
-    opts.add_argument('--headless=new')
-    opts.add_argument('--no-sandbox')
-    opts.add_argument('--disable-dev-shm-usage')
-    opts.add_argument('--window-size=1280,900')
-    return webdriver.Chrome(options=opts)
 
 
 @unittest.skipUnless(SELENIUM_AVAILABLE, 'selenium not installed (pip install -r requirements-dev.txt)')
 class ListeningFlowE2ETests(StaticLiveServerTestCase, MockTestFixturesMixin):
     """Brauzer orqali listening test oqimini tekshiradi."""
 
+    driver = None
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.driver = _chrome_driver()
+        cls.driver = create_chrome_driver('1280,900')
         cls.driver.implicitly_wait(3)
         cls.wait = WebDriverWait(cls.driver, 12)
 
     @classmethod
     def tearDownClass(cls):
-        cls.driver.quit()
+        quit_driver(cls.driver)
+        cls.driver = None
         super().tearDownClass()
 
     def setUp(self):
@@ -195,16 +188,19 @@ class ListeningFlowE2ETests(StaticLiveServerTestCase, MockTestFixturesMixin):
 class McqExtendedE2ETests(StaticLiveServerTestCase, MockTestFixturesMixin):
     """8 variantli va 2 javobli MCQ brauzer oqimi."""
 
+    driver = None
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.driver = _chrome_driver()
+        cls.driver = create_chrome_driver('1280,900')
         cls.driver.implicitly_wait(3)
         cls.wait = WebDriverWait(cls.driver, 12)
 
     @classmethod
     def tearDownClass(cls):
-        cls.driver.quit()
+        quit_driver(cls.driver)
+        cls.driver = None
         super().tearDownClass()
 
     def setUp(self):

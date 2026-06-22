@@ -3,7 +3,7 @@
 
 {% block title %}{{ test.title }} - Test{% endblock %}
 {% block body_class %}mock-exam-body{% if test.test_type == 'listening' %} mock-exam-body--listening{% endif %}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=19">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=21">{% endblock %}
 
 {% block content %}
 <div class="mock-exam-ambient" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -241,7 +241,7 @@
                         </div>
                         {% endif %}
                         <article class="mock-q-card" id="q-card-{{ question.id }}" data-qid="{{ question.id }}" data-order="{{ question.order }}">
-                            {% if question.uses_bracket_blanks %}
+                            {% if question.uses_bracket_blanks or question.question_type == 'summary_box' %}
                             <div class="mock-q-main mock-q-main--full">
                                 {% include 'mock_tests/_question_fields.html' with question=question %}
                             </div>
@@ -270,7 +270,7 @@
                             </div>
                             {% else %}
                             <div class="mock-q-row">
-                                <span class="mock-q-num-box">{{ question.order }}</span>
+                                <span class="mock-q-num-box{% if question.is_multi_answer_mcq %} mock-q-num-box--range{% endif %}">{{ question.get_order_display_label }}</span>
                                 <div class="mock-q-main">
                                     {% if question.question_type != 'summary_box' %}
                                     <div class="mock-q-text selectable-text">{{ question.question_text|linebreaks }}</div>
@@ -482,4 +482,4 @@
 {{ saved_answers|json_script:"saved-answers-data" }}
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'js/mock-test-take.js' %}?v=13"></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/mock-test-take.js' %}?v=14"></script>{% endblock %}

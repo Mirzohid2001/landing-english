@@ -3,11 +3,26 @@ import re
 
 BRACKET_IN_TEXT = re.compile(r'\[\d+\]')
 BRACKET_SLOT = re.compile(r'\[\d+\]')
+BRACKET_NUM_CAPTURE = re.compile(r'\[(\d+)\]')
 
 FILL_MULTI_TYPES = (
     'summary_box',
     'notes_completion',
     'table_completion',
+    'sentence_completion',
+    'summary_completion',
+    'fill_blank',
+)
+
+BRACKET_REQUIRED_TYPES = (
+    'summary_completion',
+    'summary_box',
+    'notes_completion',
+    'table_completion',
+)
+
+VARIANT_COMMA_TYPES = (
+    'fill_blank',
     'sentence_completion',
     'summary_completion',
 )
@@ -23,6 +38,25 @@ MULTI_MATCHING_TYPES = (
 
 def count_bracket_slots(text):
     return len(BRACKET_SLOT.findall(text or ''))
+
+
+def find_bracket_numbers(text):
+    """Matndagi [N] raqamlari (tartiblangan, takrorlanmas)."""
+    nums = BRACKET_NUM_CAPTURE.findall(text or '')
+    seen = set()
+    ordered = []
+    for num in nums:
+        if num not in seen:
+            seen.add(num)
+            ordered.append(num)
+    return sorted(ordered, key=lambda n: int(n) if str(n).isdigit() else str(n))
+
+
+def parse_fill_answers(text):
+    """Vergul/yangi qator bilan ajratilgan javoblar ro'yxati."""
+    if not text or not str(text).strip():
+        return []
+    return [p.strip() for p in str(text).replace('\n', ',').split(',') if p.strip()]
 
 
 def count_comma_answers(text):
@@ -43,9 +77,6 @@ def estimate_gradable_slots(
     if question_type in FILL_MULTI_TYPES:
         if brackets:
             return max(1, brackets)
-        comma = count_comma_answers(fill_answers)
-        if comma:
-            return comma
         return 1
     if question_type in MULTI_MATCHING_TYPES:
         corr_lines = [line for line in (matching_correct or '').split('\n') if line.strip()]
@@ -113,6 +144,48 @@ def sync_points_from_slots(question):
         question.points = slots
         return True
     return False
+
+
+def validate_fill_type_fields(question_type, question_text='', fill_answers=''):
+    """
+    Admin: fill/summary turlari uchun maydon xatolari.
+    Vergul — bracket bo'lmaganda sinonim variantlar (bir slot), bracket bo'lsa tartib.
+    """
+    errors = {}
+    qtype = question_type or ''
+    qtext = (question_text or '').strip()
+    fill_text = (fill_answers or '').strip()
+    brackets = find_bracket_numbers(qtext)
+    has_text = bool(qtext)
+
+    if qtype not in FILL_MULTI_TYPES:
+        return errors
+
+    if fill_text and not has_text:
+        errors['question_text'] = "Savol matni bo'sh bo'lmasligi kerak."
+        return errors
+
+    if qtype in BRACKET_REQUIRED_TYPES and has_text and not brackets:
+        errors['question_text'] = "Matnda kamida bitta [1] ko'rinishi kerak."
+
+    if not has_text:
+        return errors
+
+    answers = parse_fill_answers(fill_text)
+    if not answers:
+        errors['fill_answers'] = "To'g'ri javoblarni kiriting."
+        return errors
+
+    if brackets:
+        if len(answers) != len(brackets):
+            errors['fill_answers'] = (
+                f"Javoblar soni ({len(answers)}) bracket soni "
+                f"({len(brackets)}) bilan mos kelishi kerak."
+            )
+    elif qtype in VARIANT_COMMA_TYPES:
+        pass
+
+    return errors
 
 
 def sanitize_block_instruction(instruction, questions):

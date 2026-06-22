@@ -31,8 +31,16 @@
             if (!answers[qid] || typeof answers[qid] !== 'object') answers[qid] = {};
             if (sel.value) answers[qid][num] = sel.value;
         });
+        exam.querySelectorAll('.mock-summary-select').forEach((sel) => {
+            const qid = sel.dataset.questionId;
+            const num = sel.dataset.blank;
+            if (!qid || !num) return;
+            if (!answers[qid] || typeof answers[qid] !== 'object') answers[qid] = {};
+            if (sel.value) answers[qid][num] = sel.value;
+        });
         exam.querySelectorAll('[data-question-id]').forEach((el) => {
             if (el.classList.contains('mock-matching-select')) return;
+            if (el.classList.contains('mock-summary-select')) return;
             if (el.classList.contains('mock-mcq-check')) return;
             const qid = el.dataset.questionId;
             if (el.classList.contains('mock-inline-input') && el.dataset.blank) {
@@ -259,10 +267,14 @@
         Object.entries(savedAnswers).forEach(([qid, value]) => {
             if (value && typeof value === 'object' && !Array.isArray(value)) {
                 Object.entries(value).forEach(([blankNum, blankVal]) => {
-                    const sel = exam.querySelector(
+                    const matchSel = exam.querySelector(
                         `.mock-matching-select[data-question-id="${qid}"][data-match-num="${blankNum}"]`
                     );
-                    if (sel) { sel.value = blankVal; return; }
+                    if (matchSel) { matchSel.value = blankVal; return; }
+                    const summarySel = exam.querySelector(
+                        `.mock-summary-select[data-question-id="${qid}"][data-blank="${blankNum}"]`
+                    );
+                    if (summarySel) { summarySel.value = blankVal; return; }
                     const input = exam.querySelector(
                         `input.mock-inline-input[data-question-id="${qid}"][data-blank="${blankNum}"]`
                     );
@@ -395,6 +407,14 @@
         setActiveNavBtn(btn);
         updateCurrentQuestionLabel(btn.dataset.order || btn.textContent.trim());
         if (btn.dataset.blank) {
+            const summarySel = exam.querySelector(
+                `.mock-summary-select[data-question-id="${btn.dataset.qid}"][data-blank="${btn.dataset.blank}"]`
+            );
+            if (summarySel) {
+                summarySel.focus();
+                summarySel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
             const sel = exam.querySelector(
                 `.mock-matching-select[data-question-id="${btn.dataset.qid}"][data-match-num="${btn.dataset.blank}"]`
             );
@@ -823,7 +843,10 @@
 
     exam.addEventListener('change', updateProgress);
     exam.addEventListener('change', (e) => {
-        if (e.target && e.target.classList && e.target.classList.contains('mock-matching-select')) {
+        if (e.target && e.target.classList && (
+            e.target.classList.contains('mock-matching-select') ||
+            e.target.classList.contains('mock-summary-select')
+        )) {
             updateProgress();
         }
     });

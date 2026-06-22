@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from .models import MockTest, MockAttempt
 from .services.gradable import total_gradable_slots
+from .services.slots import list_gradable_slots
 from .services.scoring import score_attempt
 
 
@@ -70,29 +71,19 @@ def _build_blank_buttons(questions, start_num=0):
         })
 
     for q in sorted(questions, key=lambda x: (x.order, x.pk)):
-        if q.question_type == 'summary_box':
-            segs = [s for s in q.get_summary_segments() if s['type'] == 'blank']
-            if segs:
-                for seg in segs:
-                    _append(q.pk, True, seg['num'])
+        slots = list_gradable_slots(q)
+        if len(slots) == 1 and slots[0].kind == 'single':
+            disp = slots[0].display_num
+            order_num = int(disp) if str(disp).isdigit() else disp
+            _append(q.pk, False, question_order=order_num)
+            continue
+        for slot in slots:
+            if slot.kind in ('blank', 'matching'):
+                _append(q.pk, True, slot.key)
             else:
-                _append(q.pk, False)
-        elif q.is_multi_matching():
-            fields = q.get_matching_fields()
-            if fields:
-                for mf in fields:
-                    _append(q.pk, True, str(mf['num']))
-            else:
-                _append(q.pk, False)
-        elif q.question_type in ('notes_completion', 'table_completion', 'sentence_completion', 'summary_completion'):
-            blanks = [s for s in q.get_bracket_segments() if s['type'] == 'blank']
-            if blanks:
-                for seg in blanks:
-                    _append(q.pk, True, seg['num'])
-            else:
-                _append(q.pk, False)
-        else:
-            _append(q.pk, False, question_order=q.order)
+                num = slot.display_num
+                order_num = int(num) if str(num).isdigit() else num
+                _append(q.pk, False, question_order=order_num)
     return buttons, seq_fallback
 
 

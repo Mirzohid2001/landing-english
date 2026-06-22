@@ -42,7 +42,7 @@
     {% elif question.question_type == 'mcq' or question.question_type == 'true_false_not_given' or question.question_type == 'yes_no_not_given' or question.question_type == 'matching' %}
         <div class="listening-mcq-block">
             <div class="listening-mcq-stem selectable-text">
-                <span class="inline-blank-num">{{ question.order }}</span>
+                <span class="inline-blank-num{% if question.is_multi_answer_mcq %} inline-blank-num--range{% endif %}">{{ question.get_order_display_label }}</span>
                 <span>{{ question.question_text }}</span>
             </div>
             {% include 'mock_tests/_question_fields.html' with question=question %}

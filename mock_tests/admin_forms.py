@@ -6,7 +6,12 @@ import re
 from django import forms
 from django.core.exceptions import ValidationError
 
-from mock_tests.question_admin_helpers import fix_misplaced_instruction, sync_points_from_slots
+from mock_tests.question_admin_helpers import (
+    fix_misplaced_instruction,
+    parse_fill_answers,
+    sync_points_from_slots,
+    validate_fill_type_fields,
+)
 from mock_tests.matching_utils import MATCHING_TYPES, parse_matching_correct, parse_matching_items, parse_matching_options
 from mock_tests.mcq_utils import parse_mcq_letters, parse_mcq_options_lines
 from mock_tests.models import MockPassage, MockQuestion
@@ -15,7 +20,7 @@ QUESTION_TYPE_RULES = {
     "mcq": "Variant A–H ni to'ldiring. «Tanlash soni» 2 bo'lsa — «To'g'ri javob»: a,c (vergul bilan).",
     "true_false_not_given": "Odatda A=True, B=False, C=Not Given. To'g'ri javob: a, b yoki c.",
     "yes_no_not_given": "Odatda A=Yes, B=No, C=Not Given. To'g'ri javob: a, b yoki c.",
-    "fill_blank": "Savol matnida ______ yoki [1] ishlatishingiz mumkin. «To'g'ri javoblar» — vergul bilan.",
+    "fill_blank": "Savol matnida ______ yoki [1] ishlatishingiz mumkin. Qavs yo'q bo'lsa — vergul sinonimlar (9, nine). Qavs bo'lsa — har [N] uchun alohida javob.",
     "sentence_completion": "Bitta gap: ______ va bitta javob. Bir nechta gap: matnda [7], [8] — javoblar vergul bilan tartibda.",
     "summary_completion": "Matnda [1], [2] bo'lsa, javoblarni tartib bilan vergul bilan yozing.",
     "notes_completion": "Listening notes: matnda [1], [2]. Javoblar vergul bilan. Xarita uchun rasm — blokdagi birinchi savolga.",
@@ -233,9 +238,7 @@ class MockQuestionAdminForm(forms.ModelForm):
 
     @staticmethod
     def _parse_fill_answers(text):
-        if not text or not str(text).strip():
-            return []
-        return [p.strip() for p in str(text).replace("\n", ",").split(",") if p.strip()]
+        return parse_fill_answers(text)
 
     @staticmethod
     def _parse_word_list(text):
@@ -271,6 +274,14 @@ class MockQuestionAdminForm(forms.ModelForm):
             cleaned["correct_answers_json"] = self._parse_fill_answers(fill_text)
             if cleaned["correct_answers_json"] and not cleaned.get("correct_answer"):
                 cleaned["correct_answer"] = cleaned["correct_answers_json"][0]
+
+        fill_errors = validate_fill_type_fields(
+            qtype,
+            cleaned.get("question_text") or "",
+            fill_text,
+        )
+        if fill_errors:
+            raise ValidationError(fill_errors)
 
         if qtype == "matching" and match_opts:
             options_json["options"] = parse_matching_options(match_opts)
@@ -354,50 +365,6 @@ class MockQuestionAdminForm(forms.ModelForm):
                 raise ValidationError(
                     f"Kamida {select_count + 1} ta variant kerak ({select_count} ta javob tanlanadi)."
                 )
-
-        bracket_types = (
-            "summary_completion", "summary_box", "notes_completion", "table_completion",
-        )
-        if has_text and qtype in bracket_types:
-            qtext = cleaned.get("question_text") or ""
-            brackets = re.findall(r"\[(\d+)\]", qtext)
-            if not brackets:
-                raise ValidationError({
-                    "question_text": "Matnda kamida bitta [1] ko'rinishi kerak.",
-                })
-            answers = cleaned.get("correct_answers_json")
-            if not answers and fill_text:
-                answers = self._parse_fill_answers(fill_text)
-            if not answers:
-                raise ValidationError({
-                    "fill_answers": "Bracket soniga mos javoblarni vergul bilan kiriting.",
-                })
-            if len(answers) != len(brackets):
-                raise ValidationError({
-                    "fill_answers": (
-                        f"Javoblar soni ({len(answers)}) bracket soni "
-                        f"({len(brackets)}) bilan mos kelishi kerak."
-                    ),
-                })
-
-        if has_text and qtype in ("sentence_completion", "summary_completion"):
-            qtext = cleaned.get("question_text") or ""
-            brackets = re.findall(r"\[(\d+)\]", qtext)
-            if brackets:
-                answers = cleaned.get("correct_answers_json")
-                if not answers and fill_text:
-                    answers = self._parse_fill_answers(fill_text)
-                if not answers:
-                    raise ValidationError({
-                        "fill_answers": "Bracket soniga mos javoblarni vergul bilan kiriting.",
-                    })
-                if len(answers) != len(brackets):
-                    raise ValidationError({
-                        "fill_answers": (
-                            f"Javoblar soni ({len(answers)}) bracket soni "
-                            f"({len(brackets)}) bilan mos kelishi kerak."
-                        ),
-                    })
 
         test = cleaned.get("test") or getattr(self.instance, "test", None)
         if test and test.test_type == "reading" and qtype in ("notes_completion", "table_completion"):

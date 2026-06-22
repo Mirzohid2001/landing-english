@@ -11,7 +11,7 @@ from .matching_utils import (
     is_multi_matching_type,
     matching_ref_title,
 )
-from .mcq_utils import MCQ_LETTERS
+from .mcq_utils import MCQ_LETTERS, get_mcq_correct_letters
 
 
 class MockTest(models.Model):
@@ -204,6 +204,16 @@ class MockQuestion(models.Model):
             count = 1
         return max(1, min(count, 3))
 
+    def is_multi_answer_mcq(self):
+        return self.question_type == 'mcq' and self.get_mcq_select_count() > 1
+
+    def get_order_display_label(self):
+        """Ko'p javobli MCQ: 24-25 kabi IELTS oralig'i."""
+        slots = self.gradable_slot_count()
+        if self.is_multi_answer_mcq() and slots > 1:
+            return f'{self.order}-{self.order + slots - 1}'
+        return str(self.order)
+
     def get_tfng_options(self):
         return [
             {'letter': 'a', 'text': self.option_a or 'True'},
@@ -283,7 +293,7 @@ class MockQuestion(models.Model):
         """[1], [2] bo'sh joylari — fill turlari."""
         if self.question_type not in (
             'summary_box', 'notes_completion', 'table_completion',
-            'sentence_completion', 'summary_completion',
+            'sentence_completion', 'summary_completion', 'fill_blank',
         ):
             return []
         pattern = re.compile(r'\[(\d+)\]')
@@ -299,35 +309,15 @@ class MockQuestion(models.Model):
         return segments
 
     def gradable_slot_count(self):
-        if self.is_multi_matching():
-            correct = self.correct_answers_json if isinstance(self.correct_answers_json, dict) else {}
-            if correct:
-                return len(correct)
-            return len(self.get_matching_fields())
-        if self.question_type == 'summary_box':
-            answers = self.correct_answers_json or []
-            if isinstance(answers, list) and answers:
-                return len(answers)
-            return len([s for s in self.get_bracket_segments() if s['type'] == 'blank']) or 1
-        if self.question_type in ('notes_completion', 'table_completion', 'sentence_completion', 'summary_completion'):
-            answers = self.correct_answers_json or []
-            blanks = [s for s in self.get_bracket_segments() if s['type'] == 'blank']
-            n_answers = len(answers) if isinstance(answers, list) and answers else 0
-            n_blanks = len(blanks)
-            if n_blanks and n_answers:
-                return max(n_blanks, n_answers)
-            if n_blanks:
-                return n_blanks
-            if n_answers:
-                return n_answers
-            return 1
-        return 1
+        from mock_tests.services.slots import gradable_slot_count as _slot_count
+
+        return _slot_count(self)
 
     def uses_bracket_blanks(self):
         """Matnda [7], [8] kabi inline bo'sh joylar bormi (summary_box dan tashqari)."""
         if self.question_type in (
             'notes_completion', 'table_completion',
-            'sentence_completion', 'summary_completion',
+            'sentence_completion', 'summary_completion', 'fill_blank',
         ):
             return bool([s for s in self.get_bracket_segments() if s['type'] == 'blank'])
         return False
@@ -337,18 +327,56 @@ class MockQuestion(models.Model):
         if not self.uses_bracket_blanks():
             return []
         pattern = re.compile(r'\[(\d+)\]')
+        underscore = re.compile(r'_{3,}')
+        lines = (self.question_text or '').split('\n')
         rows = []
-        for line in (self.question_text or '').split('\n'):
-            line = line.strip()
-            if not line or not pattern.search(line):
+
+        def _clean_display(text):
+            return re.sub(r'\s+', ' ', (text or '').strip())
+
+        def _strip_leading_num(text):
+            return re.sub(r'^\d+\s+', '', (text or '').strip(), count=1)
+
+        def _split_underscore_block(block):
+            block = _strip_leading_num(block)
+            match = underscore.search(block)
+            if match:
+                return (
+                    _clean_display(block[:match.start()]),
+                    _clean_display(block[match.end():]),
+                )
+            return _clean_display(block), ''
+
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if not stripped:
                 continue
-            matches = list(pattern.finditer(line))
-            last = 0
-            for i, match in enumerate(matches):
-                before = line[last:match.start()].strip()
-                after = line[match.end():matches[i + 1].start()].strip() if i + 1 < len(matches) else line[match.end():].strip()
-                rows.append({'num': match.group(1), 'before': before, 'after': after})
-                last = match.end()
+            for match in pattern.finditer(stripped):
+                num = match.group(1)
+                before_inline = stripped[:match.start()].strip()
+                after_inline = stripped[match.end():].strip()
+
+                if before_inline or after_inline:
+                    before, after = _split_underscore_block(before_inline)
+                    if after_inline:
+                        after = _clean_display((after + ' ' + after_inline).strip()) if after else after_inline
+                    rows.append({'num': num, 'before': before, 'after': after})
+                    continue
+
+                block_lines = []
+                j = i - 1
+                while j >= 0:
+                    prev = lines[j].strip()
+                    if not prev:
+                        break
+                    if re.fullmatch(r'\[\d+\]', prev):
+                        break
+                    if pattern.search(prev):
+                        break
+                    block_lines.insert(0, prev)
+                    j -= 1
+                before, after = _split_underscore_block('\n'.join(block_lines))
+                rows.append({'num': num, 'before': before, 'after': after})
         return rows
 
     def get_summary_segments(self):

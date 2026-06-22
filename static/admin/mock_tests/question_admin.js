@@ -259,6 +259,7 @@
             qType === 'summary_box' ||
             qType === 'notes_completion' ||
             qType === 'table_completion' ||
+            qType === 'fill_blank' ||
             qType === 'sentence_completion' ||
             qType === 'summary_completion'
         ) {
@@ -584,6 +585,69 @@
         container.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    function isSavedInlineRow(container) {
+        var idInp = container.querySelector('input[name$="-id"]');
+        return !!(idInp && idInp.value);
+    }
+
+    function addDeleteHelper(container, tools) {
+        if (!isSavedInlineRow(container) || container.querySelector('.mock-delete-helper')) return;
+        var delCheck = container.querySelector('input[name$="-DELETE"]');
+        if (!delCheck) return;
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mock-delete-helper button';
+        btn.textContent = 'O\'chirish';
+        btn.addEventListener('click', function () {
+            delCheck.checked = !delCheck.checked;
+            container.classList.toggle('mock-row-marked-delete', delCheck.checked);
+            btn.classList.toggle('is-active', delCheck.checked);
+            btn.textContent = delCheck.checked ? 'O\'chirish bekor' : 'O\'chirish';
+            updateQuestionStats();
+        });
+        delCheck.addEventListener('change', function () {
+            container.classList.toggle('mock-row-marked-delete', delCheck.checked);
+            btn.classList.toggle('is-active', delCheck.checked);
+            btn.textContent = delCheck.checked ? 'O\'chirish bekor' : 'O\'chirish';
+            updateQuestionStats();
+        });
+        tools.appendChild(btn);
+    }
+
+    function isBlankInlineRow(container) {
+        if (isSavedInlineRow(container)) return false;
+        var text = fieldValue(container, 'question_text');
+        var answers = fieldValue(container, 'fill_answers') || fieldValue(container, 'correct_answer');
+        return !String(text || '').trim() && !String(answers || '').trim();
+    }
+
+    function addRemoveEmptyHelper(container, tools) {
+        if (!isBlankInlineRow(container) || container.querySelector('.mock-remove-empty-btn')) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mock-remove-empty-btn button';
+        btn.textContent = 'Bo\'sh qatorni olib tashlash';
+        btn.addEventListener('click', function () {
+            var delCheck = container.querySelector('input[name$="-DELETE"]');
+            if (delCheck) {
+                delCheck.checked = true;
+                container.style.display = 'none';
+            } else {
+                container.remove();
+                var total = document.querySelector('input[name$="-TOTAL_FORMS"]');
+                if (total) {
+                    var rows = getInlineRows().filter(function (row) {
+                        return row.parentNode && row.style.display !== 'none';
+                    });
+                    total.value = String(rows.length);
+                }
+            }
+            updateQuestionStats();
+        });
+        tools.appendChild(btn);
+    }
+
     function addInlineTools(container) {
         if (!container || container.querySelector('.mock-inline-tools')) return;
         var tools = document.createElement('div');
@@ -607,6 +671,8 @@
 
         tools.appendChild(dupBtn);
         tools.appendChild(suggestBtn);
+        addDeleteHelper(container, tools);
+        addRemoveEmptyHelper(container, tools);
 
         var anchor = container.querySelector('h3') || container.querySelector('.inline_label') || container.firstElementChild;
         if (anchor && anchor.parentNode) {
@@ -777,10 +843,10 @@
         }
     }
 
-    function enhanceInlineRow(container) {
+    function enhanceInlineRow(container, autoDefaults) {
         initQuestionForm(container);
         addInlineTools(container);
-        suggestRowDefaults(container, false);
+        if (autoDefaults) suggestRowDefaults(container, true);
         refreshRowCollapse(container);
     }
 
@@ -793,7 +859,7 @@
             : '#content-main .inline-related';
         document.querySelectorAll(inlineSelector).forEach(function (el) {
             if (el.querySelector('select[name$="-question_type"], select[name="question_type"]')) {
-                enhanceInlineRow(el);
+                enhanceInlineRow(el, false);
             }
         });
         var qForm = document.getElementById('mockquestion_form');
@@ -814,7 +880,7 @@
     if (typeof django !== 'undefined' && django.jQuery) {
         django.jQuery(document).on('formset:added', function (event, $row, name) {
             if (String(name).indexOf('question') >= 0 && $row && $row[0]) {
-                enhanceInlineRow($row[0]);
+                enhanceInlineRow($row[0], true);
             }
         });
     }

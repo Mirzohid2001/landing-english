@@ -8,6 +8,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self._listening_demo()
+        self._listening_summary_box_demo()
         self._reading_matching_demo()
         self.stdout.write(self.style.SUCCESS('Listening + Matching demo testlar tayyor.'))
 
@@ -67,6 +68,49 @@ class Command(BaseCommand):
             q.save()
 
         self.stdout.write(f'  Listening: /courses/tests/{test.pk}/ (MP3 admin dan yuklang)')
+
+    def _listening_summary_box_demo(self):
+        test, _ = MockTest.objects.update_or_create(
+            title='Listening Demo — Summary Box (City Cycle)',
+            defaults={
+                'test_type': 'listening',
+                'difficulty': 'medium',
+                'description': 'IELTS uslubida summary + word box (A–I).',
+                'duration_minutes': 30,
+                'passing_score': 60,
+                'is_active': True,
+            },
+        )
+        test.questions.all().delete()
+
+        word_list = [
+            'keyboard', 'code', 'padlock', 'receipt', 'handlebars',
+            'frame', 'service', 'light', 'beep',
+        ]
+        summary_text = (
+            'How to use City Cycle\n'
+            '-- Subscribe to the service online to receive a card.\n'
+            '-- At the station, log on at the computer terminal.\n'
+            '-- Select a bike by using the [11]\n'
+            '-- Release the bike by using the [12] of your chosen bike.\n'
+            '-- Remove the bike from the [13] (You have ten seconds.)\n'
+            '-- Make sure you have a [14] before setting off.\n'
+            '-- At the end of your journey, return the bike to a station and secure it in place.\n'
+            '-- (A [15] will tell you the bike is locked correctly.)'
+        )
+        MockQuestion.objects.create(
+            test=test,
+            order=1,
+            part_number=2,
+            question_type='summary_box',
+            instruction='Choose the correct answers, A-I, next to questions 11-15.',
+            question_text=summary_text,
+            correct_answers_json=['a', 'c', 'f', 'h', 'i'],
+            options_json={'word_list': word_list},
+            points=5,
+            audio_timestamp=120,
+        )
+        self.stdout.write(f'  Listening summary box: /courses/tests/{test.pk}/')
 
     def _reading_matching_demo(self):
         test, _ = MockTest.objects.update_or_create(

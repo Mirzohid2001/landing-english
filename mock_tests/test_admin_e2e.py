@@ -12,8 +12,6 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 
 try:
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
@@ -22,26 +20,20 @@ try:
 except ImportError:
     SELENIUM_AVAILABLE = False
 
+from mock_tests.e2e_helpers import create_chrome_driver, quit_driver
 from mock_tests.models import MockTest
-
-
-def _chrome_driver():
-    opts = Options()
-    opts.add_argument('--headless=new')
-    opts.add_argument('--no-sandbox')
-    opts.add_argument('--disable-dev-shm-usage')
-    opts.add_argument('--window-size=1400,1000')
-    return webdriver.Chrome(options=opts)
 
 
 @unittest.skipUnless(SELENIUM_AVAILABLE, 'selenium not installed (pip install -r requirements-dev.txt)')
 class AdminQuestionPointsE2ETests(StaticLiveServerTestCase):
     """Admin inline savol formasida JS ball avto-yangilanishini tekshiradi."""
 
+    driver = None
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.driver = _chrome_driver()
+        cls.driver = create_chrome_driver('1400,1000')
         cls.driver.implicitly_wait(3)
         cls.wait = WebDriverWait(cls.driver, 15)
 
@@ -56,7 +48,8 @@ class AdminQuestionPointsE2ETests(StaticLiveServerTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.driver.quit()
+        quit_driver(cls.driver)
+        cls.driver = None
         super().tearDownClass()
 
     def _admin_login(self):

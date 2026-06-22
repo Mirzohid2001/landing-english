@@ -38,12 +38,35 @@ def parse_mcq_letters(value):
 
 
 def format_mcq_letters(letters):
+    if isinstance(letters, (list, tuple)):
+        parsed = [str(x).strip().lower() for x in letters if str(x).strip().lower() in MCQ_LETTERS]
+        return ','.join(parsed)
     return ','.join(parse_mcq_letters(letters))
+
+
+def get_mcq_correct_letters(question):
+    """correct_answer yoki correct_answers_json dan to'g'ri harflar."""
+    letters = parse_mcq_letters(question.correct_answer)
+    if letters:
+        return letters
+    raw = question.correct_answers_json
+    if isinstance(raw, list):
+        if not raw:
+            return []
+        merged = []
+        for item in raw:
+            for letter in parse_mcq_letters(item):
+                if letter not in merged:
+                    merged.append(letter)
+        return sorted(merged)
+    if isinstance(raw, str):
+        return parse_mcq_letters(raw)
+    return []
 
 
 def score_mcq(question, user_answer):
     """MCQ: (fraction 0..1, is_full, user_display, correct_display)."""
-    correct = parse_mcq_letters(question.correct_answer)
+    correct = get_mcq_correct_letters(question)
     user = parse_mcq_letters(user_answer)
     select_count = question.get_mcq_select_count()
     correct_display = format_mcq_letters(correct) or '—'
@@ -56,5 +79,9 @@ def score_mcq(question, user_answer):
         ok = user == correct[:1] if len(correct) == 1 else user == correct
         return (1.0 if ok else 0.0), ok, user_display, correct_display
 
+    correct_set = set(correct)
+    got = len(correct_set & set(user))
+    total = len(correct) or select_count
+    frac = got / total if total else 0.0
     ok = user == correct and len(user) == select_count
-    return (1.0 if ok else 0.0), ok, user_display, correct_display
+    return frac, ok, user_display, correct_display

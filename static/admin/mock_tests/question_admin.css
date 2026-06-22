@@ -221,9 +221,73 @@
 
 .mock-inline-collapsed fieldset,
 .mock-inline-collapsed .form-row,
-.mock-inline-collapsed .mock-inline-tools,
-.mock-inline-collapsed h3 {
+.mock-inline-collapsed .mock-inline-tools {
     display: none !important;
+}
+
+.mock-inline-collapsed h3 {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    background: #f1f5f9;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.mock-inline-collapsed h3 .inline_label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mock-inline-collapsed h3 label {
+    flex-shrink: 0;
+    font-size: 12px !important;
+    font-weight: 700;
+    color: #b91c1c !important;
+    background: #fff;
+    padding: 4px 10px;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.mock-inline-collapsed h3 label:hover {
+    background: #fef2f2;
+}
+
+.mock-row-marked-delete {
+    opacity: 0.6;
+    outline: 2px dashed #dc2626;
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+.mock-delete-helper {
+    font-size: 12px !important;
+    padding: 4px 10px !important;
+    color: #b91c1c !important;
+    border-color: #fecaca !important;
+    background: #fff !important;
+}
+
+.mock-delete-helper.is-active {
+    background: #fef2f2 !important;
+    font-weight: 700;
+}
+
+.mock-remove-empty-btn {
+    font-size: 12px !important;
+    padding: 4px 10px !important;
+    color: #64748b !important;
 }
 
 .mock-inline-collapsed {

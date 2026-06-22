@@ -125,27 +125,38 @@
 <div class="mock-summary-box">
     {% with words=question.get_summary_word_bank %}
     {% if words %}
-    <div class="mock-word-list">
-        <span class="mock-word-list-label">So'zlar ro'yxati:</span>
+    <div class="mock-word-bank" aria-label="So'zlar ro'yxati">
         {% for item in words %}
-        <span class="mock-word-chip">
-            <span class="mock-word-letter">{{ item.letter }}</span><span class="mock-word-sep">|</span>{{ item.text }}
-        </span>
+        <div class="mock-word-bank-row">
+            <span class="mock-word-bank-letter">{{ item.letter }}</span>
+            <span class="mock-word-bank-text">{{ item.text }}</span>
+        </div>
         {% endfor %}
     </div>
     {% endif %}
-    {% endwith %}
     <div class="mock-summary-inline selectable-text">
         {% for seg in question.get_summary_segments %}
-            {% if seg.type == 'text' %}{{ seg.value }}{% else %}
-            <span class="mock-inline-blank">
+            {% if seg.type == 'text' %}<span class="mock-summary-text">{{ seg.value }}</span>{% else %}
+            <span class="mock-summary-select-wrap">
+                {% if words %}
+                <select class="mock-summary-select mock-fill-input"
+                        data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
+                        aria-label="Javob {{ seg.num }}">
+                    <option value="">{{ seg.num }}</option>
+                    {% for item in words %}
+                    <option value="{{ item.letter|lower }}">{{ item.letter }}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
                 <input type="text" class="mock-summary-input mock-fill-input mock-inline-input"
                        data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
                        placeholder="{{ seg.num }}" autocomplete="off" aria-label="Javob {{ seg.num }}">
+                {% endif %}
             </span>
             {% endif %}
         {% endfor %}
     </div>
+    {% endwith %}
 </div>
 
 {% else %}
