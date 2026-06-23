@@ -126,6 +126,7 @@
     {% with words=question.get_summary_word_bank %}
     {% if words %}
     <div class="mock-word-bank" aria-label="So'zlar ro'yxati">
+        <div class="mock-word-bank-title">Variants</div>
         {% for item in words %}
         <div class="mock-word-bank-row">
             <span class="mock-word-bank-letter">{{ item.letter }}</span>
@@ -134,26 +135,35 @@
         {% endfor %}
     </div>
     {% endif %}
-    <div class="mock-summary-inline selectable-text">
-        {% for seg in question.get_summary_segments %}
-            {% if seg.type == 'text' %}<span class="mock-summary-text">{{ seg.value }}</span>{% else %}
-            <span class="mock-summary-select-wrap">
-                {% if words %}
-                <select class="mock-summary-select mock-fill-input"
-                        data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
-                        aria-label="Javob {{ seg.num }}">
-                    <option value="">{{ seg.num }}</option>
-                    {% for item in words %}
-                    <option value="{{ item.letter|lower }}">{{ item.letter }}</option>
-                    {% endfor %}
-                </select>
-                {% else %}
-                <input type="text" class="mock-summary-input mock-fill-input mock-inline-input"
-                       data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
-                       placeholder="{{ seg.num }}" autocomplete="off" aria-label="Javob {{ seg.num }}">
+    <div class="mock-summary-body selectable-text">
+        {% for line in question.get_summary_lines %}
+        {% if line.spacer %}
+        <div class="mock-summary-spacer" aria-hidden="true"></div>
+        {% elif line.segments %}
+        <p class="mock-summary-line{% if line.is_title %} mock-summary-line--title{% endif %}">
+            {% for seg in line.segments %}
+                {% if seg.type == 'text' %}<span class="mock-summary-text">{{ seg.value }}</span>{% else %}
+                <span class="mock-summary-select-wrap">
+                    <span class="mock-summary-num" aria-hidden="true">{{ seg.num }}</span>
+                    {% if words %}
+                    <select class="mock-summary-select mock-fill-input"
+                            data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
+                            aria-label="Javob {{ seg.num }}">
+                        <option value=""></option>
+                        {% for item in words %}
+                        <option value="{{ item.letter|lower }}">{{ item.letter }}</option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <input type="text" class="mock-summary-input mock-fill-input mock-inline-input"
+                           data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"
+                           placeholder="{{ seg.num }}" autocomplete="off" aria-label="Javob {{ seg.num }}">
+                    {% endif %}
+                </span>
                 {% endif %}
-            </span>
-            {% endif %}
+            {% endfor %}
+        </p>
+        {% endif %}
         {% endfor %}
     </div>
     {% endwith %}

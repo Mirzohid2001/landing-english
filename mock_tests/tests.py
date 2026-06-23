@@ -599,6 +599,8 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         self.assertIn('mock-summary-box', html)
         self.assertIn('mock-word-bank', html)
         self.assertIn('mock-summary-select', html)
+        self.assertIn('mock-summary-line', html)
+        self.assertIn('mock-summary-num', html)
         self.assertIn('How to use City Cycle', html)
         self.assertNotIn('listening-sa-text">How to use City Cycle', html)
         self.assertEqual(html.count('How to use City Cycle'), 1)
@@ -917,8 +919,34 @@ class ReadingSummaryBoxTests(TestCase):
         self.assertIn('mock-summary-box', html)
         self.assertIn('mock-word-bank', html)
         self.assertIn('mock-summary-select', html)
+        self.assertIn('mock-summary-line', html)
         self.assertIn('Many birds migrate to', html)
         self.assertNotIn('mock-sc-block', html)
+
+    def test_summary_box_lines_keep_blanks_inline(self):
+        test = MockTest.objects.create(title='SB inline', test_type='listening', is_active=True)
+        q = MockQuestion.objects.create(
+            test=test,
+            order=1,
+            question_type='summary_box',
+            question_text=(
+                'How to use City Cycle\n'
+                '-- Select a bike by using the [11]\n'
+                '-- Release the bike by using the [12] of your chosen bike.'
+            ),
+            correct_answers_json=['a', 'b'],
+            options_json={'word_list': ['button', 'website']},
+        )
+        lines = q.get_summary_lines()
+        self.assertEqual(len(lines), 3)
+        self.assertTrue(lines[0]['is_title'])
+        line_with_blank = lines[1]['segments']
+        types = [s['type'] for s in line_with_blank]
+        self.assertEqual(types, ['text', 'blank'])
+        self.assertIn('using the ', line_with_blank[0]['value'])
+        html = self.client.get(reverse('mock_tests:test_take', kwargs={'pk': test.pk})).content.decode()
+        self.assertIn('mock-summary-num', html)
+        self.assertIn('mock-summary-line--title', html)
 
     def test_reading_summary_box_scoring(self):
         test = MockTest.objects.create(title='Reading SB score', test_type='reading', is_active=True)
@@ -1191,8 +1219,8 @@ class McqExtendedTests(TestCase):
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0]['order'], 5)
         self.assertEqual(rows[1]['order'], 6)
-        self.assertEqual(rows[0]['label'], 'Savol 5')
-        self.assertEqual(rows[1]['label'], 'Savol 6')
+        self.assertEqual(rows[0]['label'], 'Savol 5 — [5]')
+        self.assertEqual(rows[1]['label'], 'Savol 5 — [6]')
         self.assertTrue(rows[0]['is_correct'])
         self.assertEqual(rows[0]['correct_answer'], 'a')
         self.assertFalse(rows[1]['is_correct'])
@@ -1207,6 +1235,38 @@ class McqExtendedTests(TestCase):
         detail_rows = [d for d in result['details'] if d['question_id'] == q.id]
         self.assertEqual(len(detail_rows), 2)
         self.assertTrue(any(d['correct_answer'] == 'c' for d in detail_rows))
+
+    def test_result_labels_consistent_across_question_types(self):
+        from mock_tests.services.scoring import score_attempt
+
+        test = MockTest.objects.create(title='Label mix', test_type='listening', is_active=True)
+        notes = MockQuestion.objects.create(
+            test=test,
+            order=4,
+            part_number=1,
+            question_type='notes_completion',
+            question_text='Effect [23]',
+            correct_answers_json=['explode'],
+        )
+        mcq = MockQuestion.objects.create(
+            test=test,
+            order=5,
+            part_number=1,
+            question_type='mcq',
+            question_text='Choose one',
+            option_a='A', option_b='B', option_c='C', option_d='D',
+            correct_answer='a',
+        )
+        attempt = MockAttempt.objects.create(
+            test=test,
+            session_key='label-mix',
+            answers_json={str(notes.pk): {'23': ''}, str(mcq.pk): 'a'},
+            is_finished=True,
+        )
+        result = score_attempt(attempt, [notes, mcq])
+        labels = [d['label'] for d in result['details']]
+        self.assertEqual(labels[0], 'Savol 4 — [23]')
+        self.assertEqual(labels[1], 'Savol 5 — [24]')
 
     def test_mcq_multi_renders_checkboxes(self):
         test = MockTest.objects.create(title='MCQ UI', test_type='reading', is_active=True)

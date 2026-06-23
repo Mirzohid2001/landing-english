@@ -191,7 +191,40 @@ def _question_detail_meta(question):
     }
 
 
-def expand_question_details(question, user_answer):
+def _dock_buttons_by_question(questions):
+    from mock_tests.views import _build_blank_buttons
+
+    buttons, _ = _build_blank_buttons(list(questions))
+    by_q = {}
+    for btn in buttons:
+        by_q.setdefault(btn['question_id'], []).append(btn)
+    return by_q
+
+
+def _ielts_num_for_slot(question, slot, dock_by_question=None):
+    """Dock bilan bir xil test raqami [N]."""
+    if dock_by_question:
+        for btn in dock_by_question.get(question.id, []):
+            if slot.kind in ('blank', 'matching'):
+                if btn['is_blank'] and str(btn['blank_key']) == str(slot.key):
+                    return btn['num']
+            elif not btn['is_blank']:
+                if str(btn['num']) == str(slot.display_num):
+                    return btn['num']
+                if slot.kind == 'single' and len(dock_by_question.get(question.id, [])) == 1:
+                    return btn['num']
+    num = slot.display_num
+    return int(num) if str(num).isdigit() else num
+
+
+def _detail_label(question, ielts_num):
+    """Natija: tizimdagi tartib + testdagi [N] raqam."""
+    if ielts_num is None:
+        return f'Savol {question.order}'
+    return f'Savol {question.order} — [{ielts_num}]'
+
+
+def expand_question_details(question, user_answer, dock_by_question=None):
     """Har bir baholanadigan slot uchun alohida natija qatori."""
     qtype = question.question_type
     slot_pt = question_total_points(question) / max(question.gradable_slot_count(), 1)
@@ -212,7 +245,7 @@ def expand_question_details(question, user_answer):
             rows.append({
                 'order': int(slot.display_num) if str(slot.display_num).isdigit() else slot.display_num,
                 'question_order': question.order,
-                'label': f'Savol {question.order} — [{slot.display_num}]',
+                'label': _detail_label(question, _ielts_num_for_slot(question, slot, dock_by_question)),
                 'is_correct': ok,
                 'earned_points': round(slot_pt if ok else 0.0, 2),
                 'max_points': round(slot_pt, 2),
@@ -256,7 +289,7 @@ def expand_question_details(question, user_answer):
             rows.append({
                 'order': int(slot.display_num) if str(slot.display_num).isdigit() else slot.display_num,
                 'question_order': question.order,
-                'label': f'Savol {question.order} — {slot.display_num}',
+                'label': _detail_label(question, _ielts_num_for_slot(question, slot, dock_by_question)),
                 'is_correct': ok,
                 'earned_points': round(slot_pt if ok else 0.0, 2),
                 'max_points': round(slot_pt, 2),
@@ -278,7 +311,7 @@ def expand_question_details(question, user_answer):
             rows.append({
                 'order': int(slot.display_num) if str(slot.display_num).isdigit() else slot.display_num,
                 'question_order': question.order,
-                'label': f'Savol {slot.display_num}',
+                'label': _detail_label(question, _ielts_num_for_slot(question, slot, dock_by_question)),
                 'is_correct': ok,
                 'earned_points': round(slot_pt if ok else 0.0, 2),
                 'max_points': round(slot_pt, 2),
@@ -298,10 +331,16 @@ def expand_question_details(question, user_answer):
     if not correct_norm or correct_norm == '—':
         correct_norm = format_correct_display(question) or '—'
     q_pt = question_total_points(question)
+    single_slots = list_gradable_slots(question)
+    single_slot = single_slots[0] if single_slots else None
+    ielts_num = (
+        _ielts_num_for_slot(question, single_slot, dock_by_question)
+        if single_slot else question.order
+    )
     rows.append({
         'order': question.order,
         'question_order': question.order,
-        'label': f'Savol {question.order}',
+        'label': _detail_label(question, ielts_num),
         'is_correct': is_correct,
         'earned_points': round(earned, 2),
         'max_points': round(q_pt, 2),
@@ -400,6 +439,7 @@ def score_attempt(attempt, questions):
     earned_points = 0.0
     correct_slots = 0
     details = []
+    dock_by_question = _dock_buttons_by_question(questions)
 
     for question in questions:
         qid = str(question.id)
@@ -410,7 +450,7 @@ def score_attempt(attempt, questions):
         earned = score_question_points(question, user_answer)
         earned_points += earned
 
-        for row in expand_question_details(question, user_answer):
+        for row in expand_question_details(question, user_answer, dock_by_question):
             if row['is_correct']:
                 correct_slots += 1
             details.append({

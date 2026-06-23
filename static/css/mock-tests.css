@@ -1540,23 +1540,23 @@
 .mock-word-count { margin-top: 0.5rem; font-size: 0.88rem; color: var(--mock-muted); font-weight: 500; }
 .mock-summary-box {
     padding: 0.15rem 0;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.85rem;
 }
-@media (min-width: 900px) {
-    .mock-summary-box:has(.mock-word-bank) {
-        grid-template-columns: minmax(9rem, 11rem) 1fr;
-        align-items: start;
-        gap: 1rem 1.25rem;
-    }
-}
 .mock-word-bank {
-    padding: 0.65rem 0.75rem;
+    padding: 0.65rem 0.85rem;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
     font-size: 0.88rem;
     line-height: 1.45;
+}
+.mock-word-bank-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #0f172a;
+    margin-bottom: 0.35rem;
 }
 .mock-word-bank-row {
     display: flex;
@@ -1570,38 +1570,49 @@
     color: #3730a3;
 }
 .mock-word-bank-text { color: #1e293b; }
-.mock-summary-inline {
-    line-height: 1.75;
-    padding: 0.9rem 1rem;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
+.mock-summary-body {
     font-size: 0.95rem;
+    line-height: 1.6;
     color: #1e293b;
-    white-space: pre-line;
-    word-wrap: break-word;
 }
-.mock-summary-text { white-space: pre-line; }
+.mock-summary-line {
+    margin: 0 0 0.3rem;
+    line-height: 1.6;
+}
+.mock-summary-line--title {
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+}
+.mock-summary-spacer {
+    height: 0.35rem;
+}
+.mock-summary-text {
+    display: inline;
+    white-space: normal;
+}
 .mock-summary-select-wrap {
-    display: inline-block;
-    margin: 0 0.3rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin: 0 0.12rem;
     vertical-align: baseline;
     white-space: nowrap;
 }
 .mock-summary-select {
     appearance: none;
     -webkit-appearance: none;
-    min-width: 3.4rem;
-    max-width: 5.5rem;
-    padding: 0.22rem 1.55rem 0.22rem 0.55rem;
-    font-size: 0.88rem;
+    min-width: 2.6rem;
+    max-width: 4.5rem;
+    padding: 0.15rem 1.35rem 0.15rem 0.4rem;
+    font-size: 0.82rem;
     font-weight: 700;
     line-height: 1.2;
     color: #334155;
-    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748b' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 0.45rem center;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748b' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 0.35rem center;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
+    vertical-align: baseline;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 .mock-summary-select:focus {
@@ -1616,16 +1627,35 @@
     vertical-align: baseline;
 }
 .mock-summary-num {
-    display: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #4b5563;
+    background: #e5e7eb;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    flex-shrink: 0;
+    line-height: 1;
 }
 .mock-summary-select-wrap .mock-summary-input {
-    min-width: 6.5rem;
-    max-width: 10rem;
+    min-width: 5.5rem;
+    max-width: 9rem;
 }
 .mock-summary-select-wrap input:focus {
     border-bottom-color: var(--mock-purple);
     box-shadow: none;
     outline: none;
+}
+/* Eski inline blok — qayta ishlatilmasa ham moslik uchun */
+.mock-summary-inline {
+    line-height: 1.6;
+    font-size: 0.95rem;
+    color: #1e293b;
 }
 .mock-word-list {
     display: flex;

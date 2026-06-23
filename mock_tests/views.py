@@ -49,18 +49,31 @@ def _build_blank_buttons(questions, start_num=0):
         nonlocal seq_fallback
         if preferred is not None and preferred not in used_nums:
             used_nums.add(preferred)
+            if isinstance(preferred, int):
+                seq_fallback = max(seq_fallback, preferred)
             return preferred
+        numeric_used = [n for n in used_nums if isinstance(n, int)]
+        if numeric_used:
+            seq_fallback = max(seq_fallback, max(numeric_used))
         seq_fallback += 1
         while seq_fallback in used_nums:
             seq_fallback += 1
         used_nums.add(seq_fallback)
         return seq_fallback
 
+    def _preferred_num(value):
+        if value is None:
+            return None
+        numeric_used = [n for n in used_nums if isinstance(n, int)]
+        if numeric_used and isinstance(value, int) and value <= max(numeric_used):
+            return None
+        return value
+
     def _append(question_id, is_blank, blank_key='', question_order=None):
         if is_blank and blank_key:
             num = int(blank_key) if str(blank_key).isdigit() else blank_key
         elif question_order is not None:
-            num = question_order
+            num = _preferred_num(question_order)
         else:
             num = None
         buttons.append({

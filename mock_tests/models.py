@@ -395,6 +395,34 @@ class MockQuestion(models.Model):
             segments.append({'type': 'text', 'value': self.question_text[last:]})
         return segments
 
+    def get_summary_lines(self):
+        """Summary box: har qator alohida, [N] shu qator ichida inline."""
+        if self.question_type != 'summary_box':
+            return []
+        pattern = re.compile(r'\[(\d+)\]')
+        lines = []
+        for raw_line in (self.question_text or '').split('\n'):
+            segments = []
+            last = 0
+            for match in pattern.finditer(raw_line):
+                if match.start() > last:
+                    segments.append({'type': 'text', 'value': raw_line[last:match.start()]})
+                segments.append({'type': 'blank', 'num': match.group(1)})
+                last = match.end()
+            if last < len(raw_line):
+                segments.append({'type': 'text', 'value': raw_line[last:]})
+            if not segments and not raw_line.strip():
+                lines.append({'segments': [], 'spacer': True})
+                continue
+            stripped = raw_line.strip()
+            is_title = (
+                bool(stripped)
+                and not stripped.startswith('--')
+                and not pattern.search(raw_line)
+            )
+            lines.append({'segments': segments, 'is_title': is_title})
+        return lines
+
     def get_summary_option_list(self):
         opts = self.options_json or {}
         return opts.get('word_list', [])
