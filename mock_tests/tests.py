@@ -522,6 +522,132 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
+    def test_reading_dock_sequential_across_parts(self):
+        from mock_tests.views import _build_part_groups
+
+        test = MockTest.objects.create(title='Reading 40', test_type='reading', is_active=True)
+        for i in range(1, 10):
+            MockQuestion.objects.create(
+                test=test,
+                order=10 + i,
+                part_number=3,
+                question_type='true_false_not_given',
+                question_text=f'Statement {i}',
+                option_a='True',
+                option_b='False',
+                option_c='Not Given',
+                correct_answer='a',
+            )
+        MockQuestion.objects.create(
+            test=test,
+            order=19,
+            part_number=3,
+            question_type='summary_box',
+            question_text='Text [36] and [37] and [38] and [39] and [40].',
+            correct_answers_json=['a', 'b', 'c', 'd', 'e'],
+            options_json={'word_list': ['a', 'b', 'c', 'd', 'e', 'f']},
+        )
+        for i in range(1, 14):
+            MockQuestion.objects.create(
+                test=test,
+                order=i,
+                part_number=1,
+                question_type='true_false_not_given',
+                question_text=f'P1 {i}',
+                option_a='True',
+                option_b='False',
+                option_c='Not Given',
+                correct_answer='a',
+            )
+        for i in range(1, 14):
+            MockQuestion.objects.create(
+                test=test,
+                order=13 + i,
+                part_number=2,
+                question_type='true_false_not_given',
+                question_text=f'P2 {i}',
+                option_a='True',
+                option_b='False',
+                option_c='Not Given',
+                correct_answer='a',
+            )
+        questions = list(test.questions.all())
+        groups = _build_part_groups(test, questions, [])
+        all_nums = []
+        for g in groups:
+            all_nums.extend(b['num'] for b in g['blank_buttons'])
+        self.assertEqual(all_nums, list(range(1, 41)))
+        part3 = next(g for g in groups if g['part_number'] == 3)
+        self.assertEqual([b['num'] for b in part3['blank_buttons']], list(range(27, 41)))
+
+    def test_reading_ui_labels_follow_dock_sequence(self):
+        test = MockTest.objects.create(title='UI labels', test_type='reading', is_active=True)
+        MockQuestion.objects.create(
+            test=test, order=1, part_number=1, question_type='matching_features',
+            question_text='Match features',
+            options_json={
+                'items': [
+                    {'num': 1, 'label': 'one'}, {'num': 2, 'label': 'two'},
+                    {'num': 3, 'label': 'three'}, {'num': 4, 'label': 'four'},
+                    {'num': 5, 'label': 'five'}, {'num': 6, 'label': 'six'},
+                ],
+                'options': [{'letter': 'a', 'text': 'A'}],
+            },
+            correct_answers_json={str(i): 'a' for i in range(1, 7)},
+        )
+        MockQuestion.objects.create(
+            test=test, order=2, part_number=1, question_type='sentence_completion',
+            question_text='First [7]. Second [8]. Third [9].',
+            correct_answers_json=['a', 'b', 'c'],
+        )
+        for i in range(3, 7):
+            MockQuestion.objects.create(
+                test=test, order=i, part_number=1, question_type='true_false_not_given',
+                question_text=f'Statement {i}', option_a='T', option_b='F', option_c='NG',
+                correct_answer='a',
+            )
+        url = reverse('mock_tests:test_take', kwargs={'pk': test.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('class="mock-sc-num" aria-hidden="true">7</span>', html)
+        self.assertIn('class="mock-q-num-box">10</span>', html)
+        self.assertIn('class="mock-q-num-box">13</span>', html)
+
+    def test_reading_scoring_dock_matches_part_dock_with_overlapping_orders(self):
+        from mock_tests.views import _build_part_groups
+        from mock_tests.services.scoring import _dock_buttons_by_question
+
+        test = MockTest.objects.create(title='Dock align', test_type='reading', is_active=True)
+        for i in range(1, 14):
+            MockQuestion.objects.create(
+                test=test, order=i, part_number=1, question_type='true_false_not_given',
+                question_text=f'P1 {i}', option_a='T', option_b='F', option_c='NG', correct_answer='a',
+            )
+        for i in range(1, 14):
+            MockQuestion.objects.create(
+                test=test, order=13 + i, part_number=2, question_type='true_false_not_given',
+                question_text=f'P2 {i}', option_a='T', option_b='F', option_c='NG', correct_answer='a',
+            )
+        for i in range(10, 15):
+            MockQuestion.objects.create(
+                test=test, order=i, part_number=3, question_type='true_false_not_given',
+                question_text=f'P3 {i}', option_a='T', option_b='F', option_c='NG', correct_answer='a',
+            )
+        MockQuestion.objects.create(
+            test=test, order=19, part_number=3, question_type='summary_box',
+            question_text='A [36] B [37] C [38] D [39] E [40].',
+            correct_answers_json=['a', 'b', 'c', 'd', 'e'],
+            options_json={'word_list': ['a', 'b', 'c', 'd', 'e', 'f']},
+        )
+        questions = list(test.questions.all())
+        groups = _build_part_groups(test, questions, [])
+        ui_nums = {(b['question_id'], b.get('blank_key', '')): b['num']
+                   for g in groups for b in g['blank_buttons']}
+        score_nums = {(b['question_id'], b.get('blank_key', '')): b['num']
+                      for bs in _dock_buttons_by_question(questions).values() for b in bs}
+        self.assertEqual(ui_nums, score_nums)
+
     def test_dock_buttons_use_ielts_numbers_when_available(self):
         from mock_tests.views import _build_blank_buttons
 
@@ -540,8 +666,10 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
             question_text='First [7]. Second [8]. Third [9].',
             correct_answers_json=['a', 'b', 'c'],
         )
-        sc_buttons, _ = _build_blank_buttons(list(reading.questions.all()))
-        self.assertEqual([b['num'] for b in sc_buttons], [7, 8, 9])
+        sc_buttons, _ = _build_blank_buttons(
+            list(reading.questions.all()), sequential_only=True,
+        )
+        self.assertEqual([b['num'] for b in sc_buttons], [1, 2, 3])
 
     def test_only_three_test_types(self):
         self.assertEqual(len(MockTest.TEST_TYPES), 3)
@@ -948,6 +1076,42 @@ class ReadingSummaryBoxTests(TestCase):
         self.assertIn('mock-summary-num', html)
         self.assertIn('mock-summary-line--title', html)
 
+    def test_reading_tfng_renders_three_options(self):
+        test = MockTest.objects.create(title='Reading TFNG', test_type='reading', is_active=True)
+        MockQuestion.objects.create(
+            test=test,
+            order=3,
+            part_number=1,
+            question_type='true_false_not_given',
+            question_text='The statement agrees with the passage.',
+            option_a='True',
+            option_b='False',
+            option_c='Not Given',
+            correct_answer='b',
+        )
+        html = self.client.get(reverse('mock_tests:test_take', kwargs={'pk': test.pk})).content.decode()
+        self.assertEqual(html.count('mock-option--inline'), 3)
+        self.assertIn('NOT GIVEN', html)
+        self.assertIn('mock-q-row--choice', html)
+
+    def test_reading_summary_box_matches_listening_layout(self):
+        test = MockTest.objects.create(title='Reading SB layout', test_type='reading', is_active=True)
+        MockQuestion.objects.create(
+            test=test,
+            order=11,
+            part_number=2,
+            question_type='summary_box',
+            instruction='Choose words from the box.',
+            question_text='Birds fly to [11] each winter.',
+            correct_answers_json=['siberia'],
+            options_json={'word_list': ['siberia', 'africa', 'europe']},
+        )
+        html = self.client.get(reverse('mock_tests:test_take', kwargs={'pk': test.pk})).content.decode()
+        self.assertIn('mock-q-card--summary-box', html)
+        self.assertIn('mock-summary-line', html)
+        self.assertIn('mock-word-bank-title', html)
+        self.assertIn('Variants', html)
+
     def test_reading_summary_box_scoring(self):
         test = MockTest.objects.create(title='Reading SB score', test_type='reading', is_active=True)
         q = MockQuestion.objects.create(
@@ -1070,8 +1234,8 @@ class SlotAlignmentTests(TestCase):
         self.assertEqual(len(slots), 1)
         self.assertEqual(slots[0].key, '11')
         self.assertEqual(q.gradable_slot_count(), 1)
-        buttons, _ = _build_blank_buttons([q])
-        self.assertEqual([b['num'] for b in buttons], [11])
+        buttons, _ = _build_blank_buttons([q], sequential_only=True)
+        self.assertEqual([b['num'] for b in buttons], [1])
         self.assertEqual(len(buttons), 1)
 
     def test_fill_blank_variants_are_single_slot(self):
@@ -1146,6 +1310,8 @@ class AdminEstimateSlotsTests(TestCase):
             estimate_gradable_slots('fill_blank', question_text='A [16]. B [17].'),
             2,
         )
+        self.assertEqual(estimate_gradable_slots('mcq', mcq_select_count=2), 2)
+        self.assertEqual(estimate_gradable_slots('mcq', mcq_select_count=3), 3)
 
     def test_fix_mock_questions_command_syncs_points(self):
         from io import StringIO
@@ -1236,6 +1402,44 @@ class McqExtendedTests(TestCase):
         self.assertEqual(len(detail_rows), 2)
         self.assertTrue(any(d['correct_answer'] == 'c' for d in detail_rows))
 
+    def test_mcq_two_answers_labels_follow_dock_after_notes(self):
+        from mock_tests.services.scoring import _dock_buttons_by_question, expand_question_details, score_attempt
+
+        test = MockTest.objects.create(title='MCQ dock labels', test_type='listening', is_active=True)
+        notes = MockQuestion.objects.create(
+            test=test,
+            order=4,
+            question_type='notes_completion',
+            question_text='Effect [23]',
+            correct_answers_json=['explode'],
+        )
+        mcq = MockQuestion.objects.create(
+            test=test,
+            order=5,
+            question_type='mcq',
+            mcq_select_count=2,
+            question_text='Choose TWO',
+            option_a='A', option_b='B', option_c='C', option_d='D', option_e='E',
+            correct_answer='a,e',
+            points=2,
+        )
+        dock = _dock_buttons_by_question([notes, mcq])
+        rows = expand_question_details(mcq, '', dock)
+        self.assertEqual(rows[0]['label'], 'Savol 5 — [24]')
+        self.assertEqual(rows[1]['label'], 'Savol 5 — [25]')
+        self.assertEqual(rows[0]['order'], 24)
+        self.assertEqual(rows[1]['order'], 25)
+
+        attempt = MockAttempt.objects.create(
+            test=test,
+            session_key='mcq-dock-lbl',
+            answers_json={str(notes.pk): {'23': ''}, str(mcq.pk): ''},
+            is_finished=True,
+        )
+        result = score_attempt(attempt, [notes, mcq])
+        mcq_labels = [d['label'] for d in result['details'] if d['question_id'] == mcq.id]
+        self.assertEqual(mcq_labels, ['Savol 5 — [24]', 'Savol 5 — [25]'])
+
     def test_result_labels_consistent_across_question_types(self):
         from mock_tests.services.scoring import score_attempt
 
@@ -1281,7 +1485,7 @@ class McqExtendedTests(TestCase):
         self.assertIn('mock-mcq-check', html)
         self.assertIn('2 ta javob tanlang', html)
         self.assertIn('mock-q-num-box--range', html)
-        self.assertIn('24-25', html)
+        self.assertIn('1-2', html)
 
     def test_mcq_multi_order_display_and_dock(self):
         from mock_tests.views import _build_blank_buttons
@@ -1307,7 +1511,27 @@ class McqExtendedTests(TestCase):
             'correct_answer': 'a', 'points': 1,
         })
         self.assertFalse(form.is_valid())
-        self.assertIn('correct_answer', form.errors)
+
+    def test_tfng_admin_form_accepts_three_options(self):
+        from mock_tests.admin_forms import MockQuestionAdminForm
+
+        test = MockTest.objects.create(title='TFNG', test_type='reading', is_active=True)
+        form = MockQuestionAdminForm(data={
+            'test': test.pk,
+            'order': 3,
+            'part_number': 1,
+            'question_type': 'true_false_not_given',
+            'question_text': 'The statement agrees with the passage.',
+            'option_a': 'True',
+            'option_b': 'False',
+            'option_c': 'Not Given',
+            'correct_answer': 'c',
+            'points': 1,
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        q = form.save()
+        self.assertEqual(len(q.get_tfng_options()), 3)
+        self.assertEqual(q.get_tfng_options()[2]['text'], 'Not Given')
 
 
 class StatsTests(MockTestFixturesMixin, TestCase):

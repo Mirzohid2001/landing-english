@@ -192,9 +192,12 @@ def _question_detail_meta(question):
 
 
 def _dock_buttons_by_question(questions):
-    from mock_tests.views import _build_blank_buttons
+    from mock_tests.views import _build_test_dock_buttons
 
-    buttons, _ = _build_blank_buttons(list(questions))
+    if not questions:
+        return {}
+    test = questions[0].test
+    buttons, _ = _build_test_dock_buttons(test, list(questions))
     by_q = {}
     for btn in buttons:
         by_q.setdefault(btn['question_id'], []).append(btn)
@@ -203,18 +206,30 @@ def _dock_buttons_by_question(questions):
 
 def _ielts_num_for_slot(question, slot, dock_by_question=None):
     """Dock bilan bir xil test raqami [N]."""
-    if dock_by_question:
-        for btn in dock_by_question.get(question.id, []):
-            if slot.kind in ('blank', 'matching'):
+    if dock_by_question and slot:
+        buttons = dock_by_question.get(question.id, [])
+        if slot.kind in ('blank', 'matching'):
+            for btn in buttons:
                 if btn['is_blank'] and str(btn['blank_key']) == str(slot.key):
                     return btn['num']
-            elif not btn['is_blank']:
-                if str(btn['num']) == str(slot.display_num):
-                    return btn['num']
-                if slot.kind == 'single' and len(dock_by_question.get(question.id, [])) == 1:
-                    return btn['num']
+        non_blank = [b for b in buttons if not b['is_blank']]
+        if slot.kind == 'mcq_letter':
+            letter_slots = [s for s in list_gradable_slots(question) if s.kind == 'mcq_letter']
+            for idx, s in enumerate(letter_slots):
+                if s.key == slot.key and idx < len(non_blank):
+                    return non_blank[idx]['num']
+        elif slot.kind == 'single' and non_blank:
+            return non_blank[0]['num']
+    if not slot:
+        return None
     num = slot.display_num
     return int(num) if str(num).isdigit() else num
+
+
+def _row_sort_order(ielts_num, fallback):
+    if ielts_num is None:
+        return fallback
+    return int(ielts_num) if str(ielts_num).isdigit() else ielts_num
 
 
 def _detail_label(question, ielts_num):
@@ -243,7 +258,10 @@ def expand_question_details(question, user_answer, dock_by_question=None):
                 ok = match_text_answer(user_val, [raw_correct]) if raw_correct else False
                 user_display = str(user_val).strip() or '—'
             rows.append({
-                'order': int(slot.display_num) if str(slot.display_num).isdigit() else slot.display_num,
+                'order': _row_sort_order(
+                    _ielts_num_for_slot(question, slot, dock_by_question),
+                    slot.display_num,
+                ),
                 'question_order': question.order,
                 'label': _detail_label(question, _ielts_num_for_slot(question, slot, dock_by_question)),
                 'is_correct': ok,
@@ -287,7 +305,10 @@ def expand_question_details(question, user_answer, dock_by_question=None):
             corr = slot.correct
             ok = normalize_choice(user_val) == normalize_choice(corr) if corr else False
             rows.append({
-                'order': int(slot.display_num) if str(slot.display_num).isdigit() else slot.display_num,
+                'order': _row_sort_order(
+                    _ielts_num_for_slot(question, slot, dock_by_question),
+                    slot.display_num,
+                ),
                 'question_order': question.order,
                 'label': _detail_label(question, _ielts_num_for_slot(question, slot, dock_by_question)),
                 'is_correct': ok,
@@ -309,7 +330,10 @@ def expand_question_details(question, user_answer, dock_by_question=None):
             letter = slot.correct
             ok = bool(letter) and letter in user_letters
             rows.append({
-                'order': int(slot.display_num) if str(slot.display_num).isdigit() else slot.display_num,
+                'order': _row_sort_order(
+                    _ielts_num_for_slot(question, slot, dock_by_question),
+                    slot.display_num,
+                ),
                 'question_order': question.order,
                 'label': _detail_label(question, _ielts_num_for_slot(question, slot, dock_by_question)),
                 'is_correct': ok,
@@ -338,7 +362,7 @@ def expand_question_details(question, user_answer, dock_by_question=None):
         if single_slot else question.order
     )
     rows.append({
-        'order': question.order,
+        'order': _row_sort_order(ielts_num, question.order),
         'question_order': question.order,
         'label': _detail_label(question, ielts_num),
         'is_correct': is_correct,

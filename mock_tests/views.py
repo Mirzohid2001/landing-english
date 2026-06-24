@@ -6,6 +6,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 
 from .models import MockTest, MockAttempt
+from .services.ui_dock import attach_reading_ui_dock_labels
 from .services.gradable import total_gradable_slots
 from .services.slots import list_gradable_slots
 from .services.scoring import score_attempt
@@ -39,15 +40,15 @@ def _get_or_create_attempt(request, test):
     return attempt
 
 
-def _build_blank_buttons(questions, start_num=0):
-    """Footer dock — IELTS/qavs raqamlari; ziddiyat bo'lsa ketma-ket fallback."""
+def _build_blank_buttons(questions, start_num=0, sequential_only=False):
+    """Footer dock — ketma-ket raqamlar; listeningda qavs/IELTS raqami afzal."""
     buttons = []
     seq_fallback = start_num
     used_nums = set()
 
     def _pick_num(preferred):
         nonlocal seq_fallback
-        if preferred is not None and preferred not in used_nums:
+        if not sequential_only and preferred is not None and preferred not in used_nums:
             used_nums.add(preferred)
             if isinstance(preferred, int):
                 seq_fallback = max(seq_fallback, preferred)
@@ -62,7 +63,7 @@ def _build_blank_buttons(questions, start_num=0):
         return seq_fallback
 
     def _preferred_num(value):
-        if value is None:
+        if sequential_only or value is None:
             return None
         numeric_used = [n for n in used_nums if isinstance(n, int)]
         if numeric_used and isinstance(value, int) and value <= max(numeric_used):
@@ -70,7 +71,9 @@ def _build_blank_buttons(questions, start_num=0):
         return value
 
     def _append(question_id, is_blank, blank_key='', question_order=None):
-        if is_blank and blank_key:
+        if sequential_only:
+            num = None
+        elif is_blank and blank_key:
             num = int(blank_key) if str(blank_key).isdigit() else blank_key
         elif question_order is not None:
             num = _preferred_num(question_order)
@@ -98,6 +101,21 @@ def _build_blank_buttons(questions, start_num=0):
                 order_num = int(num) if str(num).isdigit() else num
                 _append(q.pk, False, question_order=order_num)
     return buttons, seq_fallback
+
+
+def _build_test_dock_buttons(test, questions, start_num=0):
+    """Barcha dock tugmalari — avval part bo'yicha, keyin savol tartibida."""
+    parts = {}
+    for q in questions:
+        parts.setdefault(q.part_number or 1, []).append(q)
+    sequential = test.test_type == 'reading'
+    all_buttons = []
+    offset = start_num
+    for part_num in sorted(parts.keys()):
+        qs = parts[part_num]
+        buttons, offset = _build_blank_buttons(qs, offset, sequential_only=sequential)
+        all_buttons.extend(buttons)
+    return all_buttons, offset
 
 
 def _build_instruction_groups(questions):
@@ -143,10 +161,13 @@ def _build_part_groups(test, questions, passages):
     passage_map = {p.order: p for p in passages}
     part_groups = []
     global_offset = 0
+    sequential_dock = test.test_type == 'reading'
     for part_num in sorted(parts.keys()):
         qs = parts[part_num]
         question_count = sum(q.gradable_slot_count() for q in qs)
-        blank_buttons, global_offset = _build_blank_buttons(qs, global_offset)
+        blank_buttons, global_offset = _build_blank_buttons(
+            qs, global_offset, sequential_only=sequential_dock,
+        )
         orders = [q.order for q in qs]
         start_order = min(orders) if orders else 0
         end_order = max(orders) if orders else 0
@@ -181,10 +202,13 @@ def _build_part_groups(test, questions, passages):
     return part_groups
 
 
-def _questions_range_display(questions):
+def _questions_range_display(questions, test=None):
     if not questions:
         return '0'
-    buttons, _ = _build_blank_buttons(questions)
+    if test is not None:
+        buttons, _ = _build_test_dock_buttons(test, questions)
+    else:
+        buttons, _ = _build_blank_buttons(questions)
     if buttons:
         start, end = buttons[0]['num'], buttons[-1]['num']
         return str(start) if start == end else f'{start}-{end}'
@@ -323,12 +347,13 @@ def test_take(request, pk):
         q.ui_matching_ref_options = q.get_matching_ref_options()
         q.ui_matching_ref_title = q.get_matching_ref_title()
         q.ui_bracket_segments = q.get_bracket_segments()
+    attach_reading_ui_dock_labels(test, questions, part_groups)
     context = {
         'test': test,
         'attempt': attempt,
         'part_groups': part_groups,
         'total_questions': total_gradable_slots(questions),
-        'questions_range_display': _questions_range_display(questions),
+        'questions_range_display': _questions_range_display(questions, test=test),
         'saved_answers': saved_answers,
         'duration_minutes': test.duration_minutes or 60,
     }

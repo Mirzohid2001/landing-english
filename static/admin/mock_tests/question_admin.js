@@ -59,6 +59,33 @@
 
     function toggleFieldRow(container, fieldName, show) {
         if (!container) return;
+        var fieldBox = container.querySelector('.field-box.field-' + fieldName);
+        if (fieldBox) {
+            fieldBox.style.display = show ? '' : 'none';
+            fieldBox.classList.toggle('question-type-row-hidden', !show);
+            var row = fieldBox.closest('.form-row');
+            if (row) {
+                var boxes = row.querySelectorAll(':scope > .field-box');
+                var anyVisible = false;
+                boxes.forEach(function (box) {
+                    if (box.style.display !== 'none' && !box.classList.contains('question-type-row-hidden')) {
+                        anyVisible = true;
+                    }
+                });
+                row.style.display = anyVisible ? '' : 'none';
+                row.classList.toggle('question-type-row-hidden', !anyVisible);
+            }
+            return;
+        }
+        var inp = container.querySelector('[name$="-' + fieldName + '"]');
+        if (inp) {
+            var inpRow = inp.closest('.form-row');
+            if (inpRow) {
+                inpRow.style.display = show ? '' : 'none';
+                inpRow.classList.toggle('question-type-row-hidden', !show);
+                return;
+            }
+        }
         var row = container.querySelector('.form-row.field-' + fieldName);
         if (row) {
             row.style.display = show ? '' : 'none';
@@ -162,6 +189,7 @@
         var isFill =
             FILL_TYPES.indexOf(qType) >= 0 && qType !== 'summary_box';
         var isMcq = qType === 'mcq';
+        var isTfng = qType === 'true_false_not_given' || qType === 'yes_no_not_given';
         var testType = getTestType();
         var showImage = testType === 'listening' && qType && qType !== 'essay';
         var isEssay = qType === 'essay';
@@ -173,19 +201,48 @@
         );
         var mcqFs = container.querySelector('fieldset.question-mcq-fields');
         var fillFs = container.querySelector('fieldset.question-fill-fields');
+        container.classList.toggle('question-tfng-active', isTfng);
+        container.classList.toggle('question-mcq-active', isMcq);
         toggleFieldset(mcqFs, showMcqFields);
         toggleFieldset(fillFs, showFill);
 
-        toggleFieldRow(container, 'option_a', showMcqFields);
-        toggleFieldRow(container, 'option_b', showMcqFields);
-        toggleFieldRow(container, 'option_c', showMcqFields && (qType === 'mcq' || qType.indexOf('not_given') >= 0));
-        toggleFieldRow(container, 'option_d', showMcqFields && (isMcq || qType === 'mcq'));
-        toggleFieldRow(container, 'option_e', isMcq);
-        toggleFieldRow(container, 'option_f', isMcq);
-        toggleFieldRow(container, 'option_g', isMcq);
-        toggleFieldRow(container, 'option_h', isMcq);
-        toggleFieldRow(container, 'mcq_select_count', isMcq);
-        toggleFieldRow(container, 'mcq_options_lines', isMcq);
+        if (isTfng) {
+            ['option_a', 'option_b', 'option_c', 'correct_answer'].forEach(function (name) {
+                toggleFieldRow(container, name, true);
+            });
+            ['option_d', 'option_e', 'option_f', 'option_g', 'option_h', 'mcq_select_count', 'mcq_options_lines'].forEach(function (name) {
+                toggleFieldRow(container, name, false);
+            });
+        } else if (isMcq) {
+            toggleFieldRow(container, 'option_a', true);
+            toggleFieldRow(container, 'option_b', true);
+            toggleFieldRow(container, 'option_c', true);
+            toggleFieldRow(container, 'option_d', true);
+            toggleFieldRow(container, 'option_e', true);
+            toggleFieldRow(container, 'option_f', true);
+            toggleFieldRow(container, 'option_g', true);
+            toggleFieldRow(container, 'option_h', true);
+            toggleFieldRow(container, 'mcq_select_count', true);
+            toggleFieldRow(container, 'mcq_options_lines', true);
+            toggleFieldRow(container, 'correct_answer', true);
+        } else if (showMcqFields) {
+            toggleFieldRow(container, 'option_a', true);
+            toggleFieldRow(container, 'option_b', true);
+            toggleFieldRow(container, 'option_c', false);
+            toggleFieldRow(container, 'option_d', false);
+            toggleFieldRow(container, 'option_e', false);
+            toggleFieldRow(container, 'option_f', false);
+            toggleFieldRow(container, 'option_g', false);
+            toggleFieldRow(container, 'option_h', false);
+            toggleFieldRow(container, 'mcq_select_count', false);
+            toggleFieldRow(container, 'mcq_options_lines', false);
+            toggleFieldRow(container, 'correct_answer', true);
+        } else {
+            ['option_a', 'option_b', 'option_c', 'option_d', 'option_e', 'option_f', 'option_g', 'option_h',
+                'mcq_select_count', 'mcq_options_lines', 'correct_answer'].forEach(function (name) {
+                toggleFieldRow(container, name, false);
+            });
+        }
 
         toggleFieldRow(container, 'fill_answers', isFill || isSummaryBox || qType === 'notes_completion' || qType === 'table_completion');
         toggleFieldRow(container, 'matching_items', isMultiMatching);
@@ -200,7 +257,7 @@
         toggleFieldRow(
             container,
             'correct_answer',
-            showMcqFields || isMatching || (isFill && !isMultiMatching) || isSummaryBox
+            isTfng || isMcq || isMatching || (isFill && !isMultiMatching) || isSummaryBox
         );
         if (isMcq) {
             toggleFieldRow(container, 'correct_answer', true);
@@ -255,6 +312,13 @@
         var fill = fieldValue(container, 'fill_answers') || '';
         var brackets = countBracketSlots(qtext);
 
+        if (qType === 'mcq') {
+            var selectCount = parseInt(fieldValue(container, 'mcq_select_count') || '1', 10);
+            if (isNaN(selectCount) || selectCount < 1) selectCount = 1;
+            if (selectCount > 3) selectCount = 3;
+            return selectCount;
+        }
+
         if (
             qType === 'summary_box' ||
             qType === 'notes_completion' ||
@@ -264,7 +328,6 @@
             qType === 'summary_completion'
         ) {
             if (brackets) return brackets;
-            if (fill) return countCommaAnswers(fill);
             return 1;
         }
         if (MULTI_MATCHING.indexOf(qType) >= 0) {
@@ -427,6 +490,7 @@
             option_a: 'True',
             option_b: 'False',
             option_c: 'Not Given',
+            correct_answer: 'c',
         },
         ynng: {
             question_type: 'yes_no_not_given',
@@ -434,6 +498,7 @@
             option_a: 'Yes',
             option_b: 'No',
             option_c: 'Not Given',
+            correct_answer: 'c',
         },
         fill: {
             question_type: 'fill_blank',
@@ -447,6 +512,16 @@
             matching_items: '14|Paragraph A\n15|Paragraph B',
             matching_options_lines: 'i|First heading\nii|Second heading\niii|Third heading',
             matching_correct: '14:i\n15:ii',
+        },
+        summary_box: {
+            question_type: 'summary_box',
+            question_text: (
+                'How to use City Cycle\n'
+                '-- Select a bike by using the [11]\n'
+                '-- Release the bike by using the [12] of your chosen bike.'
+            ),
+            fill_answers: 'button, website',
+            word_list_lines: 'button\nwebsite\nhelmet',
         },
     };
 
@@ -684,10 +759,14 @@
 
     function updateQuestionStats() {
         var statsEl = document.getElementById('mock-admin-question-stats');
+        var slotEl = document.getElementById('mock-admin-slot-stats');
         if (!statsEl) return;
         var rows = getInlineRows();
         var parts = {};
         var count = 0;
+        var totalSlots = 0;
+        var totalPoints = 0;
+        var mismatches = 0;
         rows.forEach(function (row) {
             var del = row.querySelector('input[name$="-DELETE"]');
             if (del && del.checked) return;
@@ -696,15 +775,36 @@
             count += 1;
             var part = fieldValue(row, 'part_number') || '?';
             parts[part] = (parts[part] || 0) + 1;
+            var slots = estimateGradableSlots(row);
+            totalSlots += slots;
+            var pts = parseInt(fieldValue(row, 'points') || '0', 10);
+            if (!isNaN(pts)) totalPoints += pts;
+            if (pts > 0 && pts !== slots) mismatches += 1;
         });
         if (!count) {
             statsEl.textContent = 'Hali savol qatorlari bo\'sh — «Yana bir Savol qo\'shish» bosing.';
+            if (slotEl) slotEl.textContent = '';
             return;
         }
         var partText = Object.keys(parts).sort().map(function (p) {
-            return 'Part ' + p + ': ' + parts[p] + ' ta';
+            return 'Part ' + p + ': ' + parts[p] + ' ta qator';
         }).join(' · ');
         statsEl.textContent = 'Jami ' + count + ' ta savol qatori · ' + partText;
+        if (slotEl) {
+            var slotLine =
+                'Baholanadigan slotlar: ' + totalSlots +
+                ' · Jami ball (form): ' + totalPoints;
+            if (mismatches) {
+                slotLine += ' · ⚠ ' + mismatches + ' ta qatorda ball ≠ slot (Saqlash tuzatadi)';
+            }
+            if (window.MOCK_TEST_SAVED_STATS && !mismatches) {
+                var saved = window.MOCK_TEST_SAVED_STATS;
+                if (saved.gradable_slots !== totalSlots || saved.total_points !== totalPoints) {
+                    slotLine += ' · Saqlanmagan o\'zgarishlar bor';
+                }
+            }
+            slotEl.textContent = slotLine;
+        }
     }
 
     function applyTemplateToRow(container, templateKey) {
@@ -745,10 +845,11 @@
     function rowSummaryText(row) {
         var order = fieldValue(row, 'order') || '?';
         var qtype = fieldValue(row, 'question_type') || 'tur tanlanmagan';
+        var slots = estimateGradableSlots(row);
         var text = fieldValue(row, 'question_text') || '';
         text = text.replace(/\s+/g, ' ').trim();
-        if (text.length > 55) text = text.slice(0, 55) + '…';
-        return '#' + order + ' · ' + qtype + (text ? ' — ' + text : '');
+        if (text.length > 48) text = text.slice(0, 48) + '…';
+        return '#' + order + ' · ' + qtype + ' · ' + slots + ' slot' + (text ? ' — ' + text : '');
     }
 
     function refreshRowCollapse(row) {
@@ -889,7 +990,8 @@
         if (!e.target || !e.target.matches) return;
         if (e.target.matches(
             'input[name$="-order"], input[name$="-part_number"], textarea[name$="-question_text"], ' +
-            'input[name$="-fill_answers"], textarea[name$="-matching_items"], textarea[name$="-matching_correct"]'
+            'input[name$="-fill_answers"], textarea[name$="-matching_items"], textarea[name$="-matching_correct"], ' +
+            'select[name$="-mcq_select_count"], input[name$="-points"]'
         )) {
             updateQuestionStats();
             var row = getInlineContainer(e.target);

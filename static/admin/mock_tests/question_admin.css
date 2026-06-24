@@ -16,6 +16,22 @@
     display: block !important;
 }
 
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-option_d,
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-option_e,
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-option_f,
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-option_g,
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-option_h,
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-mcq_select_count,
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-mcq_options_lines {
+    display: none !important;
+}
+
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-option_a,
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-option_b,
+.inline-related.question-tfng-active fieldset.question-mcq-fields .form-row.field-option_c {
+    display: block !important;
+}
+
 .question-type-mcq-hidden,
 .question-type-row-hidden {
     display: none !important;
@@ -106,6 +122,13 @@
     font-size: 13px;
     font-weight: 600;
     color: #047857;
+}
+
+.mock-admin-slot-line {
+    margin: 6px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e40af;
 }
 
 .mock-inline-tools {

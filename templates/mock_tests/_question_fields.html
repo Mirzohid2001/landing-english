@@ -20,7 +20,7 @@
     {% endif %}
     {% for mf in question.ui_matching_fields %}
     <div class="mock-matching-row">
-        <span class="mock-q-num-box">{{ mf.num }}</span>
+        <span class="mock-q-num-box">{{ mf.display_num|default:mf.num }}</span>
         <span class="mock-matching-label">{{ mf.label }}</span>
         <select class="mock-matching-select" data-question-id="{{ question.id }}" data-match-num="{{ mf.num }}" aria-label="Javob {{ mf.num }}">
             <option value="">—</option>
@@ -77,12 +77,12 @@
 </div>
 
 {% elif question.question_type == 'notes_completion' or question.question_type == 'table_completion' or question.uses_bracket_blanks %}
-{% with rows=question.get_bracket_completion_rows %}
+{% with rows=question.ui_bracket_rows|default:question.get_bracket_completion_rows %}
 {% if rows %}
 <div class="mock-sc-block selectable-text">
     {% for row in rows %}
     <p class="mock-sc-row">
-        <span class="mock-sc-num" aria-hidden="true">{{ row.num }}</span>
+        <span class="mock-sc-num" aria-hidden="true">{{ row.display_num|default:row.num }}</span>
         {% if row.before %}<span class="mock-sc-text">{{ row.before }}</span>{% endif %}
         <span class="mock-sc-blank">
             <input type="text" class="mock-sc-input mock-fill-input mock-inline-input"
@@ -136,7 +136,7 @@
     </div>
     {% endif %}
     <div class="mock-summary-body selectable-text">
-        {% for line in question.get_summary_lines %}
+        {% for line in question.ui_summary_lines|default:question.get_summary_lines %}
         {% if line.spacer %}
         <div class="mock-summary-spacer" aria-hidden="true"></div>
         {% elif line.segments %}
@@ -144,7 +144,7 @@
             {% for seg in line.segments %}
                 {% if seg.type == 'text' %}<span class="mock-summary-text">{{ seg.value }}</span>{% else %}
                 <span class="mock-summary-select-wrap">
-                    <span class="mock-summary-num" aria-hidden="true">{{ seg.num }}</span>
+                    <span class="mock-summary-num" aria-hidden="true">{{ seg.display_num|default:seg.num }}</span>
                     {% if words %}
                     <select class="mock-summary-select mock-fill-input"
                             data-question-id="{{ question.id }}" data-blank="{{ seg.num }}"

@@ -16,8 +16,11 @@
   };
 </script>
 {% endif %}
-<script src="{% static 'admin/mock_tests/question_admin.js' %}?v=9"></script>
-<link rel="stylesheet" href="{% static 'admin/mock_tests/question_admin.css' %}?v=8">
+{% if test_slot_stats_json %}
+<script>window.MOCK_TEST_SAVED_STATS = {{ test_slot_stats_json|safe }};</script>
+{% endif %}
+<script src="{% static 'admin/mock_tests/question_admin.js' %}?v=12"></script>
+<link rel="stylesheet" href="{% static 'admin/mock_tests/question_admin.css' %}?v=10">
 {% endblock %}
 
 {% block after_field_sets %}
@@ -28,6 +31,7 @@
     <a href="{{ original.get_absolute_url }}" target="_blank" class="mock-admin-preview-link">Saytda ko'rish ↗</a>
   </div>
   <p class="mock-admin-summary-line" id="mock-admin-question-stats">Savollar yuklanmoqda…</p>
+  <p class="mock-admin-summary-line mock-admin-slot-line" id="mock-admin-slot-stats"></p>
   <p class="mock-admin-hint-line">
     Yangi savol: pastdagi <strong>Yana bir Savol qo'shish</strong> yoki tez shablon tugmalari.
     O'chirish: saqlangan savolda <strong>O'chirish</strong> belgilang va <strong>Saqlash</strong> bosing.

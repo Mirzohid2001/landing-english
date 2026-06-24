@@ -71,8 +71,15 @@ def estimate_gradable_slots(
     fill_answers='',
     matching_correct='',
     matching_items='',
+    mcq_select_count=1,
 ):
     """Admin JS `estimateGradableSlots` bilan bir xil mantiq."""
+    if question_type == 'mcq':
+        try:
+            count = int(mcq_select_count or 1)
+        except (TypeError, ValueError):
+            count = 1
+        return max(1, min(count, 3))
     brackets = count_bracket_slots(question_text)
     if question_type in FILL_MULTI_TYPES:
         if brackets:

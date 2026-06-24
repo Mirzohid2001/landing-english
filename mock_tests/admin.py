@@ -69,9 +69,10 @@ QUESTION_FIELDSETS = [
             "fields": [
                 "mcq_select_count",
                 ("option_a", "option_b"),
-                ("option_c", "option_d"),
-                ("option_e", "option_f"),
-                ("option_g", "option_h"),
+                "option_c",
+                ("option_d", "option_e"),
+                ("option_f", "option_g"),
+                "option_h",
                 "mcq_options_lines",
                 "correct_answer",
             ],
@@ -270,6 +271,14 @@ class MockTestAdmin(admin.ModelAdmin):
         extra_context["import_json_url"] = reverse(
             "admin:mock_tests_mocktest_import_json"
         )
+        obj = self.get_object(request, object_id)
+        if obj:
+            qs = obj.questions.all()
+            extra_context["test_slot_stats_json"] = json.dumps({
+                "question_rows": qs.count(),
+                "gradable_slots": obj.total_questions,
+                "total_points": sum(q.points for q in qs),
+            }, ensure_ascii=False)
         return super().change_view(
             request, object_id, form_url, extra_context=extra_context
         )

@@ -214,6 +214,13 @@ class MockQuestion(models.Model):
             return f'{self.order}-{self.order + slots - 1}'
         return str(self.order)
 
+    def get_ui_display_label(self):
+        """Take sahifasi — readingda dock ketma-ket raqami."""
+        label = getattr(self, 'ui_display_label', None)
+        if label is not None:
+            return label
+        return self.get_order_display_label()
+
     def get_tfng_options(self):
         return [
             {'letter': 'a', 'text': self.option_a or 'True'},
