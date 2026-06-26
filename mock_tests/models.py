@@ -258,6 +258,35 @@ class MockQuestion(models.Model):
     def get_matching_ref_title(self):
         return matching_ref_title(self.question_type)
 
+    def parse_inline_parts(self, text=None):
+        """Matndan [N] inline bo'sh joylar."""
+        source = self.question_text if text is None else text
+        source = source or ''
+        pattern = re.compile(r'\[(\d+)\]')
+        if not pattern.search(source):
+            return []
+        parts = []
+        last = 0
+        for match in pattern.finditer(source):
+            if match.start() > last:
+                parts.append({'type': 'text', 'content': source[last:match.start()]})
+            parts.append({'type': 'input', 'num': match.group(1)})
+            last = match.end()
+        if last < len(source):
+            parts.append({'type': 'text', 'content': source[last:]})
+        return parts
+
+    def get_completion_title_body(self):
+        """Summary/Sentence completion: birinchi qator sarlavha (qavsiz)."""
+        text = (self.question_text or '').strip()
+        if not text:
+            return '', ''
+        lines = [ln.strip() for ln in text.split('\n') if ln.strip()]
+        if lines and not re.search(r'\[\d+\]', lines[0]):
+            body = '\n'.join(lines[1:]).strip() if len(lines) > 1 else ''
+            return lines[0], body or text
+        return '', text
+
     def get_listening_inline_parts(self):
         """Listening UI: matn ichida [1] yoki ______ bo'sh joylar."""
         qtypes = (
@@ -267,18 +296,9 @@ class MockQuestion(models.Model):
         if self.question_type not in qtypes:
             return []
         text = self.question_text or ''
-        pattern = re.compile(r'\[(\d+)\]')
-        if pattern.search(text):
-            parts = []
-            last = 0
-            for match in pattern.finditer(text):
-                if match.start() > last:
-                    parts.append({'type': 'text', 'content': text[last:match.start()]})
-                parts.append({'type': 'input', 'num': match.group(1)})
-                last = match.end()
-            if last < len(text):
-                parts.append({'type': 'text', 'content': text[last:]})
-            return parts
+        bracket_parts = self.parse_inline_parts(text)
+        if bracket_parts:
+            return bracket_parts
         for sep in ('______', '_____', '____', '___'):
             if sep in text:
                 before, after = text.split(sep, 1)

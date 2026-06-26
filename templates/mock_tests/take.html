@@ -3,7 +3,7 @@
 
 {% block title %}{{ test.title }} - Test{% endblock %}
 {% block body_class %}mock-exam-body{% if test.test_type == 'listening' %} mock-exam-body--listening{% endif %}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=24">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=26">{% endblock %}
 
 {% block content %}
 <div class="mock-exam-ambient" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -240,17 +240,17 @@
                             </ul>
                         </div>
                         {% endif %}
-                        <article class="mock-q-card{% if question.question_type == 'summary_box' %} mock-q-card--summary-box{% endif %}" id="q-card-{{ question.id }}" data-qid="{{ question.id }}" data-order="{{ question.order }}">
+                        <article class="mock-q-card{% if question.question_type == 'summary_box' %} mock-q-card--summary-box{% elif question.question_type == 'sentence_completion' or question.question_type == 'summary_completion' %} mock-q-card--completion{% endif %}" id="q-card-{{ question.id }}" data-qid="{{ question.id }}" data-order="{{ question.order }}">
                             {% if question.question_type == 'summary_box' %}
                             {% if question.instruction and question.instruction != block.display_instruction %}
                             <div class="mock-shart-inline mock-shart-inline--summary">{{ question.instruction }}</div>
                             {% endif %}
                             <div class="mock-q-main mock-q-main--full">
-                                {% include 'mock_tests/_question_fields.html' with question=question %}
+                                {% include 'mock_tests/_question_fields.html' with question=question block_instruction=block.display_instruction %}
                             </div>
                             {% elif question.uses_bracket_blanks %}
                             <div class="mock-q-main mock-q-main--full">
-                                {% include 'mock_tests/_question_fields.html' with question=question %}
+                                {% include 'mock_tests/_question_fields.html' with question=question block_instruction=block.display_instruction %}
                             </div>
                             {% elif question.question_type == 'fill_blank' or question.question_type == 'sentence_completion' or question.question_type == 'summary_completion' %}
                             <div class="mock-fill-row selectable-text">

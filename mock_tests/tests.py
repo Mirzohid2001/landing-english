@@ -610,9 +610,10 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertIn('class="mock-sc-num" aria-hidden="true">7</span>', html)
+        self.assertIn('aria-hidden="true">7</span>', html)
+        self.assertIn('aria-hidden="true">8</span>', html)
+        self.assertIn('aria-hidden="true">9</span>', html)
         self.assertIn('class="mock-q-num-box">10</span>', html)
-        self.assertIn('class="mock-q-num-box">13</span>', html)
 
     def test_reading_scoring_dock_matches_part_dock_with_overlapping_orders(self):
         from mock_tests.views import _build_part_groups
@@ -849,6 +850,79 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         html = self.client.get(url).content.decode()
         self.assertEqual(html.count('mock-sc-row'), 5)
 
+    def test_reading_completion_block_layout(self):
+        test = MockTest.objects.create(title='Completion layout', test_type='reading', is_active=True)
+        for i in range(1, 14):
+            MockQuestion.objects.create(
+                test=test, order=i, part_number=1,
+                question_type='true_false_not_given',
+                question_text=f'Q {i}', option_a='T', option_b='F', option_c='NG',
+                correct_answer='a',
+            )
+        for i in range(14, 24):
+            MockQuestion.objects.create(
+                test=test, order=i, part_number=2,
+                question_type='true_false_not_given',
+                question_text=f'Q {i}', option_a='T', option_b='F', option_c='NG',
+                correct_answer='a',
+            )
+        MockQuestion.objects.create(
+            test=test,
+            order=24,
+            part_number=2,
+            question_type='sentence_completion',
+            instruction='Choose ONE WORD ONLY from the passage for each answer',
+            question_text=(
+                'Celebrities achieve a global status\n\n'
+                'The development of publishing meant readers learned about celebrities by reading [24]. '
+                'Mass media meant a person\'s [25] rather than talent could bring fame. '
+                'Fame may depend on the response of the [26].'
+            ),
+            correct_answers_json=['newspapers', 'personality', 'public'],
+        )
+        url = reverse('mock_tests:test_take', kwargs={'pk': test.pk})
+        html = self.client.get(url).content.decode()
+        self.assertIn('mock-completion-range', html)
+        self.assertIn('Questions 24-26', html)
+        self.assertIn('mock-completion-title', html)
+        self.assertIn('Celebrities achieve a global status', html)
+        self.assertIn('mock-completion-panel', html)
+        self.assertIn('mock-completion-input', html)
+
+    def test_reading_sentence_completion_inline_matches_dock_not_brackets(self):
+        test = MockTest.objects.create(title='Reading SC inline', test_type='reading', is_active=True)
+        for i in range(1, 14):
+            MockQuestion.objects.create(
+                test=test, order=i, part_number=1, question_type='true_false_not_given',
+                question_text=f'P1 {i}', option_a='T', option_b='F', option_c='NG', correct_answer='a',
+            )
+        for i in range(1, 9):
+            MockQuestion.objects.create(
+                test=test, order=i, part_number=2, question_type='true_false_not_given',
+                question_text=f'P2 {i}', option_a='T', option_b='F', option_c='NG', correct_answer='a',
+            )
+        MockQuestion.objects.create(
+            test=test,
+            order=9,
+            part_number=2,
+            question_type='sentence_completion',
+            instruction='Choose ONE WORD ONLY from the passage for each answer',
+            question_text=(
+                'The development of publishing meant readers learned about celebrities by reading [24]. '
+                'Mass media meant a person\'s [25] rather than talent could bring fame. '
+                'Fame may depend on the response of the [26].'
+            ),
+            correct_answers_json=['newspapers', 'personality', 'public'],
+        )
+        url = reverse('mock_tests:test_take', kwargs={'pk': test.pk})
+        html = self.client.get(url).content.decode()
+        self.assertIn('mock-reading-inline', html)
+        self.assertNotIn('mock-sc-row', html)
+        self.assertIn('aria-hidden="true">22</span>', html)
+        self.assertIn('aria-hidden="true">23</span>', html)
+        self.assertIn('aria-hidden="true">24</span>', html)
+        self.assertNotIn('aria-hidden="true">25</span>', html)
+
     def test_sentence_completion_bracket_blanks_count_and_render(self):
         test = MockTest.objects.create(title='Reading SC', test_type='reading', is_active=True)
         q = MockQuestion.objects.create(
@@ -868,9 +942,8 @@ class ViewsTests(MockTestFixturesMixin, TestCase):
         self.assertTrue(q.uses_bracket_blanks())
         url = reverse('mock_tests:test_take', kwargs={'pk': test.pk})
         html = self.client.get(url).content.decode()
-        self.assertEqual(html.count('mock-sc-row'), 3)
-        self.assertEqual(html.count('mock-sc-block'), 1)
-        self.assertIn('mock-sc-text', html)
+        self.assertEqual(html.count('mock-reading-inline-blank'), 3)
+        self.assertIn('mock-reading-inline-text', html)
 
     def test_sentence_completion_multiline_underscore_before_bracket(self):
         test = MockTest.objects.create(title='Reading SC multiline', test_type='reading', is_active=True)
@@ -1152,8 +1225,8 @@ class SummaryCompletionTests(TestCase):
         self.assertEqual(q.gradable_slot_count(), 3)
         self.assertTrue(q.uses_bracket_blanks())
         html = self.client.get(reverse('mock_tests:test_take', kwargs={'pk': test.pk})).content.decode()
-        self.assertEqual(html.count('mock-sc-row'), 3)
-        self.assertEqual(html.count('mock-sc-block'), 1)
+        self.assertEqual(html.count('mock-reading-inline-blank'), 3)
+        self.assertIn('mock-reading-inline-text', html)
 
     def test_summary_completion_multiline_underscore_before_bracket(self):
         test = MockTest.objects.create(title='Summary multiline', test_type='reading', is_active=True)

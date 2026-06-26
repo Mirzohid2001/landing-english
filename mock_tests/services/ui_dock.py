@@ -72,3 +72,29 @@ def attach_reading_ui_dock_labels(test, questions, part_groups):
             if seg.get('type') == 'blank':
                 key = str(seg['num'])
                 seg['display_num'] = nums.get(key, seg['num'])
+
+        if q.question_type in ('sentence_completion', 'summary_completion'):
+            title, body = q.get_completion_title_body()
+            q.ui_completion_title = title
+            blank_values = [nums[k] for k in nums if k != '']
+            if blank_values:
+                sorted_vals = sorted(
+                    blank_values, key=lambda x: int(x) if str(x).isdigit() else x,
+                )
+                q.ui_range_label = (
+                    f'{sorted_vals[0]}-{sorted_vals[-1]}'
+                    if len(sorted_vals) > 1 else str(sorted_vals[0])
+                )
+            parse_text = body if body else (q.question_text or '')
+            inline_parts = []
+            for part in q.parse_inline_parts(parse_text):
+                if part.get('type') == 'input':
+                    key = str(part['num'])
+                    inline_parts.append({
+                        **part,
+                        'display_num': nums.get(key, part['num']),
+                    })
+                else:
+                    inline_parts.append(part)
+            if inline_parts:
+                q.ui_reading_inline_parts = inline_parts

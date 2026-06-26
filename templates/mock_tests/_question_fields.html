@@ -76,6 +76,43 @@
     {% endfor %}
 </div>
 
+{% elif question.question_type == 'sentence_completion' or question.question_type == 'summary_completion' %}
+{% with parts=question.ui_reading_inline_parts|default:question.get_listening_inline_parts %}
+{% if parts %}
+<div class="mock-completion-block">
+    {% if question.ui_range_label %}
+    <div class="mock-completion-range">Questions {{ question.ui_range_label }}</div>
+    {% endif %}
+    {% if question.instruction and question.instruction != block_instruction %}
+    <p class="mock-completion-sub">{{ question.instruction }}</p>
+    {% endif %}
+    <div class="mock-completion-panel selectable-text">
+        {% if question.ui_completion_title %}
+        <h3 class="mock-completion-title">{{ question.ui_completion_title }}</h3>
+        {% endif %}
+        <div class="mock-reading-inline mock-completion-body">
+            {% for p in parts %}
+                {% if p.type == 'text' %}<span class="mock-reading-inline-text">{{ p.content|linebreaksbr }}</span>{% endif %}
+                {% if p.type == 'input' %}
+                <span class="mock-reading-inline-blank">
+                    <span class="mock-q-num-box mock-reading-inline-num" aria-hidden="true">{{ p.display_num|default:p.num }}</span>
+                    <input type="text" class="mock-completion-input mock-fill-input mock-inline-input"
+                           data-question-id="{{ question.id }}" data-blank="{{ p.num }}" autocomplete="off"
+                           aria-label="Javob {{ p.display_num|default:p.num }}">
+                </span>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="mock-fill-answer">
+    <input type="text" name="q_{{ question.id }}" class="mock-fill-input"
+           placeholder="Javobingiz" data-question-id="{{ question.id }}" autocomplete="off">
+</div>
+{% endif %}
+{% endwith %}
+
 {% elif question.question_type == 'notes_completion' or question.question_type == 'table_completion' or question.uses_bracket_blanks %}
 {% with rows=question.ui_bracket_rows|default:question.get_bracket_completion_rows %}
 {% if rows %}
