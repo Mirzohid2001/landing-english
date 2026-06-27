@@ -39,8 +39,14 @@
                 <div class="student-photo">
                     <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" loading="lazy">
                     {% if student.video_file or student.video_url %}
-                    <div class="student-video-overlay">
-                        <button class="play-btn" data-student-id="{{ student.id }}">
+                    <div class="student-video-overlay video-preview--clickable"
+                         role="button"
+                         tabindex="0"
+                         aria-label="{{ student.full_name }} videosini ochish"
+                         data-student-id="{{ student.id }}"
+                         {% if student.video_url %}data-video-url="{{ student.video_url }}"{% endif %}
+                         {% if student.video_file %}data-video-file="{{ student.video_file.url }}"{% endif %}>
+                        <button type="button" class="play-btn" tabindex="-1" aria-hidden="true">
                             <i class="fas fa-play"></i>
                         </button>
                     </div>
@@ -72,74 +78,8 @@
 <!-- Video Modal -->
 <div id="video-modal" class="modal">
     <div class="modal-content modal-video">
-        <span class="close-modal">&times;</span>
+        <span class="close-modal" aria-label="Videoni yopish">&times;</span>
         <div id="video-modal-content"></div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Student video handling
-    document.querySelectorAll('.play-btn[data-student-id]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const studentId = this.getAttribute('data-student-id');
-            const modal = document.getElementById('video-modal');
-            const modalContent = document.getElementById('video-modal-content');
-            
-            // Show loading
-            modalContent.innerHTML = '<div style="text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin fa-3x"></i></div>';
-            modal.style.display = 'block';
-            
-            // Fetch video
-            fetch(`/api/student-video/${studentId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        let videoHTML = '';
-                        if (data.video_url) {
-                            // YouTube or Vimeo URL
-                            let embedUrl = '';
-                            if (data.video_url.includes('youtube.com') || data.video_url.includes('youtu.be')) {
-                                const videoId = data.video_url.includes('youtu.be') 
-                                    ? data.video_url.split('youtu.be/')[1].split('?')[0]
-                                    : data.video_url.split('v=')[1].split('&')[0];
-                                embedUrl = `https://www.youtube.com/embed/${videoId}`;
-                            } else if (data.video_url.includes('vimeo.com')) {
-                                const videoId = data.video_url.split('vimeo.com/')[1].split('?')[0];
-                                embedUrl = `https://player.vimeo.com/video/${videoId}`;
-                            }
-                            videoHTML = `<iframe src="${embedUrl}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="width: 100%; height: 500px;"></iframe>`;
-                        } else if (data.video_file) {
-                            videoHTML = `<video controls autoplay style="width: 100%; max-height: 80vh;"><source src="${data.video_file}" type="video/mp4">Your browser does not support the video tag.</video>`;
-                        }
-                        modalContent.innerHTML = videoHTML;
-                    } else {
-                        modalContent.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Video topilmadi</p></div>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    modalContent.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Xatolik yuz berdi</p></div>';
-                });
-        });
-    });
-    
-    // Close modal
-    document.querySelectorAll('.close-modal').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.getElementById('video-modal').style.display = 'none';
-            document.getElementById('video-modal-content').innerHTML = '';
-        });
-    });
-    
-    // Close modal on outside click
-    window.addEventListener('click', function(event) {
-        const modal = document.getElementById('video-modal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
-            document.getElementById('video-modal-content').innerHTML = '';
-        }
-    });
-</script>
 {% endblock %}

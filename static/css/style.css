@@ -2920,25 +2920,29 @@ section {
 .modal-video {
     max-width: 1000px;
     padding: 0;
-    background: transparent;
+    background: #0f172a;
     z-index: 10002 !important;
+    overflow: visible;
 }
 
 .modal-video .close-modal {
     position: absolute;
-    top: -50px;
-    right: 0;
+    top: 12px;
+    right: 12px;
     color: var(--white);
-    font-size: 2.5rem;
-    width: 50px;
-    height: 50px;
+    font-size: 1.75rem;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(15, 23, 42, 0.75);
     backdrop-filter: blur(10px);
     border-radius: 50%;
     transition: all 0.3s ease;
+    z-index: 3;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .modal-video .close-modal:hover {
@@ -2984,6 +2988,62 @@ section {
     width: 100%;
     height: 100%;
     border: none;
+    background: #000;
+}
+
+.video-preview--clickable,
+.video-preview-home.video-preview--clickable,
+.student-video-overlay.video-preview--clickable,
+.course-video-overlay.video-preview--clickable {
+    cursor: pointer;
+}
+
+.video-player-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+}
+
+.video-player-wrap .video-player {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.video-modal-loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: rgba(15, 23, 42, 0.85);
+    color: #fff;
+    z-index: 2;
+    font-size: 0.95rem;
+}
+
+.video-modal-loader.is-centered {
+    position: relative;
+    inset: auto;
+    min-height: 280px;
+    border-radius: 16px;
+}
+
+.video-modal-loader.is-hidden {
+    display: none;
+}
+
+.video-modal-loader i {
+    font-size: 2rem;
+    color: var(--primary-color, #7c3aed);
+}
+
+body.video-modal-open {
+    overflow: hidden;
 }
 
 .video-error {

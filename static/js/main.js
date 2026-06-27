@@ -46,7 +46,11 @@ function getCsrfToken() {
 
 // Utility Functions
 function showLoading() {
-    document.getElementById('loading-overlay').style.display = 'flex';
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.classList.remove('hidden');
+        overlay.style.display = 'flex';
+    }
 }
 
 function hideLoading() {
