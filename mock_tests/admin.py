@@ -16,6 +16,7 @@ from .admin_forms import (
 )
 from .models import MockAttempt, MockPassage, MockQuestion, MockTest
 from .question_admin_helpers import fix_misplaced_instruction, sync_points_from_slots
+from .services.stats import get_dashboard_stats
 
 
 class MockPassageInline(admin.StackedInline):
