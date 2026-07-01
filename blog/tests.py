@@ -100,6 +100,18 @@ class VideoApiFallbackTests(TestCase):
         self.assertIn('youtube.com', data['video_url'])
 
 
+class HomePageHeroBackgroundTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_home_page_includes_hero_classroom_background(self):
+        response = self.client.get(reverse('blog:home'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'hero-photo')
+        self.assertContains(response, 'hero-photo__img')
+        self.assertContains(response, 'images/hero-classroom.png')
+
+
 class HomePageCoursesLayoutTests(TestCase):
     def setUp(self):
         self.client = Client()

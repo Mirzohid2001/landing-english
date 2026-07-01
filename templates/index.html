@@ -8,14 +8,24 @@
 <!-- Hero Section -->
 <section class="hero">
     <div class="hero-background">
+        <div class="hero-photo" aria-hidden="true">
+            <img
+                src="{% static 'images/hero-classroom.png' %}"
+                alt=""
+                class="hero-photo__img"
+                width="576"
+                height="1024"
+                loading="eager"
+                decoding="async"
+                fetchpriority="high">
+        </div>
         {% if about and about.video_file %}
-        <div class="hero-video">
+        <div class="hero-video hero-video--hidden">
             {% include 'includes/video_player.html' with video_file=about.video_file %}
         </div>
         {% endif %}
         <div class="hero-overlay"></div>
-        <!-- Animated Background Elements -->
-        <div class="animated-bg">
+        <div class="animated-bg animated-bg--subtle">
             <div class="floating-shapes">
                 <div class="shape shape-1"></div>
                 <div class="shape shape-2"></div>
