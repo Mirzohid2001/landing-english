@@ -100,6 +100,32 @@ class VideoApiFallbackTests(TestCase):
         self.assertIn('youtube.com', data['video_url'])
 
 
+class HomePageCoursesLayoutTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        Course.objects.create(
+            title='Single IELTS Course',
+            description='Full description',
+            duration='Umrbod',
+            price='599000.00',
+            level='intermediate',
+        )
+
+    def test_single_course_uses_centered_grid_class(self):
+        response = self.client.get(reverse('blog:home'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'courses-grid courses-grid--single')
+
+    def test_courses_section_after_testimonials(self):
+        content = self.client.get(reverse('blog:home')).content.decode()
+        testimonials_pos = content.find('testimonials-section')
+        courses_pos = content.find('courses-section')
+        faq_pos = content.find('faq-section')
+        self.assertGreater(courses_pos, testimonials_pos)
+        if faq_pos != -1:
+            self.assertLess(courses_pos, faq_pos)
+
+
 class HomePageVideoTemplateTests(TestCase):
     def setUp(self):
         self.client = Client()

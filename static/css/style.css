@@ -1663,6 +1663,23 @@ section {
     gap: 3rem;
 }
 
+.courses-grid--single {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 3rem;
+    width: 100%;
+}
+
+.courses-grid--single .course-card {
+    flex: 0 1 420px;
+    width: 100%;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .course-card {
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
     border-radius: 28px;
@@ -3849,6 +3866,11 @@ body.video-modal-open {
     .videos-grid {
         grid-template-columns: 1fr;
     }
+
+    .courses-grid--single {
+        display: flex !important;
+        justify-content: center !important;
+    }
     
     .page-header h1 {
         font-size: 2.5rem;
@@ -5451,6 +5473,13 @@ body.video-modal-open {
         max-width: 100% !important;
         box-sizing: border-box;
     }
+
+    .courses-grid--single {
+        display: flex !important;
+        justify-content: center !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
     
     .course-card {
         margin-bottom: 1rem;
@@ -5866,6 +5895,11 @@ body.video-modal-open {
     .benefits-grid {
         grid-template-columns: 1fr !important;
     }
+
+    .courses-grid--single {
+        display: flex !important;
+        justify-content: center !important;
+    }
     
     .stats-grid {
         grid-template-columns: repeat(2, 1fr) !important;
@@ -5881,6 +5915,12 @@ body.video-modal-open {
     .courses-grid,
     .videos-grid-home {
         grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .courses-grid--single {
+        display: flex !important;
+        justify-content: center !important;
+        grid-template-columns: unset !important;
     }
     
     .benefits-grid {
