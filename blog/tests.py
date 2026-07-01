@@ -116,6 +116,11 @@ class HomePageCoursesLayoutTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'courses-grid courses-grid--single')
 
+    def test_courses_section_header_is_centered(self):
+        response = self.client.get(reverse('blog:home'))
+        self.assertContains(response, "O'zingizga Mos Kursni Tanlang")
+        self.assertContains(response, 'courses-section')
+
     def test_courses_section_after_testimonials(self):
         content = self.client.get(reverse('blog:home')).content.decode()
         testimonials_pos = content.find('testimonials-section')

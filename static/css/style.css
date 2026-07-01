@@ -1657,6 +1657,16 @@ section {
     padding: 120px 0;
 }
 
+.courses-section .section-header {
+    justify-content: center;
+    width: 100%;
+}
+
+.courses-section .section-title {
+    width: 100%;
+    text-align: center;
+}
+
 .courses-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
