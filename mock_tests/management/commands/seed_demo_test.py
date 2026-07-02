@@ -39,7 +39,7 @@ Studies show that expert performance is not simply the result of talent. Continu
                 'order': 1, 'part_number': 1, 'question_type': 'fill_blank',
                 'instruction': 'Choose NO MORE THAN THREE WORDS from the passage for each answer.',
                 'question_text': 'Novices have to learn the key ______ and rules of tasks before performing them.',
-                'correct_answer': 'terms', 'correct_answers_json': ['terms', 'key terms'],
+                'correct_answer': 'terms', 'correct_answers_json': ['terms/key terms'],
             },
             {
                 'order': 2, 'part_number': 1, 'question_type': 'fill_blank',

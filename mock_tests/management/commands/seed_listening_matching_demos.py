@@ -27,12 +27,12 @@ class Command(BaseCommand):
         test.questions.all().delete()
 
         specs = [
-            (1, 1, 'notes_completion', 0, 'Hotel booking: Name [1], Check-in [2]', ['riverside', '15 march'], 'ONE WORD AND/OR A NUMBER'),
-            (2, 1, 'fill_blank', 45, 'The tour starts at ______ AM.', ['9', 'nine'], 'NO MORE THAN ONE WORD'),
+            (1, 1, 'notes_completion', 0, 'Hotel booking: Name [1], Check-in [2]', ['riverside/Riverside', '15 October/15th October'], 'ONE WORD AND/OR A NUMBER'),
+            (2, 1, 'fill_blank', 45, 'The tour starts at ______ AM.', ['9/nine'], 'NO MORE THAN ONE WORD'),
             (3, 1, 'mcq', 90, 'The guide recommends visiting:', [], ''),
             (4, 1, 'mcq', 120, 'Which TWO facilities are included in the ticket?', [], 'Choose TWO answers.'),
             (5, 2, 'notes_completion', 150, 'Workshop venue: Room [1], Floor [2]', ['b', '3'], ''),
-            (6, 2, 'fill_blank', 180, 'Participants must bring ______.', ['laptop', 'a laptop'], ''),
+            (6, 2, 'fill_blank', 180, 'Participants must bring ______.', ['laptop/a laptop'], ''),
         ]
         for order, part, qtype, ts, text, answers, instr in specs:
             q = MockQuestion(

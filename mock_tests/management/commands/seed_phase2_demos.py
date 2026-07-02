@@ -60,7 +60,7 @@ Despite challenges, many cities now include urban agriculture in their sustainab
                         test=reading, order=7, part_number=2, question_type='fill_blank',
                         instruction='Choose NO MORE THAN TWO WORDS from the passage.',
                         question_text='Supporters say urban farming improves access to ______ food.',
-                        correct_answer='healthy', correct_answers_json=['healthy'],
+                        correct_answer='healthy', correct_answers_json=['healthy/nutritious'],
                         points=1,
                     ),
                 ])
@@ -85,7 +85,7 @@ Despite challenges, many cities now include urban agriculture in their sustainab
                     test=listening, order=1, part_number=1, question_type='fill_blank',
                     instruction='Write ONE WORD AND/OR A NUMBER.',
                     question_text='Customer name: ______',
-                    correct_answer='Johnson', correct_answers_json=['Johnson', 'johnson'],
+                    correct_answer='Johnson', correct_answers_json=['Johnson/johnson'],
                     audio_timestamp=0, points=1,
                 ),
                 MockQuestion(

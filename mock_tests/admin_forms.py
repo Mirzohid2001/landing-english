@@ -23,7 +23,7 @@ QUESTION_TYPE_RULES = {
     "fill_blank": "Savol matnida ______ yoki [1] ishlatishingiz mumkin. Qavs yo'q bo'lsa — vergul sinonimlar (9, nine). Qavs bo'lsa — har [N] uchun alohida javob.",
     "sentence_completion": "Bitta gap: ______ va bitta javob. Bir nechta gap: matnda [7], [8] — javoblar vergul bilan tartibda.",
     "summary_completion": "Matnda [1], [2] bo'lsa, javoblarni tartib bilan vergul bilan yozing.",
-    "notes_completion": "Listening notes: matnda [1], [2]. Javoblar vergul bilan. Xarita uchun rasm — blokdagi birinchi savolga.",
+    "notes_completion": "Listening notes: matnda [1], [2]. Har bir gap uchun javoblar vergul bilan; bir gapda 2+ variant: 15 October/15th October",
     "table_completion": "Jadval: matnda [1], [2]. Jadval rasmi — blokdagi birinchi savolga yuklang.",
     "summary_box": "Savol matnida [1], [2]. Javoblar vergul bilan. So'zlar ro'yxati — har satrda bitta so'z.",
     "matching": "Eski: bitta tanlov — variantlar a|Matn, to'g'ri javob bitta harf.",
@@ -65,7 +65,7 @@ class MockQuestionAdminForm(forms.ModelForm):
     fill_answers = forms.CharField(
         required=False,
         label="To'g'ri javoblar (vergul bilan)",
-        help_text="Fill / summary / notes: marin, Marin yoki [1],[2] uchun tartib bilan",
+        help_text="Fill / summary / notes: marin, Marin yoki [1],[2] uchun tartib bilan. Bir gapda ko'p variant: 15 October/15th October",
         widget=forms.TextInput(attrs={"data-role": "qt-fill", "data-qt-field": "fill_answers"}),
     )
     matching_items = forms.CharField(

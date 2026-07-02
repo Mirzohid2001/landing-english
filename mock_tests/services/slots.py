@@ -6,6 +6,7 @@ from typing import List
 
 from mock_tests.mcq_utils import get_mcq_correct_letters
 from mock_tests.matching_utils import is_multi_matching_type
+from mock_tests.services.answer_normalizer import format_slot_acceptable_display
 
 BLANK_TYPES = (
     'summary_box',
@@ -58,6 +59,12 @@ def _summary_display_answer(question, ans: str) -> str:
     return format_summary_box_answer_display(question, ans)
 
 
+def _display_blank_answer(question, ans: str) -> str:
+    if question.question_type == 'summary_box':
+        return _summary_display_answer(question, ans)
+    return format_slot_acceptable_display(ans)
+
+
 def _matching_slots(question) -> List[GradableSlot]:
     fields = question.get_matching_fields()
     correct = question.correct_answers_json if isinstance(question.correct_answers_json, dict) else {}
@@ -108,7 +115,7 @@ def _blank_slots(question) -> List[GradableSlot]:
         slots = []
         for idx, num in enumerate(nums):
             ans = answers[idx] if idx < len(answers) else ''
-            display_ans = _summary_display_answer(question, ans) if question.question_type == 'summary_box' else ans
+            display_ans = _display_blank_answer(question, ans)
             slots.append(GradableSlot(
                 kind='blank',
                 key=str(num),
@@ -122,7 +129,7 @@ def _blank_slots(question) -> List[GradableSlot]:
                 kind='blank',
                 key=str(idx + 1),
                 display_num=str(idx + 1),
-                correct=ans,
+                correct=_display_blank_answer(question, ans),
             )
             for idx, ans in enumerate(answers)
         ]
@@ -131,7 +138,7 @@ def _blank_slots(question) -> List[GradableSlot]:
         kind='single',
         key='',
         display_num=str(question.order),
-        correct=str(primary or ''),
+        correct=_display_blank_answer(question, primary) if primary else '',
     )]
 
 
@@ -160,12 +167,24 @@ def gradable_slot_count(question) -> int:
 
 def slot_correct_for_scoring(question, slot: GradableSlot) -> str:
     """Natija/scoring uchun xom to'g'ri javob (summary_box harfi emas)."""
-    if slot.kind != 'blank' or question.question_type != 'summary_box':
-        return slot.correct
     answers = _answers_list(question)
     nums = _bracket_nums(question)
-    if slot.key in nums:
+    if slot.kind == 'blank' and nums and slot.key in nums:
         idx = nums.index(slot.key)
         if idx < len(answers):
             return answers[idx]
+    if slot.kind == 'blank' and answers and question.question_type not in FILL_SINGLE_BLANK_TYPES:
+        try:
+            idx = int(slot.key) - 1
+            if 0 <= idx < len(answers):
+                return answers[idx]
+        except (TypeError, ValueError):
+            pass
+    if slot.kind == 'single' and answers:
+        return answers[0]
+    if question.question_type == 'summary_box' and slot.kind == 'blank':
+        if slot.key in nums:
+            idx = nums.index(slot.key)
+            if idx < len(answers):
+                return answers[idx]
     return slot.correct

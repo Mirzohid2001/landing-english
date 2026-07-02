@@ -124,16 +124,38 @@ def match_text_answer(user_value, acceptable_values, allow_fuzzy=True):
     return False
 
 
+def split_slot_acceptable(raw):
+    """Bitta slot uchun qabul qilinadigan variantlar (15 October/15th October)."""
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        out = []
+        for item in raw:
+            out.extend(split_slot_acceptable(item))
+        return out
+    text = str(raw).strip()
+    if not text:
+        return []
+    if '/' in text:
+        return [part.strip() for part in text.split('/') if part.strip()]
+    return [text]
+
+
+def format_slot_acceptable_display(raw):
+    return ' / '.join(split_slot_acceptable(raw))
+
+
 def collect_acceptable_answers(question):
     """Savol uchun barcha qabul qilinadigan matn javoblari."""
     acceptable = []
     raw = question.correct_answers_json
     if isinstance(raw, list):
-        acceptable.extend(str(a) for a in raw if a is not None and str(a).strip())
+        for item in raw:
+            acceptable.extend(split_slot_acceptable(item))
     elif isinstance(raw, str) and raw.strip():
-        acceptable.append(raw)
+        acceptable.extend(split_slot_acceptable(raw))
     if question.correct_answer and str(question.correct_answer).strip():
-        acceptable.append(str(question.correct_answer))
+        acceptable.extend(split_slot_acceptable(question.correct_answer))
     return acceptable
 
 

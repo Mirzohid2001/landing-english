@@ -10,10 +10,12 @@ from mock_tests.mcq_utils import format_mcq_letters, get_mcq_correct_letters, pa
 
 from .answer_normalizer import (
     collect_acceptable_answers,
+    format_slot_acceptable_display,
     match_text_answer,
     normalize_choice,
     normalize_text,
     score_extended_text,
+    split_slot_acceptable,
 )
 from .band_score import earned_ratio_to_band
 from .gradable import question_total_points, total_gradable_slots
@@ -156,7 +158,8 @@ def score_blanks(question, user_answer):
         if question.question_type == 'summary_box':
             ok = _match_summary_blank(question, user_val, raw_correct)
         else:
-            ok = match_text_answer(user_val, [raw_correct]) if raw_correct else False
+            acceptable = split_slot_acceptable(raw_correct)
+            ok = match_text_answer(user_val, acceptable) if acceptable else False
         if ok:
             got += 1
 
@@ -255,7 +258,8 @@ def expand_question_details(question, user_answer, dock_by_question=None):
                 ok = _match_summary_blank(question, user_val, raw_correct)
                 user_display = format_summary_box_answer_display(question, user_val) if user_val else '—'
             else:
-                ok = match_text_answer(user_val, [raw_correct]) if raw_correct else False
+                acceptable = split_slot_acceptable(raw_correct)
+                ok = match_text_answer(user_val, acceptable) if acceptable else False
                 user_display = str(user_val).strip() or '—'
             rows.append({
                 'order': _row_sort_order(
@@ -268,7 +272,7 @@ def expand_question_details(question, user_answer, dock_by_question=None):
                 'earned_points': round(slot_pt if ok else 0.0, 2),
                 'max_points': round(slot_pt, 2),
                 'user_answer_display': user_display,
-                'correct_answer': slot.correct,
+                'correct_answer': format_slot_acceptable_display(raw_correct) if raw_correct else slot.correct,
                 'explanation': question.explanation,
                 **_question_detail_meta(question),
             })

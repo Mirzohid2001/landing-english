@@ -40,7 +40,7 @@ class MockTestFixturesMixin:
             part_number=1,
             question_type='notes_completion',
             question_text='Name [1], City [2]',
-            correct_answers_json=['anna', 'london'],
+            correct_answers_json=['anna/Anna', 'london/London'],
             audio_timestamp=10.5,
             points=1,
         )
@@ -169,6 +169,22 @@ class AnswerNormalizerTests(TestCase):
 
     def test_multiple_acceptable(self):
         self.assertTrue(match_text_answer('riverside', ['riverside', 'riverside hotel']))
+        self.assertTrue(match_text_answer('15th October', ['15 October', '15th October']))
+
+    def test_split_slot_acceptable_formats(self):
+        from mock_tests.services.answer_normalizer import (
+            format_slot_acceptable_display,
+            split_slot_acceptable,
+        )
+
+        self.assertEqual(
+            split_slot_acceptable('15 October/15th October'),
+            ['15 October', '15th October'],
+        )
+        self.assertEqual(
+            format_slot_acceptable_display('15 October/15th October'),
+            '15 October / 15th October',
+        )
 
     def test_fuzzy_typo(self):
         self.assertTrue(match_text_answer('londn', ['london']))
@@ -198,6 +214,40 @@ class MatchingUtilsTests(TestCase):
         self.assertEqual(len(fields), 2)
         self.assertEqual(fields[0]['value'], 'i')
         self.assertEqual(fields[1]['value'], 'wrong')
+
+
+class NotesAlternateAnswerTests(MockTestFixturesMixin, TestCase):
+    def test_notes_slot_accepts_slash_separated_variants(self):
+        from mock_tests.services.scoring import expand_question_details, score_attempt
+
+        test = MockTest.objects.create(
+            title='Notes alternate demo',
+            test_type='listening',
+            is_active=True,
+        )
+        q = MockQuestion.objects.create(
+            test=test,
+            order=1,
+            part_number=1,
+            question_type='notes_completion',
+            question_text='Date of arrival [1]',
+            correct_answers_json=['15 October/15th October'],
+            points=1,
+        )
+        attempt = MockAttempt.objects.create(
+            test=test,
+            session_key='notes-alt',
+            answers_json={str(q.pk): {'1': '15th October'}},
+            is_finished=True,
+        )
+        result = score_attempt(attempt, [q])
+        row = result['details'][0]
+        self.assertTrue(row['is_correct'])
+        self.assertEqual(row['correct_answer'], '15 October / 15th October')
+        self.assertEqual(row['user_answer_display'], '15th October')
+
+        rows = expand_question_details(q, {'1': '15 October'}, {})
+        self.assertTrue(rows[0]['is_correct'])
 
 
 class ScoringTests(MockTestFixturesMixin, TestCase):
