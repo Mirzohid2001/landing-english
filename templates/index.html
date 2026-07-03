@@ -203,7 +203,7 @@
                          aria-label="{{ student.full_name }} videosini ochish"
                          data-student-id="{{ student.id }}"
                          {% if student.video_url %}data-video-url="{{ student.video_url }}"{% endif %}
-                         {% if student.video_file %}data-video-file="{{ student.video_file.url }}"{% endif %}>
+                         {% if student.video_file %}data-video-file="{% absolute_media_url student.video_file %}"{% endif %}>
                         <button type="button" class="play-btn" tabindex="-1" aria-hidden="true">
                             <i class="fas fa-play"></i>
                         </button>
@@ -305,8 +305,8 @@
                      tabindex="0"
                      aria-label="{{ video.title }} videosini ochish"
                      {% if video.video_url %}data-video-url="{{ video.video_url }}"{% endif %}
-                     {% if video.video_file %}data-video-file="{{ video.video_file.url }}"{% endif %}
-                     {% if video.preview_image %}data-preview="{{ video.preview_image.url }}"{% endif %}>
+                     {% if video.video_file %}data-video-file="{% absolute_media_url video.video_file %}"{% endif %}
+                     {% if video.preview_image %}data-preview="{% absolute_media_url video.preview_image %}"{% endif %}>
                     {% if video.preview_image %}
                     <img src="{{ video.preview_image.url }}" alt="{{ video.title }}" loading="lazy">
                     {% elif video.video_url %}
@@ -470,7 +470,7 @@
                          tabindex="0"
                          aria-label="{{ course.title }} promo videosini ochish"
                          data-course-id="{{ course.id }}"
-                         data-video-file="{{ course.promo_video_file.url }}">
+                         data-video-file="{% absolute_media_url course.promo_video_file %}">
                         <button type="button" class="play-btn" tabindex="-1" aria-hidden="true">
                             <i class="fas fa-play"></i>
                         </button>

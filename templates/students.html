@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static video_filters %}
 
 {% block title %}Bizning O'quvchilarning Natijalari - Ton Academy{% endblock %}
 
@@ -45,7 +45,7 @@
                          aria-label="{{ student.full_name }} videosini ochish"
                          data-student-id="{{ student.id }}"
                          {% if student.video_url %}data-video-url="{{ student.video_url }}"{% endif %}
-                         {% if student.video_file %}data-video-file="{{ student.video_file.url }}"{% endif %}>
+                         {% if student.video_file %}data-video-file="{% absolute_media_url student.video_file %}"{% endif %}>
                         <button type="button" class="play-btn" tabindex="-1" aria-hidden="true">
                             <i class="fas fa-play"></i>
                         </button>

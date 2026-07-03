@@ -184,3 +184,43 @@ class StudentsPageVideoTemplateTests(TestCase):
         self.assertContains(response, 'student-video-overlay video-preview--clickable')
         self.assertContains(response, 'data-video-url=')
         self.assertNotContains(response, 'Student video handling')
+
+
+class VideoHandlerAssetTests(TestCase):
+    def test_video_handler_uses_non_blocking_mp4_player(self):
+        from pathlib import Path
+
+        js_path = Path(__file__).resolve().parent.parent / 'static' / 'js' / 'video-handler.js'
+        content = js_path.read_text(encoding='utf-8')
+        mp4_block = content.split('if (videoFile)')[1].split('function attachVideoPlayerHints')[0]
+        self.assertIn('preload="none"', mp4_block)
+        self.assertIn('video-play-hint', mp4_block)
+        self.assertNotIn('video-modal-loader', mp4_block)
+
+
+class AbsoluteMediaUrlTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.video_file = SimpleUploadedFile(
+            'lesson.mp4',
+            b'fake-mp4-content',
+            content_type='video/mp4',
+        )
+        self.video = Video.objects.create(
+            title='Local MP4 Lesson',
+            description='Uploaded from admin',
+            video_url='',
+            video_file=self.video_file,
+            video_type='course_lesson',
+            is_active=True,
+        )
+
+    def test_videos_page_exposes_absolute_file_url(self):
+        response = self.client.get(reverse('blog:videos'))
+        self.assertEqual(response.status_code, 200)
+        expected = f'data-video-file="http://testserver{self.video.video_file.url}"'
+        self.assertContains(response, expected)
+
+    def test_base_template_cache_busts_video_handler(self):
+        response = self.client.get(reverse('blog:home'))
+        self.assertContains(response, 'video-handler.js?v=3')

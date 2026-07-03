@@ -60,8 +60,7 @@ function createVideoEmbed(videoUrl, videoFile, previewImage = null) {
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen
-                    class="video-iframe"
-                    loading="lazy">
+                    class="video-iframe">
                 </iframe>
             `;
         }
@@ -72,8 +71,7 @@ function createVideoEmbed(videoUrl, videoFile, previewImage = null) {
                     frameborder="0"
                     allow="autoplay; fullscreen; picture-in-picture"
                     allowfullscreen
-                    class="video-iframe"
-                    loading="lazy">
+                    class="video-iframe">
                 </iframe>
             `;
         }
@@ -82,8 +80,7 @@ function createVideoEmbed(videoUrl, videoFile, previewImage = null) {
                 src="${videoUrl}"
                 frameborder="0"
                 allowfullscreen
-                class="video-iframe"
-                loading="lazy">
+                class="video-iframe">
             </iframe>
         `;
     }
@@ -92,20 +89,17 @@ function createVideoEmbed(videoUrl, videoFile, previewImage = null) {
         const poster = previewImage ? `poster="${previewImage}"` : '';
         return `
             <div class="video-player-wrap">
-                <div class="video-modal-loader" aria-live="polite">
-                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                    <span>Video yuklanmoqda...</span>
-                </div>
                 <video
                     controls
                     playsinline
                     class="video-player"
                     ${poster}
-                    preload="metadata">
+                    preload="none">
                     <source src="${videoFile}" type="video/mp4">
-                    <source src="${videoFile}" type="video/webm">
                     Brauzeringiz video tegini qo'llab-quvvatlamaydi.
                 </video>
+                <p class="video-play-hint">▶ Play tugmasini bosing</p>
+                <p class="video-play-error is-hidden">Video yuklanmadi. Qayta urinib ko'ring.</p>
             </div>
         `;
     }
@@ -113,25 +107,34 @@ function createVideoEmbed(videoUrl, videoFile, previewImage = null) {
     return '';
 }
 
-function attachVideoLoader(container) {
+function attachVideoPlayerHints(container) {
     const wrap = container.querySelector('.video-player-wrap');
     if (!wrap) {
         return;
     }
 
     const video = wrap.querySelector('video');
-    const loader = wrap.querySelector('.video-modal-loader');
-    if (!video || !loader) {
+    const hint = wrap.querySelector('.video-play-hint');
+    const errorEl = wrap.querySelector('.video-play-error');
+    if (!video) {
         return;
     }
 
-    const hideLoader = () => loader.classList.add('is-hidden');
+    const hideHint = () => {
+        if (hint) {
+            hint.classList.add('is-hidden');
+        }
+    };
 
-    video.addEventListener('canplay', hideLoader, { once: true });
-    video.addEventListener('loadeddata', hideLoader, { once: true });
+    video.addEventListener('play', hideHint, { once: true });
+    video.addEventListener('playing', hideHint, { once: true });
+    setTimeout(hideHint, 600);
+
     video.addEventListener('error', () => {
-        loader.innerHTML = '<span>Video yuklanmadi. Qayta urinib ko\'ring.</span>';
-        loader.classList.remove('is-hidden');
+        hideHint();
+        if (errorEl) {
+            errorEl.classList.remove('is-hidden');
+        }
     });
 }
 
@@ -177,7 +180,7 @@ function showVideoModal(videoUrl, videoFile, previewImage = null) {
     content.innerHTML = `<div class="video-container">${embedHTML}</div>`;
     modal.style.display = 'block';
     document.body.classList.add('video-modal-open');
-    attachVideoLoader(content);
+    attachVideoPlayerHints(content);
 }
 
 function getVideoContainer(el) {

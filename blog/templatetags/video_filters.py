@@ -50,6 +50,25 @@ def vimeo_id(url):
     return None
 
 
+@register.simple_tag(takes_context=True)
+def absolute_media_url(context, file_field):
+    """FileField/ImageField uchun to'liq (absolute) URL."""
+    if not file_field:
+        return ''
+    try:
+        url = file_field.url
+    except (ValueError, AttributeError):
+        return ''
+    if not url:
+        return ''
+    if url.startswith(('http://', 'https://')):
+        return url
+    request = context.get('request')
+    if request:
+        return request.build_absolute_uri(url)
+    return url
+
+
 @register.filter
 def is_not_empty(value):
     """Проверяет, не является ли значение пустым"""

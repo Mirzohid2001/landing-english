@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static video_filters %}
 
 {% block title %}Videolar - Ton Academy{% endblock %}
 
@@ -39,8 +39,8 @@
                      tabindex="0"
                      aria-label="{{ video.title }} videosini ochish"
                      {% if video.video_url %}data-video-url="{{ video.video_url }}"{% endif %}
-                     {% if video.video_file %}data-video-file="{{ video.video_file.url }}"{% endif %}
-                     {% if video.preview_image %}data-preview="{{ video.preview_image.url }}"{% endif %}>
+                     {% if video.video_file %}data-video-file="{% absolute_media_url video.video_file %}"{% endif %}
+                     {% if video.preview_image %}data-preview="{% absolute_media_url video.preview_image %}"{% endif %}>
                     {% if video.preview_image %}
                     <img src="{{ video.preview_image.url }}" alt="{{ video.title }}" loading="lazy">
                     {% elif video.video_url %}
