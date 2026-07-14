@@ -3081,6 +3081,15 @@ section {
     object-fit: contain;
 }
 
+/* Browser native Download tugmasini yashirish (Chrome/Edge) */
+.video-player::-webkit-media-controls-enclosure {
+    overflow: hidden;
+}
+
+.video-player::-webkit-media-controls-panel {
+    width: calc(100% + 30px);
+}
+
 .video-play-hint {
     position: absolute;
     bottom: 3.25rem;

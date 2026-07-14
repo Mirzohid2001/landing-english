@@ -194,6 +194,7 @@ class VideoHandlerAssetTests(TestCase):
         content = js_path.read_text(encoding='utf-8')
         mp4_block = content.split('if (videoFile)')[1].split('function attachVideoPlayerHints')[0]
         self.assertIn('preload="none"', mp4_block)
+        self.assertIn('controlsList="nodownload noremoteplayback"', mp4_block)
         self.assertIn('video-play-hint', mp4_block)
         self.assertNotIn('video-modal-loader', mp4_block)
 
@@ -223,4 +224,4 @@ class AbsoluteMediaUrlTests(TestCase):
 
     def test_base_template_cache_busts_video_handler(self):
         response = self.client.get(reverse('blog:home'))
-        self.assertContains(response, 'video-handler.js?v=3')
+        self.assertContains(response, 'video-handler.js?v=4')

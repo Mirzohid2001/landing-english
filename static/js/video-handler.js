@@ -91,10 +91,13 @@ function createVideoEmbed(videoUrl, videoFile, previewImage = null) {
             <div class="video-player-wrap">
                 <video
                     controls
+                    controlsList="nodownload noremoteplayback"
+                    disablePictureInPicture
                     playsinline
                     class="video-player"
                     ${poster}
-                    preload="none">
+                    preload="none"
+                    oncontextmenu="return false;">
                     <source src="${videoFile}" type="video/mp4">
                     Brauzeringiz video tegini qo'llab-quvvatlamaydi.
                 </video>
@@ -125,6 +128,10 @@ function attachVideoPlayerHints(container) {
             hint.classList.add('is-hidden');
         }
     };
+
+    video.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+    });
 
     video.addEventListener('play', hideHint, { once: true });
     video.addEventListener('playing', hideHint, { once: true });

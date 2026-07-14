@@ -37,13 +37,16 @@
         {% endwith %}
     {% elif video_file %}
         {# Local Video File #}
-        <video 
-            controls 
+        <video
+            controls
+            controlslist="nodownload noremoteplayback"
+            disablepictureinpicture
+            playsinline
             class="video-player"
             {% if preview_image %}poster="{{ preview_image.url }}"{% endif %}
-            preload="metadata">
+            preload="none"
+            oncontextmenu="return false;">
             <source src="{{ video_file.url }}" type="video/mp4">
-            <source src="{{ video_file.url }}" type="video/webm">
             Your browser does not support the video tag.
         </video>
     {% else %}
