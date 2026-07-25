@@ -112,6 +112,24 @@ class HomePageHeroBackgroundTests(TestCase):
         self.assertContains(response, 'images/hero-classroom.png')
 
 
+class HomePageWebinarCtaTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_home_page_shows_webinar_telegram_cta_after_hero(self):
+        content = self.client.get(reverse('blog:home')).content.decode()
+        self.assertIn('webinar-cta', content)
+        self.assertIn('webinar-cta__card', content)
+        self.assertIn('https://t.me/tonacademyuz', content)
+        self.assertIn('webinar-promo.png', content)
+        self.assertIn('Bepul webinarda qatnashish', content)
+        hero_pos = content.find('class="hero"')
+        webinar_pos = content.find('webinar-cta')
+        benefits_pos = content.find('benefits-section')
+        self.assertGreater(webinar_pos, hero_pos)
+        self.assertGreater(benefits_pos, webinar_pos)
+
+
 class HomePageCoursesLayoutTests(TestCase):
     def setUp(self):
         self.client = Client()
