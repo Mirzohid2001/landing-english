@@ -731,7 +731,7 @@ main {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 24px;
+    padding: 10px 20px;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -739,7 +739,10 @@ main {
     border-radius: 50px;
     color: var(--white);
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    text-align: center;
+    max-width: min(100%, 520px);
     margin: 0 auto 2rem;
     animation: fadeInUp 0.6s ease-out 0.1s both;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -747,6 +750,7 @@ main {
 
 .hero-badge i {
     color: #fbbf24;
+    flex-shrink: 0;
     animation: pulse 2s ease-in-out infinite;
 }
 
@@ -5632,8 +5636,11 @@ body.video-modal-open {
     }
     
     .hero-badge {
-        font-size: 0.75rem;
-        padding: 0.4rem 0.8rem;
+        font-size: 0.72rem;
+        padding: 0.55rem 0.85rem;
+        max-width: min(100%, 92vw);
+        border-radius: 16px;
+        gap: 6px;
     }
     
     .hero-stats {
