@@ -171,6 +171,72 @@ class LandingPageTemplateTests(TestCase):
         self.assertContains(response, 'lp-ai-card')
         self.assertContains(response, 'Writing AI')
 
+    def test_ai_card_youtube_replaces_image(self):
+        from blog.models import LandingAICard
+        card = LandingAICard.objects.get(key='writing')
+        card.video_url = 'https://www.youtube.com/watch?v=abcdefghijk'
+        card.save()
+        response = self.client.get(reverse('blog:home'))
+        self.assertContains(response, 'youtube.com/embed/abcdefghijk')
+        self.assertContains(response, 'lp-ai-card__video')
+
+    def test_ai_card_uploaded_video_renders(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from blog.models import LandingAICard
+        card = LandingAICard.objects.get(key='reading')
+        card.video_file = SimpleUploadedFile('reading-demo.webm', b'webm', content_type='video/webm')
+        card.save()
+        response = self.client.get(reverse('blog:home'))
+        content = response.content.decode()
+        self.assertIn('<video', content)
+        self.assertIn('data-lp-ai-video="reading"', content)
+        self.assertIn('type="video/webm"', content)
+        self.assertIn('landing/ai/', content)
+
+    def test_platform_preview_has_single_stage(self):
+        response = self.client.get(reverse('blog:home'))
+        content = response.content.decode()
+        self.assertContains(response, 'lp-preview__stage')
+        self.assertEqual(content.count('lp-preview__stage'), 1)
+        self.assertGreaterEqual(content.count('data-lp-panel='), 6)
+
+    def test_certificates_carousel_renders_all_homepage_certs(self):
+        from datetime import date
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from blog.models import IELTSCertificate
+
+        IELTSCertificate.objects.all().delete()
+        for i in range(8):
+            IELTSCertificate.objects.create(
+                student_name=f'Student {i}',
+                ielts_score=7.0,
+                date_obtained=date.today(),
+                show_on_homepage=True,
+                certificate_image=SimpleUploadedFile(
+                    f'cert-{i}.png',
+                    b'\x89PNG\r\n\x1a\n' + b'\x00' * 32,
+                    content_type='image/png',
+                ),
+            )
+        IELTSCertificate.objects.create(
+            student_name='Hidden Cert',
+            ielts_score=8.0,
+            date_obtained=date.today(),
+            show_on_homepage=False,
+            certificate_image=SimpleUploadedFile(
+                'hidden.png',
+                b'\x89PNG\r\n\x1a\n' + b'\x00' * 32,
+                content_type='image/png',
+            ),
+        )
+
+        response = self.client.get(reverse('blog:home'))
+        content = response.content.decode()
+        self.assertContains(response, 'data-lp-carousel')
+        self.assertContains(response, 'lp-carousel__track')
+        self.assertEqual(content.count('lp-carousel__slide'), 8)
+        self.assertNotContains(response, 'Hidden Cert')
+
     def test_home_has_purchase_flow_four_steps(self):
         response = self.client.get(reverse('blog:home'))
         self.assertContains(response, 'Qanday xarid qilinadi?')

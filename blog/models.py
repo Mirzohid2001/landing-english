@@ -336,7 +336,7 @@ class LandingSettings(models.Model):
     )
     hero_badge_text = models.CharField(
         max_length=200,
-        default='IELTS platform — joylar cheklangan, studentlarga beriladi',
+        default='UK ustoz + jonli darslar — joylar cheklangan',
         blank=True,
     )
     base_price = models.PositiveIntegerField(default=599_000)
@@ -568,6 +568,22 @@ class LandingAICard(models.Model):
     icon = models.CharField(max_length=100, help_text="Font Awesome icon class")
     title = models.CharField(max_length=160)
     text = models.TextField()
+    video_file = models.FileField(
+        upload_to='landing/ai/',
+        blank=True,
+        null=True,
+        help_text='AI checker demo video (MP4/WebM). Rasm o‘rniga shu ko‘rsatiladi.',
+    )
+    video_url = models.URLField(
+        blank=True,
+        help_text='Ixtiyoriy YouTube/Vimeo havola. video_file bo‘lmasa shu ishlatiladi.',
+    )
+    poster_image = models.ImageField(
+        upload_to='landing/ai/posters/',
+        blank=True,
+        null=True,
+        help_text='Video poster (thumbnail). Bo‘sh bo‘lsa default preview chiqadi.',
+    )
     order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -578,3 +594,7 @@ class LandingAICard(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def has_video(self):
+        return bool(self.video_file) or bool(self.video_url)

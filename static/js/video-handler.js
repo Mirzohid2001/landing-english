@@ -192,7 +192,7 @@ function showVideoModal(videoUrl, videoFile, previewImage = null) {
 
 function getVideoContainer(el) {
     return el.closest(
-        '.video-preview, .video-preview-home, .student-video-overlay, .course-video-overlay'
+        '.video-preview, .video-preview-home, .student-video-overlay, .course-video-overlay, .lp-ai-card__video-fallback'
     );
 }
 
@@ -317,7 +317,8 @@ function isVideoClickTarget(target) {
         target.closest('.play-btn[data-course-id]') ||
         target.closest('.play-btn[data-student-id]') ||
         target.closest('.play-btn[data-teacher-id]') ||
-        target.closest('.watch-video-btn[data-testimonial-id]')
+        target.closest('.watch-video-btn[data-testimonial-id]') ||
+        target.closest('.lp-ai-card__play')
     );
 }
 
@@ -369,7 +370,7 @@ function initVideoHandlers() {
         }
 
         const trigger = event.target.closest(
-            '.play-btn, .play-btn-home, .watch-video-btn'
+            '.play-btn, .play-btn-home, .watch-video-btn, .lp-ai-card__play'
         );
         if (trigger) {
             event.preventDefault();

@@ -884,55 +884,58 @@
 }
 
 .lp-preview__tab {
-    padding: 0.45rem 0.85rem;
-    border-radius: 10px;
+    padding: 0.55rem 0.95rem;
+    border-radius: 999px;
     border: 1px solid var(--lp-border);
-    background: transparent;
+    background: rgba(2, 10, 29, 0.35);
     color: var(--lp-muted);
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.lp-preview__tab.is-active,
 .lp-preview__tab:hover {
-    border-color: var(--lp-border-hi);
+    border-color: rgba(120, 160, 255, 0.45);
     color: var(--lp-text);
-    background: rgba(67, 135, 255, 0.1);
+}
+
+.lp-preview__tab.is-active {
+    border-color: transparent;
+    color: #fff;
+    background: var(--lp-gradient);
+    box-shadow: 0 8px 22px rgba(67, 135, 255, 0.28);
+}
+
+.lp-preview__stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1200 / 720;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #07172F, #031126);
+    border: 1px solid var(--lp-border);
 }
 
 .lp-preview__screen {
-    aspect-ratio: 1200 / 720;
-    min-height: 0;
-    border-radius: 16px;
-    background: linear-gradient(145deg, #07172F, #031126);
-    border: 1px solid var(--lp-border);
-    display: flex;
+    position: absolute;
+    inset: 0;
+    display: none;
     align-items: stretch;
     justify-content: center;
-    overflow: hidden;
+}
+
+.lp-preview__screen.is-active {
+    display: flex;
+    z-index: 1;
+}
+
+.lp-preview__screen[hidden] {
+    display: none !important;
 }
 
 .lp-preview__screen .lp-picture,
 .lp-preview__screen img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 0;
-    border: 0;
-}
-
-.lp-ai-card__screen {
-    overflow: hidden;
-    border-radius: 16px;
-    aspect-ratio: 16 / 10;
-    background: #031126;
-    border: 1px solid var(--lp-border);
-}
-
-.lp-ai-card__screen .lp-picture,
-.lp-ai-card__screen img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -1025,12 +1028,75 @@
 }
 
 .lp-ai-card__screen {
+    position: relative;
     min-height: 200px;
     background: #031126;
     display: flex;
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--lp-border);
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+}
+
+.lp-ai-card__screen .lp-picture,
+.lp-ai-card__screen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+    border: 0;
+}
+
+.lp-ai-card__screen--video {
+    padding: 0;
+}
+
+.lp-ai-card__video {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: #020814;
+    object-fit: contain;
+}
+
+video.lp-ai-card__video {
+    object-fit: cover;
+}
+
+.lp-ai-card__video-fallback {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.lp-ai-card__video-fallback img,
+.lp-ai-card__video-fallback .lp-picture,
+.lp-ai-card__video-fallback .lp-picture img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.lp-ai-card__play {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--lp-gradient);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(67, 135, 255, 0.4);
+}
+
+.lp-ai-card__play:hover {
+    transform: translate(-50%, -50%) scale(1.05);
 }
 
 .lp-ai-card__body {
@@ -1081,6 +1147,143 @@
 
 .lp-cert-grid--students {
     margin-top: 1.25rem;
+}
+
+/* Certificates carousel */
+.lp-carousel {
+    position: relative;
+    margin-top: 0.25rem;
+}
+
+.lp-carousel__viewport {
+    overflow: hidden;
+    min-width: 0;
+    border-radius: 18px;
+    margin: 0 2.75rem;
+}
+
+.lp-carousel__track {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0.2rem 0.15rem 0.45rem;
+    will-change: transform;
+}
+
+.lp-carousel.is-autoplay .lp-carousel__track {
+    overflow: visible;
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+}
+
+.lp-carousel.is-autoplay .lp-carousel__viewport {
+    cursor: default;
+    touch-action: pan-y;
+}
+
+.lp-carousel__track::-webkit-scrollbar {
+    display: none;
+}
+
+.lp-carousel__slide {
+    flex: 0 0 calc((100% - 2rem) / 3);
+    width: calc((100% - 2rem) / 3);
+    max-width: calc((100% - 2rem) / 3);
+    scroll-snap-align: start;
+    min-height: 100%;
+}
+
+.lp-carousel__btn {
+    position: absolute;
+    top: 42%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--lp-border-hi);
+    background: rgba(7, 23, 47, 0.94);
+    color: var(--lp-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+    z-index: 3;
+}
+
+.lp-carousel__btn--prev { left: 0; }
+.lp-carousel__btn--next { right: 0; }
+
+.lp-carousel__btn:hover {
+    transform: translateY(-50%) scale(1.05);
+    background: rgba(67, 135, 255, 0.2);
+    border-color: rgba(120, 160, 255, 0.55);
+}
+
+.lp-carousel__btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
+.lp-carousel__dots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.85rem;
+}
+
+.lp-carousel__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    border: 0;
+    padding: 0;
+    background: rgba(168, 179, 199, 0.35);
+    cursor: pointer;
+}
+
+.lp-carousel__dot.is-active {
+    width: 22px;
+    background: linear-gradient(90deg, #E653C7, #4387FF);
+}
+
+@media (max-width: 1024px) {
+    .lp-carousel__slide {
+        flex-basis: calc((100% - 1rem) / 2);
+        width: calc((100% - 1rem) / 2);
+        max-width: calc((100% - 1rem) / 2);
+    }
+}
+
+@media (max-width: 767px) {
+    .lp-carousel__viewport {
+        margin: 0 1.9rem;
+    }
+
+    .lp-carousel__btn {
+        width: 34px;
+        height: 34px;
+        background: rgba(2, 10, 29, 0.88);
+        backdrop-filter: blur(8px);
+    }
+
+    .lp-carousel__slide {
+        flex-basis: 85%;
+        width: 85%;
+        max-width: 85%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lp-carousel__track {
+        scroll-behavior: auto;
+    }
 }
 
 .lp-cert-card {

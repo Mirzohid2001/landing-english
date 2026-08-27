@@ -17,20 +17,55 @@
         const root = document.querySelector('[data-lp-preview]');
         if (!root) return;
 
-        const tabs = root.querySelectorAll('[data-lp-tab]');
-        const panels = root.querySelectorAll('[data-lp-panel]');
-        if (!tabs.length) return;
+        const tabs = Array.from(root.querySelectorAll('[data-lp-tab]'));
+        const panels = Array.from(root.querySelectorAll('[data-lp-panel]'));
+        if (!tabs.length || !panels.length) return;
+
+        function activate(key) {
+            tabs.forEach((tab) => {
+                const active = tab.getAttribute('data-lp-tab') === key;
+                tab.classList.toggle('is-active', active);
+                tab.setAttribute('aria-selected', active ? 'true' : 'false');
+                tab.tabIndex = active ? 0 : -1;
+            });
+            panels.forEach((panel) => {
+                const active = panel.getAttribute('data-lp-panel') === key;
+                panel.classList.toggle('is-active', active);
+                if (active) {
+                    panel.removeAttribute('hidden');
+                } else {
+                    panel.setAttribute('hidden', '');
+                }
+            });
+        }
 
         tabs.forEach((tab) => {
             tab.addEventListener('click', () => {
                 const key = tab.getAttribute('data-lp-tab');
-                tabs.forEach((t) => t.classList.toggle('is-active', t === tab));
-                panels.forEach((panel) => {
-                    panel.hidden = panel.getAttribute('data-lp-panel') !== key;
-                });
+                if (!key) return;
+                activate(key);
                 track('platform_demo_view', { tab: key });
             });
         });
+
+        root.addEventListener('keydown', (event) => {
+            const current = tabs.findIndex((t) => t.classList.contains('is-active'));
+            if (current < 0) return;
+            let next = current;
+            if (event.key === 'ArrowRight') next = (current + 1) % tabs.length;
+            else if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+            else if (event.key === 'Home') next = 0;
+            else if (event.key === 'End') next = tabs.length - 1;
+            else return;
+            event.preventDefault();
+            const key = tabs[next].getAttribute('data-lp-tab');
+            activate(key);
+            tabs[next].focus();
+            track('platform_demo_view', { tab: key });
+        });
+
+        const initial = tabs.find((t) => t.classList.contains('is-active')) || tabs[0];
+        activate(initial.getAttribute('data-lp-tab'));
     }
 
     function initCtaTracking() {
@@ -123,6 +158,24 @@
         document.querySelectorAll('[data-lp-ai]').forEach((el) => observer.observe(el));
     }
 
+    function initAiVideos() {
+        const videos = Array.from(document.querySelectorAll('[data-lp-ai-video]'));
+        if (!videos.length) return;
+
+        videos.forEach((video) => {
+            video.addEventListener('play', () => {
+                videos.forEach((other) => {
+                    if (other !== video && !other.paused) {
+                        other.pause();
+                    }
+                });
+                track('ai_video_play', {
+                    ai_type: video.getAttribute('data-lp-ai-video') || '',
+                });
+            });
+        });
+    }
+
     function initScrollReveal() {
         const items = document.querySelectorAll('.lp-reveal');
         if (!items.length) return;
@@ -209,15 +262,203 @@
         update();
     }
 
+    function initCertificateCarousel() {
+        const root = document.querySelector('[data-lp-carousel]');
+        if (!root) return;
+
+        const viewport = root.querySelector('[data-lp-carousel-viewport]');
+        const track = root.querySelector('[data-lp-carousel-track]');
+        const prevBtn = root.querySelector('[data-lp-carousel-prev]');
+        const nextBtn = root.querySelector('[data-lp-carousel-next]');
+        const dotsWrap = root.querySelector('[data-lp-carousel-dots]');
+        if (!viewport || !track) return;
+
+        const originalSlides = Array.from(track.querySelectorAll('.lp-carousel__slide'));
+        if (!originalSlides.length) return;
+
+        if (dotsWrap) dotsWrap.hidden = true;
+
+        if (originalSlides.length <= 1) {
+            if (prevBtn) prevBtn.hidden = true;
+            if (nextBtn) nextBtn.hidden = true;
+            return;
+        }
+
+        // Infinite strip: continuous marquee via transform + cloned sets.
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const canHover = window.matchMedia('(hover: hover)').matches;
+        let offset = 0;
+        let paused = false;
+        let pointerDown = false;
+        let loopWidth = 0;
+        let rafId = 0;
+        let lastTs = 0;
+        const speed = 42; // px / second
+
+        function measureGap() {
+            const style = window.getComputedStyle(track);
+            return parseFloat(style.columnGap || style.gap || '16') || 16;
+        }
+
+        function slideWidth() {
+            const first = track.querySelector('.lp-carousel__slide');
+            if (!first) return 260;
+            return first.getBoundingClientRect().width + measureGap();
+        }
+
+        function syncPaused() {
+            const focused = root.contains(document.activeElement);
+            paused = pointerDown || focused || (canHover && root.matches(':hover'));
+            if (!paused) lastTs = 0;
+        }
+
+        function ensureLoopCopies() {
+            if (!track.dataset.lpCloned) {
+                const markup = originalSlides.map((slide) => {
+                    const node = slide.cloneNode(true);
+                    node.setAttribute('aria-hidden', 'true');
+                    node.querySelectorAll('img').forEach((img) => {
+                        img.setAttribute('loading', 'lazy');
+                        img.removeAttribute('fetchpriority');
+                    });
+                    return node.outerHTML;
+                }).join('');
+                // Two extra sets so wide viewports never show empty space.
+                track.insertAdjacentHTML('beforeend', markup + markup);
+                track.dataset.lpCloned = '1';
+            }
+
+            const all = track.querySelectorAll('.lp-carousel__slide');
+            const count = originalSlides.length;
+            if (!count || all.length < count) {
+                loopWidth = 0;
+                return;
+            }
+
+            // Distance from start of set N to start of set N+1 includes the gap
+            // after the last slide (flex gap between sets).
+            let width = 0;
+            for (let i = 0; i < count; i += 1) {
+                width += all[i].getBoundingClientRect().width;
+            }
+            width += measureGap() * count;
+            loopWidth = width;
+        }
+
+        function applyTransform() {
+            track.style.transform = `translate3d(${-offset}px, 0, 0)`;
+        }
+
+        function tick(ts) {
+            if (!lastTs) lastTs = ts;
+            const delta = Math.min(48, ts - lastTs);
+            lastTs = ts;
+
+            if (!paused && !reduceMotion && !document.hidden && loopWidth > 0) {
+                offset += (speed * delta) / 1000;
+                if (offset >= loopWidth) {
+                    offset %= loopWidth;
+                }
+                applyTransform();
+            }
+
+            rafId = window.requestAnimationFrame(tick);
+        }
+
+        function jumpBy(dir) {
+            if (!loopWidth) return;
+            const step = slideWidth();
+            offset += dir * step;
+            offset = ((offset % loopWidth) + loopWidth) % loopWidth;
+            applyTransform();
+        }
+
+        function recalc() {
+            const prev = offset;
+            const prevLoop = loopWidth || 1;
+            ensureLoopCopies();
+            if (loopWidth > 0) {
+                offset = (prev / prevLoop) * loopWidth;
+                offset %= loopWidth;
+            }
+            applyTransform();
+        }
+
+        root.classList.add('is-autoplay');
+        track.style.overflow = 'visible';
+        track.scrollLeft = 0;
+
+        if (prevBtn) {
+            prevBtn.disabled = false;
+            prevBtn.addEventListener('click', () => jumpBy(-1));
+        }
+        if (nextBtn) {
+            nextBtn.disabled = false;
+            nextBtn.addEventListener('click', () => jumpBy(1));
+        }
+
+        if (canHover) {
+            root.addEventListener('mouseenter', syncPaused);
+            root.addEventListener('mouseleave', syncPaused);
+        }
+        root.addEventListener('focusin', syncPaused);
+        root.addEventListener('focusout', () => {
+            window.setTimeout(syncPaused, 0);
+        });
+        root.addEventListener('pointerdown', () => {
+            pointerDown = true;
+            syncPaused();
+        }, { passive: true });
+        window.addEventListener('pointerup', () => {
+            pointerDown = false;
+            syncPaused();
+        }, { passive: true });
+        window.addEventListener('pointercancel', () => {
+            pointerDown = false;
+            syncPaused();
+        }, { passive: true });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) lastTs = 0;
+        });
+
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = window.setTimeout(recalc, 120);
+        });
+
+        // Images can change slide widths after first paint — remeasure.
+        track.querySelectorAll('img').forEach((img) => {
+            if (img.complete) return;
+            img.addEventListener('load', recalc, { once: true });
+            img.addEventListener('error', recalc, { once: true });
+        });
+
+        window.requestAnimationFrame(() => {
+            ensureLoopCopies();
+            applyTransform();
+            if (!reduceMotion) {
+                rafId = window.requestAnimationFrame(tick);
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (rafId) window.cancelAnimationFrame(rafId);
+        }, { once: true });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initPlatformTabs();
         initCtaTracking();
         initScrollDepth();
         initSectionViews();
         initAiCardViews();
+        initAiVideos();
         initScrollReveal();
         initFaqAccordion();
         initTestimonialTracking();
         initMobileStickyCta();
+        initCertificateCarousel();
     });
 })();

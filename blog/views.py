@@ -19,7 +19,10 @@ def home(request):
     """Yangi landing page — dark premium IELTS SaaS."""
     featured_students = StudentResult.objects.filter(is_active=True, is_featured=True)[:4]
     featured_testimonials = Testimonial.objects.filter(is_featured=True)[:4]
-    certificates = IELTSCertificate.objects.filter(show_on_homepage=True)[:6]
+    # Homepageda ko‘rsatiladiganlar — limit yo‘q (admin: show_on_homepage)
+    certificates = IELTSCertificate.objects.filter(show_on_homepage=True).order_by(
+        '-ielts_score', '-date_obtained'
+    )
 
     context = {
         'students': featured_students,

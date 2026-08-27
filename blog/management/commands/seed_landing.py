@@ -35,6 +35,8 @@ HERO_DEFAULTS = {
     'hero_subtitle': (
         'IELTS balingizni Britaniyalik ustozlar va kafolatlangan tizim orqali o‘rganing'
     ),
+    # Eski default seed da yo‘q edi → production da “joylar cheklangan” qotib qolgan.
+    'hero_badge_text': 'UK ustoz + jonli darslar — joylar cheklangan',
     'primary_cta_text': 'Bepul daraja testini boshlash',
     'secondary_cta_text': 'Telegram orqali xarid qilish',
     'base_price_label': 'Platforma + jonli darslar — umrbod access',
@@ -51,10 +53,8 @@ HERO_DEFAULTS = {
 
 LIVE_BUNDLE = {
     'badge': 'live',
-    'title': 'UK ustoz + 2 professional ustozdan jonli darslar',
-    'description': (
-        'UK ustoz va yana 2 ta professional ustozlardan jonli darslar + to‘liq website access'
-    ),
+    'title': 'Jonli darslar',
+    'description': 'Jonli darslar + to‘liq website access',
     'offer_label': 'LIVE bundle — 899 000 so‘m',
     'price': 899_000,
     'urgency_text': 'Joylar cheklangan',
@@ -264,7 +264,7 @@ class Command(BaseCommand):
                 'enabled': enable_promo,
                 'placement': 'announcement',
                 'campaign_id': 'ann_live_sr_aug26',
-                'title': 'UK ustoz va yana 2 ta professional ustozlardan jonli darslar va website ga toliq access',
+                'title': 'Jonli darslar va website ga to‘liq access',
                 'description': '',
                 'price': 899_000,
                 'cta_text': 'Batafsil',

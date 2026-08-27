@@ -1,5 +1,6 @@
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.utils import timezone
+import re
 
 from blog.models import (
     FAQ,
@@ -45,7 +46,7 @@ BENEFIT_CARDS = [
     {
         'icon': 'fas fa-chalkboard-teacher',
         'title': 'Jonli darslar',
-        'text': 'UK ustoz va yana 2 ta professional ustozlardan jonli darslar.',
+        'text': 'Jonli darslar.',
         'badge': 'LIVE',
     },
     {
@@ -394,6 +395,22 @@ def get_benefit_cards():
     return BENEFIT_CARDS
 
 
+def _extract_youtube_id(url):
+    if not url:
+        return ''
+    patterns = (
+        r'youtu\.be/([a-zA-Z0-9_-]{11})',
+        r'youtube\.com/embed/([a-zA-Z0-9_-]{11})',
+        r'youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})',
+        r'youtube\.com/watch\?.*[&?]v=([a-zA-Z0-9_-]{11})',
+    )
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return ''
+
+
 def get_ai_checker_cards():
     cards = {
         card.key: card
@@ -403,6 +420,23 @@ def get_ai_checker_cards():
     for order, default in enumerate(AI_CHECKER_CARDS):
         card = cards.get(default['key'])
         title = card.title if card else default['title']
+        video_file_url = ''
+        video_url = ''
+        poster_url = ''
+        youtube_id = ''
+        if card:
+            if card.video_file:
+                video_file_url = card.video_file.url
+            video_url = (card.video_url or '').strip()
+            youtube_id = _extract_youtube_id(video_url)
+            if card.poster_image:
+                poster_url = card.poster_image.url
+        has_video = bool(video_file_url or video_url)
+        video_mime = 'video/mp4'
+        if video_file_url.lower().endswith('.webm'):
+            video_mime = 'video/webm'
+        elif video_file_url.lower().endswith('.ogg') or video_file_url.lower().endswith('.ogv'):
+            video_mime = 'video/ogg'
         resolved.append({
             'key': default['key'],
             'icon': card.icon if card else default['icon'],
@@ -410,6 +444,12 @@ def get_ai_checker_cards():
             'text': card.text if card else default['text'],
             'picture': ai_fallback_picture(default['key'], alt=title),
             'image_url': ai_fallback_image(default['key']),
+            'has_video': has_video,
+            'video_file_url': video_file_url,
+            'video_mime': video_mime,
+            'video_url': video_url,
+            'youtube_id': youtube_id,
+            'poster_url': poster_url,
             'order': card.order if card else order,
         })
     return sorted(resolved, key=lambda item: item['order'])

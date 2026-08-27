@@ -76,7 +76,7 @@
                     <ul class="lp-pricing-card__list">
                         <li class="is-highlight">
                             <i class="fas fa-broadcast-tower" aria-hidden="true"></i>
-                            <span>UK ustoz + 2 professional ustozdan <strong>jonli darslar</strong></span>
+                            <span><strong>Jonli darslar</strong></span>
                         </li>
                         <li><i class="fas fa-check" aria-hidden="true"></i> 100+ video darslar</li>
                         <li><i class="fas fa-check" aria-hidden="true"></i> AI Writing checker</li>
@@ -138,19 +138,29 @@
             <p>{{ section_copy.platform.subtitle }}</p>
         </div>
         <div class="lp-preview__frame" data-lp-preview>
-            <div class="lp-preview__tabs" role="tablist">
+            <div class="lp-preview__tabs" role="tablist" aria-label="Platforma bo‘limlari">
                 {% for tab in platform_tabs %}
                 <button type="button"
                         class="lp-preview__tab{% if forloop.first %} is-active{% endif %}"
+                        id="lp-tab-{{ tab.key }}"
                         data-lp-tab="{{ tab.key }}"
-                        role="tab">{{ tab.label }}</button>
+                        role="tab"
+                        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                        aria-controls="lp-panel-{{ tab.key }}">{{ tab.label }}</button>
                 {% endfor %}
             </div>
-            {% for tab in platform_tabs %}
-            <div class="lp-preview__screen" data-lp-panel="{{ tab.key }}" {% if not forloop.first %}hidden{% endif %}>
-                {% include 'includes/lp_picture.html' with picture=tab.picture %}
+            <div class="lp-preview__stage">
+                {% for tab in platform_tabs %}
+                <div class="lp-preview__screen{% if forloop.first %} is-active{% endif %}"
+                     id="lp-panel-{{ tab.key }}"
+                     data-lp-panel="{{ tab.key }}"
+                     role="tabpanel"
+                     aria-labelledby="lp-tab-{{ tab.key }}"
+                     {% if not forloop.first %}hidden{% endif %}>
+                    {% include 'includes/lp_picture.html' with picture=tab.picture eager=forloop.first %}
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </div>
 </section>
@@ -187,8 +197,40 @@
         <div class="lp-ai__grid">
             {% for card in ai_checker_cards %}
             <article class="lp-ai-card" data-lp-ai="{{ card.key }}">
-                <div class="lp-ai-card__screen">
+                <div class="lp-ai-card__screen{% if card.has_video %} lp-ai-card__screen--video{% endif %}">
+                    {% if card.video_file_url %}
+                    <video class="lp-ai-card__video"
+                           controls
+                           playsinline
+                           preload="metadata"
+                           {% if card.poster_url %}poster="{{ card.poster_url }}"{% endif %}
+                           data-lp-ai-video="{{ card.key }}">
+                        <source src="{{ card.video_file_url }}" type="{{ card.video_mime }}">
+                        Brauzeringiz video formatini qo‘llab-quvvatlamaydi.
+                    </video>
+                    {% elif card.youtube_id %}
+                    <iframe class="lp-ai-card__video"
+                            src="https://www.youtube.com/embed/{{ card.youtube_id }}?rel=0&modestbranding=1"
+                            title="{{ card.title }}"
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen></iframe>
+                    {% elif card.video_url %}
+                    <div class="lp-ai-card__video-fallback video-preview"
+                         data-video-url="{{ card.video_url }}"
+                         {% if card.poster_url %}data-preview="{{ card.poster_url }}"{% endif %}>
+                        {% if card.poster_url %}
+                        <img src="{{ card.poster_url }}" alt="{{ card.title }}" loading="lazy" decoding="async">
+                        {% else %}
+                        {% include 'includes/lp_picture.html' with picture=card.picture %}
+                        {% endif %}
+                        <button type="button" class="lp-ai-card__play watch-video-btn" aria-label="Videoni ko‘rish">
+                            <i class="fas fa-play" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    {% else %}
                     {% include 'includes/lp_picture.html' with picture=card.picture %}
+                    {% endif %}
                 </div>
                 <div class="lp-ai-card__body">
                     <h3>{{ card.title }}</h3>
@@ -214,26 +256,43 @@
             <span class="lp-score-chip lp-score-chip--8">8.0</span>
         </div>
         {% if certificates %}
-        <div class="lp-cert-grid lp-swipe-row">
-            {% for certificate in certificates %}
-            <article class="lp-cert-card lp-reveal">
-                {% if certificate.certificate_image %}
-                <div class="lp-cert-card__media">
-                    <img src="{{ certificate.certificate_image.url }}"
-                         alt="IELTS certificate {{ certificate.student_name }}"
-                         loading="lazy"
-                         decoding="async"
-                         width="480"
-                         height="320"
-                         sizes="(max-width: 768px) 78vw, 240px">
+        <div class="lp-carousel" data-lp-carousel aria-label="IELTS sertifikatlar karuseli">
+            <button type="button"
+                    class="lp-carousel__btn lp-carousel__btn--prev"
+                    data-lp-carousel-prev
+                    aria-label="Oldingi sertifikat">
+                <i class="fas fa-chevron-left" aria-hidden="true"></i>
+            </button>
+            <div class="lp-carousel__viewport" data-lp-carousel-viewport>
+                <div class="lp-carousel__track" data-lp-carousel-track>
+                    {% for certificate in certificates %}
+                    <article class="lp-cert-card lp-carousel__slide">
+                        {% if certificate.certificate_image %}
+                        <div class="lp-cert-card__media">
+                            <img src="{{ certificate.certificate_image.url }}"
+                                 alt="IELTS certificate {{ certificate.student_name }}"
+                                 loading="lazy"
+                                 decoding="async"
+                                 width="480"
+                                 height="320"
+                                 sizes="(max-width: 768px) 78vw, 260px">
+                        </div>
+                        {% else %}
+                        <div class="lp-cert-card__score" aria-hidden="true">{{ certificate.ielts_score }}</div>
+                        {% endif %}
+                        <strong>{{ certificate.student_name }}</strong>
+                        <div class="lp-cert-card__meta">IELTS {{ certificate.ielts_score }}</div>
+                    </article>
+                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="lp-cert-card__score" aria-hidden="true">{{ certificate.ielts_score }}</div>
-                {% endif %}
-                <strong>{{ certificate.student_name }}</strong>
-                <div class="lp-cert-card__meta">IELTS {{ certificate.ielts_score }}</div>
-            </article>
-            {% endfor %}
+            </div>
+            <button type="button"
+                    class="lp-carousel__btn lp-carousel__btn--next"
+                    data-lp-carousel-next
+                    aria-label="Keyingi sertifikat">
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            </button>
+            <div class="lp-carousel__dots" data-lp-carousel-dots hidden></div>
         </div>
         {% endif %}
         {% if students %}

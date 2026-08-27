@@ -574,18 +574,34 @@ class LandingBenefitCardAdmin(LandingCMSMixin, admin.ModelAdmin):
 
 @admin.register(LandingAICard)
 class LandingAICardAdmin(LandingCMSMixin, admin.ModelAdmin):
-    list_display = ['order', 'key', 'title', 'icon', 'is_active']
+    list_display = ['order', 'key', 'title', 'has_media', 'icon', 'is_active']
     list_display_links = ['title']
     list_filter = ['key', 'is_active']
-    search_fields = ['title', 'text', 'icon']
+    search_fields = ['title', 'text', 'icon', 'video_url']
     list_editable = ['order', 'is_active']
     ordering = ['order', 'id']
+    readonly_fields = ['poster_preview']
     fieldsets = (
-        ('AI checker kartasi', {
+        ('Matn', {
             'fields': ('key', 'icon', 'title', 'text', 'order', 'is_active'),
             'description': 'key ni o‘zgartirmang (writing / reading / listening) — analytics bog‘liq.',
         }),
+        ('Video (rasm o‘rniga)', {
+            'fields': ('video_file', 'video_url', 'poster_image', 'poster_preview'),
+            'description': (
+                'Asosan MP4 yuklang. Yoki YouTube havola qo‘ying. '
+                'Video bo‘lmasa eski placeholder rasm chiqadi.'
+            ),
+        }),
     )
+
+    @admin.display(description='Media', boolean=True)
+    def has_media(self, obj):
+        return obj.has_video
+
+    @admin.display(description='Poster preview')
+    def poster_preview(self, obj):
+        return admin_thumb(obj.poster_image, size=160)
 
 
 # Admin index: Landing CMS modellari tepaga
