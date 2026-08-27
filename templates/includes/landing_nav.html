@@ -1,0 +1,8 @@
+<li><a href="{% url 'blog:home' %}#platform">Platforma</a></li>
+<li><a href="{% url 'blog:home' %}#ai-checker">AI Checker</a></li>
+<li><a href="{% url 'mock_tests:test_list' %}"{% if request.resolver_match.namespace == 'mock_tests' %} class="is-active"{% endif %}>Mock test</a></li>
+<li><a href="{% url 'blog:videos' %}"{% if request.resolver_match.url_name == 'videos' %} class="is-active"{% endif %}>Videolar</a></li>
+<li><a href="{% url 'blog:students' %}"{% if request.resolver_match.url_name == 'students' %} class="is-active"{% endif %}>Natijalar</a></li>
+<li><a href="{% url 'blog:home' %}#faq">FAQ</a></li>
+<li class="lp-nav-item lp-nav-item--secondary"><a href="{% url 'blog:contact' %}"{% if request.resolver_match.url_name == 'contact' %} class="is-active"{% endif %}>Aloqa</a></li>
+<li class="lp-nav-item lp-nav-item--home"><a href="{% url 'blog:home' %}"{% if request.resolver_match.url_name == 'home' %} class="is-active"{% endif %}>Bosh sahifa</a></li>

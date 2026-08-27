@@ -2497,3 +2497,214 @@ body.mock-exam-fullscreen .mock-split-layout--writing .mock-right-pane { top: 8p
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ===== Landing dark theme (catalog / detail / result) ===== */
+.landing-page.mock-landing {
+    --mock-ink: #F7F9FF;
+    --mock-muted: #A8B3C7;
+    --mock-border: rgba(103, 130, 207, 0.22);
+    --mock-glass: rgba(7, 23, 47, 0.82);
+    --mock-gradient-surface: linear-gradient(145deg, rgba(7, 23, 47, 0.96), rgba(4, 15, 35, 0.96));
+    --mock-shadow-sm: 0 4px 18px rgba(0, 20, 60, 0.18);
+    --mock-shadow-md: 0 12px 34px rgba(0, 20, 60, 0.24);
+    --mock-shadow-lg: 0 20px 50px rgba(0, 40, 120, 0.28);
+    --mock-gradient-hero: linear-gradient(90deg, #E653C7 0%, #8558EB 48%, #4387FF 100%);
+    --mock-navbar-offset: 76px;
+}
+
+.landing-page.mock-landing .mock-tests-page,
+.landing-page.mock-landing .mock-test-detail,
+.landing-page.mock-landing .mock-result-page {
+    padding-top: 0;
+    margin-top: 0;
+}
+
+.landing-page.mock-landing .mock-filters {
+    background: var(--mock-glass);
+    border-color: var(--mock-border);
+    box-shadow: var(--mock-shadow-sm);
+}
+
+.landing-page.mock-landing .mock-filter-btn {
+    color: var(--mock-muted);
+}
+
+.landing-page.mock-landing .mock-filter-btn:hover {
+    color: #fff;
+    background: rgba(67, 135, 255, 0.12);
+}
+
+.landing-page.mock-landing .mock-test-card,
+.landing-page.mock-landing .mock-detail-card,
+.landing-page.mock-landing .mock-result-card {
+    background: var(--mock-gradient-surface);
+    border-color: var(--mock-border);
+    box-shadow: var(--mock-shadow-md);
+}
+
+.landing-page.mock-landing .mock-test-card h3,
+.landing-page.mock-landing .mock-detail-header h2,
+.landing-page.mock-landing .mock-result-details h2,
+.landing-page.mock-landing .mock-result-item-head {
+    color: var(--mock-ink);
+}
+
+.landing-page.mock-landing .mock-test-card > p,
+.landing-page.mock-landing .mock-test-meta,
+.landing-page.mock-landing .mock-detail-copy,
+.landing-page.mock-landing .mock-result-summary,
+.landing-page.mock-landing .mock-result-status {
+    color: var(--mock-muted);
+}
+
+.landing-page.mock-landing .mock-test-badge--reading { background: rgba(59, 130, 246, 0.16); color: #93c5fd; }
+.landing-page.mock-landing .mock-test-badge--listening { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
+.landing-page.mock-landing .mock-test-badge--writing { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; }
+.landing-page.mock-landing .mock-test-badge--speaking { background: rgba(236, 72, 153, 0.16); color: #f9a8d4; }
+
+.landing-page.mock-landing .mock-test-last-result {
+    background: rgba(4, 14, 32, 0.65);
+    border-color: var(--mock-border);
+}
+
+.landing-page.mock-landing .mock-test-last-result--pass {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.28);
+}
+
+.landing-page.mock-landing .mock-test-last-score { color: var(--mock-ink); }
+.landing-page.mock-landing .mock-test-last-result--pass .mock-test-last-score { color: #6ee7b7; }
+.landing-page.mock-landing .mock-test-last-band { background: rgba(67, 135, 255, 0.14); color: #93c5fd; }
+
+.landing-page.mock-landing .mock-detail-pill {
+    background: rgba(4, 14, 32, 0.75);
+    border-color: var(--mock-border);
+    color: var(--mock-muted);
+}
+
+.landing-page.mock-landing .mock-detail-stats li {
+    background: rgba(4, 14, 32, 0.75);
+    border-color: var(--mock-border);
+}
+
+.landing-page.mock-landing .mock-detail-stats strong { color: #93c5fd; }
+.landing-page.mock-landing .mock-detail-stats span { color: var(--mock-muted); }
+
+.landing-page.mock-landing .mock-detail-howto {
+    margin: 1.5rem 0;
+    padding: 1.15rem 1.2rem;
+    border-radius: 16px;
+    background: rgba(4, 14, 32, 0.55);
+    border: 1px solid var(--mock-border);
+}
+
+.landing-page.mock-landing .mock-detail-howto h3 {
+    margin: 0 0 0.85rem;
+    color: var(--mock-ink);
+    font-size: 1rem;
+}
+
+.landing-page.mock-landing .mock-detail-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--mock-muted);
+}
+
+.landing-page.mock-landing .mock-detail-steps li {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.55rem;
+}
+
+.landing-page.mock-landing .mock-detail-steps li span {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--mock-gradient-hero);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.landing-page.mock-landing .mock-attempts-note {
+    background: rgba(67, 135, 255, 0.1);
+    border-color: rgba(67, 135, 255, 0.24);
+    color: #bfdbfe;
+}
+
+.landing-page.mock-landing .mock-attempts-note--limit {
+    background: rgba(244, 63, 94, 0.1);
+    border-color: rgba(244, 63, 94, 0.24);
+    color: #fecdd3;
+}
+
+.landing-page.mock-landing .mock-result-score-inner {
+    background: #06152D;
+    color: var(--mock-ink);
+}
+
+.landing-page.mock-landing .mock-result-item {
+    background: rgba(7, 23, 47, 0.92);
+    border-color: var(--mock-border);
+}
+
+.landing-page.mock-landing .mock-result-item-body,
+.landing-page.mock-landing .mock-result-answer-row {
+    color: var(--mock-muted);
+}
+
+.landing-page.mock-landing .mock-result-filter {
+    background: rgba(4, 14, 32, 0.75);
+    border: 1px solid var(--mock-border);
+    color: var(--mock-muted);
+}
+
+.landing-page.mock-landing .mock-result-filter.is-active {
+    background: var(--mock-gradient-hero);
+    border-color: transparent;
+    color: #fff;
+}
+
+.landing-page.mock-landing .mock-detail-card--center {
+    max-width: 560px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.landing-page.mock-landing .mock-detail-actions--center {
+    justify-content: center;
+}
+
+.landing-page.mock-landing .mock-test-card-actions .lp-btn-primary,
+.landing-page.mock-landing .mock-test-card-actions .lp-btn-secondary,
+.landing-page.mock-landing .mock-detail-actions .lp-btn-primary,
+.landing-page.mock-landing .mock-detail-actions .lp-btn-secondary,
+.landing-page.mock-landing .mock-result-actions .lp-btn-primary,
+.landing-page.mock-landing .mock-result-actions .lp-btn-secondary {
+    flex: 1;
+    min-width: 120px;
+}
+
+.landing-page.mock-landing .mock-test-card-actions .lp-btn-secondary,
+.landing-page.mock-landing .mock-detail-actions .lp-btn-secondary,
+.landing-page.mock-landing .mock-result-actions .lp-btn-secondary {
+    border: 1px solid rgba(103, 130, 207, 0.35);
+    background: transparent;
+}
+
+.landing-page.mock-landing .mock-result-actions button.lp-btn-secondary {
+    cursor: pointer;
+}
+
+@media (max-width: 767px) {
+    .landing-page.mock-landing .mock-filters {
+        border-radius: 16px;
+        width: 100%;
+        justify-content: flex-start;
+    }
+}

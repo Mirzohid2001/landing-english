@@ -1,648 +1,416 @@
-{% extends 'base.html' %}
+{% extends 'landing_base.html' %}
 {% load static %}
-{% load video_filters %}
 
-{% block title %}Bosh Sahifa - Ton Academy{% endblock %}
+{% block title %}Ton Academy — IELTS Platform{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="hero">
-    <div class="hero-background">
-        <div class="hero-photo" aria-hidden="true">
-            <img
-                src="{% static 'images/hero-classroom.png' %}"
-                alt=""
-                class="hero-photo__img"
-                width="576"
-                height="1024"
-                loading="eager"
-                decoding="async"
-                fetchpriority="high">
-        </div>
-        {% if about and about.video_file %}
-        <div class="hero-video hero-video--hidden">
-            {% include 'includes/video_player.html' with video_file=about.video_file %}
-        </div>
-        {% endif %}
-        <div class="hero-overlay"></div>
-        <div class="animated-bg animated-bg--subtle">
-            <div class="floating-shapes">
-                <div class="shape shape-1"></div>
-                <div class="shape shape-2"></div>
-                <div class="shape shape-3"></div>
-                <div class="shape shape-4"></div>
-                <div class="shape shape-5"></div>
-                <div class="shape shape-6"></div>
-                <div class="shape shape-7"></div>
-                <div class="shape shape-8"></div>
-            </div>
-            <div class="wave-container">
-                <svg class="wave wave-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
-                    <path fill="rgba(37, 99, 235, 0.3)" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-                <svg class="wave wave-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
-                    <path fill="rgba(245, 158, 11, 0.25)" fill-opacity="1" d="M0,192L48,197.3C96,203,192,213,288,197.3C384,181,480,139,576,138.7C672,139,768,181,864,197.3C960,213,1056,203,1152,186.7C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-                <svg class="wave wave-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
-                    <path fill="rgba(16, 185, 129, 0.2)" fill-opacity="1" d="M0,256L48,234.7C96,213,192,171,288,165.3C384,160,480,192,576,197.3C672,203,768,181,864,181.3C960,181,1056,203,1152,213.3C1248,224,1344,224,1392,224L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
-            <div class="particles" id="particles"></div>
-        </div>
-    </div>
+
+<!-- 1. Hero + pricing -->
+<section class="lp-hero lp-reveal" id="top" data-lp-section="hero">
     <div class="container">
-        <div class="hero-content">
-            <div class="hero-badge">
-                <i class="fas fa-graduation-cap"></i>
-                <span>IELTS platform — joylar cheklangan, studentlarga beriladi</span>
-            </div>
-            <h1 class="hero-title">
-                <span class="title-line-1">Kafolatlangan</span>
-                <span class="title-line-2">IELTS - 7.0 + Online program</span>
-            </h1>
-            <p class="hero-subtitle">IELTS balingizni Britaniyalik ustozlar va kafolatlangan tizim orqali o‘rganing</p>
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <div class="stat-number">95%</div>
-                    <div class="stat-label">o‘quvchilar kamida 1 bandga yaxshilandi</div>
+        <div class="lp-hero__grid">
+            <div class="lp-hero__copy">
+                {% if landing.hero_badge_text %}
+                <div class="lp-hero__badge">
+                    <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+                    <span>{{ landing.hero_badge_text }}</span>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number">1000+</div>
-                    <div class="stat-label">Talabalar</div>
+                {% endif %}
+                <h1 class="lp-hero__title">{{ landing.hero_headline|linebreaksbr }}</h1>
+                <p class="lp-hero__subtitle">{{ landing.hero_subtitle }}</p>
+                <div class="lp-hero__stats">
+                    <div class="lp-hero__stat">
+                        <strong>{{ landing.stat_students }}</strong>
+                        <span>{{ landing.stat_students_label }}</span>
+                    </div>
+                    <div class="lp-hero__stat">
+                        <strong>{{ landing.stat_improvement }}</strong>
+                        <span>{{ landing.stat_improvement_label }}</span>
+                    </div>
                 </div>
-            </div>
-            <div class="hero-buttons">
-                <a href="{% url 'mock_tests:test_list' %}" class="btn btn-primary btn-hero">
-                    <i class="fas fa-rocket"></i>
-                    <span>Bepul daraja testini boshlash</span>
-                </a>
-                <a href="{% url 'blog:contact' %}" class="btn btn-outline btn-hero">
-                    <i class="fas fa-calendar-check"></i>
-                    <span>Bepul Maslahat</span>
-                </a>
-            </div>
-            <div class="hero-trust">
-                <div class="trust-item">
-                    <i class="fas fa-users"></i>
-                    <span>1000+ Bitiruvchilar</span>
+                <div class="lp-hero__score-row" aria-label="IELTS natijalari">
+                    <span class="lp-score-chip lp-score-chip--7">7.0</span>
+                    <span class="lp-score-chip lp-score-chip--75">7.5</span>
+                    <span class="lp-score-chip lp-score-chip--8">8.0</span>
+                    <span class="lp-hero__score-label">Natijalar</span>
                 </div>
-                <div class="trust-item">
-                    <i class="fas fa-trophy"></i>
-                    <span>Mukofot Sohibi</span>
+                <div class="lp-hero__proofs" aria-label="Ton Academy ustunliklari">
+                    {% for proof in hero_proofs %}
+                    <div class="lp-hero__proof">
+                        <i class="{{ proof.icon }}" aria-hidden="true"></i>
+                        <div>
+                            <strong>{{ proof.title }}</strong>
+                            <span>{{ proof.subtitle }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-            </div>
-            <div class="hero-results" aria-label="IELTS natijalari">
-                <span class="hero-results__label">
-                    <i class="fas fa-medal" aria-hidden="true"></i>
-                    Natijalar
-                </span>
-                <div class="hero-results__scores">
-                    <span class="hero-results__score hero-results__score--7">7.0</span>
-                    <span class="hero-results__score hero-results__score--75">7.5</span>
-                    <span class="hero-results__score hero-results__score--8">8.0</span>
+                <div class="lp-hero__actions">
+                    <a href="{% url 'mock_tests:test_list' %}"
+                       class="lp-btn-primary"
+                       data-lp-track="free_trial_click">
+                        {{ landing.primary_cta_text }}
+                    </a>
+                    <a href="{{ landing.telegram_purchase_url }}"
+                       class="lp-btn-secondary"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       data-lp-track="hero_buy_click"
+                       data-offer-type="base"
+                       data-offer-price="{{ landing.base_price }}">
+                        <i class="fab fa-telegram-plane"></i>
+                        {{ landing.secondary_cta_text }}
+                    </a>
                 </div>
+                <p class="lp-hero__reassurance">{{ landing.reassurance_text }}</p>
             </div>
+            <aside class="lp-pricing-card" aria-label="599 000 so‘m pricing">
+                <div class="lp-planet" aria-hidden="true">
+                    {% include 'includes/lp_picture.html' with picture=planet_picture eager=True %}
+                </div>
+                <div class="lp-pricing-card__body">
+                    <span class="lp-pricing-card__badge">{{ landing.pricing_card_badge }}</span>
+                    <span class="lp-pricing-card__label">{{ landing.base_price_label }}</span>
+                    <h3>{{ landing.pricing_card_title }}</h3>
+                    <p class="lp-pricing-card__price">{{ landing.formatted_base_price }} so‘m</p>
+                    <ul class="lp-pricing-card__list">
+                        <li class="is-highlight">
+                            <i class="fas fa-broadcast-tower" aria-hidden="true"></i>
+                            <span>UK ustoz + 2 professional ustozdan <strong>jonli darslar</strong></span>
+                        </li>
+                        <li><i class="fas fa-check" aria-hidden="true"></i> 100+ video darslar</li>
+                        <li><i class="fas fa-check" aria-hidden="true"></i> AI Writing checker</li>
+                        <li><i class="fas fa-check" aria-hidden="true"></i> Reading / Listening / Writing</li>
+                        <li><i class="fas fa-check" aria-hidden="true"></i> Progress tracking</li>
+                        <li><i class="fas fa-check" aria-hidden="true"></i> Umrbod access</li>
+                        <li><i class="fas fa-check" aria-hidden="true"></i> Barcha yangilanishlar bepul</li>
+                    </ul>
+                    <p class="lp-pricing-card__footer">Bir martalik to‘lov • Yashirin to‘lovlar yo‘q</p>
+                </div>
+            </aside>
         </div>
     </div>
 </section>
 
-<!-- Bepul webinar — markaziy card (to'liq rasm) -->
-<section class="webinar-cta" aria-labelledby="webinar-cta-title">
-    <div class="container webinar-cta__inner">
-        <article class="webinar-cta__card">
-            <div class="webinar-cta__media">
-                <img
-                    src="{% static 'images/webinar-promo.png' %}"
-                    alt="Ton Academy bepul IELTS webinar"
-                    class="webinar-cta__photo"
-                    width="720"
-                    height="1280"
-                    loading="lazy"
-                    decoding="async">
+<!-- 2. Dolzarb taklif -->
+{% if current_offer_promo %}
+<section class="lp-current-offer" data-lp-section="current-offer">
+    <div class="container">
+        <article class="lp-offer-card">
+            <div>
+                <span class="lp-offer-card__badge">{{ current_offer_promo.display_badge }}</span>
+                <h3>{{ current_offer_promo.title }}</h3>
+                <p>{{ current_offer_promo.description }}</p>
+                {% if current_offer_promo.offer_label %}
+                <p class="lp-offer-card__meta">{{ current_offer_promo.offer_label }}</p>
+                {% endif %}
+                {% if current_offer_promo.urgency_text %}
+                <p class="lp-offer-card__meta">{{ current_offer_promo.urgency_text }}</p>
+                {% endif %}
             </div>
-            <div class="webinar-cta__copy">
-                <span class="webinar-cta__badge">
-                    <i class="fab fa-telegram-plane" aria-hidden="true"></i>
-                    Bepul webinar
-                </span>
-                <h2 id="webinar-cta-title" class="webinar-cta__title">
-                    Bepul webinarda qatnashish uchun hoziroq Telegram guruhimizga qo‘shiling
-                </h2>
-                <p class="webinar-cta__text">
-                    IELTS dan yuqori natija olishni maqsad qilgan bo‘lsangiz — bu imkoniyatni qo‘ldan boy bermang.
-                </p>
-                <a
-                    href="https://t.me/tonacademyuz"
-                    class="webinar-cta__btn"
-                    target="_blank"
-                    rel="noopener noreferrer">
-                    <i class="fab fa-telegram-plane" aria-hidden="true"></i>
-                    <span>Telegram guruhiga qo‘shilish</span>
+            <div class="lp-offer-card__price-box">
+                {% if current_offer_promo.price %}
+                <div class="lp-offer-card__price">{{ current_offer_promo.formatted_price }}<small>so‘m</small></div>
+                {% endif %}
+                <a href="{{ current_offer_promo.cta_link }}"
+                   class="lp-btn-primary"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   data-lp-track="current_offer_click"
+                   data-campaign-id="{{ current_offer_promo.campaign_id }}"
+                   data-offer-type="live_bundle"
+                   data-offer-price="{{ current_offer_promo.price|default:'' }}">
+                    <i class="fab fa-telegram-plane"></i>
+                    {{ current_offer_promo.cta_text }}
                 </a>
             </div>
         </article>
     </div>
 </section>
-
-<!-- Benefits Section - Перемещено в самый верх для быстрого показа преимуществ -->
-<section class="benefits-section">
-    <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Afzalliklar</span>
-            <h2 class="section-title">Nima Uchun Aynan Bizni Tanlash</h2>
-            <p class="section-description">Bizning tizimimizni xarid qilish yoki ishlatish uchun 6 ta asosiy sabab</p>
-        </div>
-        <div class="benefits-grid">
-            <div class="benefit-card">
-                <div class="benefit-icon-wrapper">
-                    <div class="benefit-icon">
-                        <i class="fas fa-infinity"></i>
-                    </div>
-                    <div class="benefit-icon-bg"></div>
-                </div>
-                <h3>Umrbod Foydalanish</h3>
-                <p>Bir marta xarid qiling va umrbod foydalaning. Hech qanday qo'shimcha to'lovlar yo'q!</p>
-                <div class="benefit-badge">Premium</div>
-            </div>
-            
-            <div class="benefit-card">
-                <div class="benefit-icon-wrapper">
-                    <div class="benefit-icon">
-                        <i class="fas fa-video"></i>
-                    </div>
-                    <div class="benefit-icon-bg"></div>
-                </div>
-                <h3>100+ Video Darslar</h3>
-                <p>Professional o'qituvchilar tomonidan tayyorlangan 100 dan ortiq video darslar</p>
-                <div class="benefit-badge">100+</div>
-            </div>
-
-            <div class="benefit-card">
-                <div class="benefit-icon-wrapper">
-                    <div class="benefit-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="benefit-icon-bg"></div>
-                </div>
-                <h3>Writing AI Checking</h3>
-                <p>Writing ishlaringizni AI orqali tezkor tekshiring — xatolar, band bahosi va tavsiyalar bir joyda</p>
-                <div class="benefit-badge">AI</div>
-            </div>
-            
-            <div class="benefit-card">
-                <div class="benefit-icon-wrapper">
-                    <div class="benefit-icon">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <div class="benefit-icon-bg"></div>
-                </div>
-                <h3>100+ Haqiqiy IELTS Materiallar</h3>
-                <p>Reading, Listening, Writing bo'limlari uchun CD formatdagi haqiqiy IELTS materiallari</p>
-                <div class="benefit-badge">IELTS</div>
-            </div>
-            
-            <div class="benefit-card">
-                <div class="benefit-icon-wrapper">
-                    <div class="benefit-icon">
-                        <i class="fas fa-chalkboard-user"></i>
-                    </div>
-                    <div class="benefit-icon-bg"></div>
-                </div>
-                <h3>Jonli darslar</h3>
-                <p>O'qituvchilar bilan real vaqtda jonli darslar va amaliy mashg'ulotlar</p>
-                <div class="benefit-badge">Jonli</div>
-            </div>
-            
-            <div class="benefit-card">
-                <div class="benefit-icon-wrapper">
-                    <div class="benefit-icon">
-                        <i class="fas fa-user-circle"></i>
-                    </div>
-                    <div class="benefit-icon-bg"></div>
-                </div>
-                <h3>Shaxsiy Kabinet</h3>
-                <p>Barcha materiallar va progressni kuzatish uchun qulay shaxsiy kabinet</p>
-                <div class="benefit-badge">Qulay</div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Students Results Section -->
-{% if students %}
-<section class="students-section">
-    <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Muvaffaqiyat Hikoyalari</span>
-            <h2 class="section-title">IELTS O'quvchilarimizning Natijalari</h2>
-            <p class="section-description">Bizning IELTS o'quvchilarimizning haqiqiy natijalari va muvaffaqiyat hikoyalari</p>
-        </div>
-        <div class="students-grid">
-            {% for student in students %}
-            <div class="student-card">
-                {% if student.photo %}
-                <div class="student-photo">
-                    <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" loading="lazy">
-                    {% if student.video_file or student.video_url %}
-                    <div class="student-video-overlay video-preview--clickable"
-                         role="button"
-                         tabindex="0"
-                         aria-label="{{ student.full_name }} videosini ochish"
-                         data-student-id="{{ student.id }}"
-                         {% if student.video_url %}data-video-url="{{ student.video_url }}"{% endif %}
-                         {% if student.video_file %}data-video-file="{% absolute_media_url student.video_file %}"{% endif %}>
-                        <button type="button" class="play-btn" tabindex="-1" aria-hidden="true">
-                            <i class="fas fa-play"></i>
-                        </button>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-                <div class="student-info">
-                    <h3>{{ student.full_name }}</h3>
-                    {% if student.course %}
-                    <p class="student-course">
-                        <i class="fas fa-book"></i> {{ student.course.title }}
-                    </p>
-                    {% endif %}
-                    {% if student.achievement %}
-                    <p class="student-achievement">
-                        <i class="fas fa-trophy"></i> {{ student.achievement }}
-                    </p>
-                    {% endif %}
-                    <p class="student-bio">{{ student.bio|truncatewords:25 }}</p>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        <div class="text-center">
-            <a href="{% url 'blog:students' %}" class="btn btn-outline">Barcha Natijalarni Ko'rish</a>
-        </div>
-    </div>
-</section>
 {% endif %}
 
-<!-- Certificates Section - Перемещено сразу после Students -->
-{% if certificates %}
-<section class="certificates-section">
+<!-- 3. Platform preview -->
+<section class="lp-preview lp-reveal" id="platform" data-lp-section="platform">
     <div class="container">
-        <div class="section-intro" style="color: white;">
-            <span class="section-badge" style="background: rgba(255, 255, 255, 0.2); color: white;">Yutuqlar</span>
-            <h2 class="section-title" style="color: white; -webkit-text-fill-color: white;">IELTS Muvaffaqiyat Hikoyalari</h2>
-            <p class="section-description" style="color: rgba(255, 255, 255, 0.95);">Bizning talabalarimizning yutuqlari o'z-o'zidan gapirib beradi</p>
+        <div class="lp-section-head">
+            <span class="lp-kicker">{{ section_copy.platform.kicker }}</span>
+            <h2>{{ section_copy.platform.title }}</h2>
+            <p>{{ section_copy.platform.subtitle }}</p>
         </div>
-        <div class="certificates-slider-wrapper">
-            <button class="slider-btn slider-btn-prev" aria-label="Oldingi">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="certificates-slider">
-                <div class="certificates-slider-track">
-                    {% for certificate in certificates %}
-                    <div class="certificate-card slider-item">
-                        {% if certificate.student_photo %}
-                        <div class="certificate-student-photo">
-                            <img src="{{ certificate.student_photo.url }}" alt="{{ certificate.student_name }}" loading="lazy">
-                        </div>
-                        {% endif %}
-                        <div class="certificate-content">
-                            <h4>{{ certificate.student_name }}</h4>
-                            <div class="certificate-score">
-                                <span class="score-label">IELTS Balli</span>
-                                <span class="score-value">{{ certificate.ielts_score }}</span>
-                            </div>
-                            {% if certificate.certificate_image %}
-                            <div class="certificate-image">
-                                <img src="{{ certificate.certificate_image.url }}" alt="IELTS Certificate" loading="lazy">
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            <button class="slider-btn slider-btn-next" aria-label="Keyingi">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-            <div class="slider-indicators">
-                {% for certificate in certificates %}
-                <button class="slider-indicator" data-slide="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>
+        <div class="lp-preview__frame" data-lp-preview>
+            <div class="lp-preview__tabs" role="tablist">
+                {% for tab in platform_tabs %}
+                <button type="button"
+                        class="lp-preview__tab{% if forloop.first %} is-active{% endif %}"
+                        data-lp-tab="{{ tab.key }}"
+                        role="tab">{{ tab.label }}</button>
                 {% endfor %}
             </div>
-        </div>
-    </div>
-</section>
-{% endif %}
-
-<!-- Videos Section - После Certificates -->
-{% if videos %}
-<section class="videos-section">
-    <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Videolar</span>
-            <h2 class="section-title">IELTS Demo darslar</h2>
-            <p class="section-description">Bizning IELTS kurslarimizdan demo video darslar va ko'rib chiqishlar</p>
-            <a href="{% url 'blog:videos' %}" class="view-all-link">Barcha Videolarni Ko'rish <i class="fas fa-arrow-right"></i></a>
-        </div>
-        <div class="videos-grid-home">
-            {% for video in videos %}
-            <div class="video-card-home">
-                {% if video.preview_image or video.video_url or video.video_file %}
-                <div class="video-preview-home video-preview--clickable"
-                     role="button"
-                     tabindex="0"
-                     aria-label="{{ video.title }} videosini ochish"
-                     {% if video.video_url %}data-video-url="{{ video.video_url }}"{% endif %}
-                     {% if video.video_file %}data-video-file="{% absolute_media_url video.video_file %}"{% endif %}
-                     {% if video.preview_image %}data-preview="{% absolute_media_url video.preview_image %}"{% endif %}>
-                    {% if video.preview_image %}
-                    <img src="{{ video.preview_image.url }}" alt="{{ video.title }}" loading="lazy">
-                    {% elif video.video_url %}
-                    <div class="video-placeholder-home">
-                        <i class="fas fa-video"></i>
-                    </div>
-                    {% else %}
-                    <div class="video-placeholder-home">
-                        <i class="fas fa-play-circle"></i>
-                    </div>
-                    {% endif %}
-                    <button type="button" class="play-btn-home" tabindex="-1" aria-hidden="true">
-                        <i class="fas fa-play"></i>
-                    </button>
-                </div>
-                {% endif %}
-                <div class="video-info-home">
-                    <h3>{{ video.title }}</h3>
-                    {% if video.description %}
-                    <p>{{ video.description|truncatewords:15 }}</p>
-                    {% endif %}
-                    {% if video.course %}
-                    <p class="video-course-home"><i class="fas fa-book"></i> {{ video.course.title }}</p>
-                    {% endif %}
-                </div>
+            {% for tab in platform_tabs %}
+            <div class="lp-preview__screen" data-lp-panel="{{ tab.key }}" {% if not forloop.first %}hidden{% endif %}>
+                {% include 'includes/lp_picture.html' with picture=tab.picture %}
             </div>
             {% endfor %}
         </div>
     </div>
 </section>
-{% endif %}
 
-<!-- Stats Section -->
-<section class="stats-section">
+<!-- 4. Benefits -->
+<section class="lp-benefits lp-reveal" id="benefits" data-lp-section="benefits">
     <div class="container">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number" data-target="1000">0</div>
-                    <div class="stat-label">Baxtli Talabalar</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number" data-target="100">0</div>
-                    <div class="stat-label">Kafolatlangan Darslar</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-trophy"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number" data-target="95">0</div>
-                    <div class="stat-label">Muvaffaqiyat Darajasi %</div>
-                </div>
-            </div>
+        <div class="lp-section-head">
+            <span class="lp-kicker">{{ section_copy.benefits.kicker }}</span>
+            <h2>{{ section_copy.benefits.title }}</h2>
+            <p>{{ section_copy.benefits.subtitle }}</p>
+        </div>
+        <div class="lp-benefits__grid">
+            {% for card in benefit_cards %}
+            <article class="lp-benefit-card">
+                <div class="lp-benefit-card__icon"><i class="{{ card.icon }}" aria-hidden="true"></i></div>
+                <h3>{{ card.title }}</h3>
+                <p>{{ card.text }}</p>
+                <span class="lp-benefit-card__tag">{{ card.badge }}</span>
+            </article>
+            {% endfor %}
         </div>
     </div>
 </section>
 
-<!-- How It Works Section -->
-<section class="how-it-works-section">
+<!-- 5. AI Checker -->
+<section class="lp-ai lp-reveal" id="ai-checker" data-lp-section="ai-checker">
     <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Jarayon</span>
-            <h2 class="section-title">Qanday Ishlaydi</h2>
-            <p class="section-description">Ingliz tilini mukammal o'rganish safaringiz 2 oddiy qadamda</p>
+        <div class="lp-section-head">
+            <span class="lp-kicker">{{ section_copy.ai.kicker }}</span>
+            <h2>{{ section_copy.ai.title }}</h2>
+            <p>{{ section_copy.ai.subtitle }}</p>
         </div>
-        <div class="process-timeline">
-            <div class="timeline-item" data-step="1">
-                <div class="timeline-icon">
-                    <i class="fas fa-user-plus"></i>
-                    <div class="step-number">01</div>
+        <div class="lp-ai__grid">
+            {% for card in ai_checker_cards %}
+            <article class="lp-ai-card" data-lp-ai="{{ card.key }}">
+                <div class="lp-ai-card__screen">
+                    {% include 'includes/lp_picture.html' with picture=card.picture %}
                 </div>
-                <div class="timeline-content">
-                    <h3>Ro'yxatdan o'ting</h3>
-                    <p>Sayt orqali ariza qoldiring yoki administrator bilan bog'laning.</p>
+                <div class="lp-ai-card__body">
+                    <h3>{{ card.title }}</h3>
+                    <p>{{ card.text }}</p>
                 </div>
-            </div>
-            <div class="timeline-item" data-step="2">
-                <div class="timeline-icon">
-                    <i class="fas fa-university"></i>
-                    <div class="step-number">02</div>
-                </div>
-                <div class="timeline-content">
-                    <h3>To'liq akademiya imkoniyatini qo'lga kiriting</h3>
-                    <p>Barcha kurslar, materiallar va qo'shimcha imkoniyatlardan cheklovsiz foydalaning.</p>
-                </div>
-            </div>
+            </article>
+            {% endfor %}
         </div>
     </div>
 </section>
 
-<!-- Testimonials Section -->
+<!-- 6. Results -->
+<section class="lp-results lp-reveal" id="results" data-lp-section="results">
+    <div class="container">
+        <div class="lp-section-head">
+            <span class="lp-kicker">{{ section_copy.results.kicker }}</span>
+            <h2>{{ section_copy.results.title }}</h2>
+            <p>{{ section_copy.results.subtitle }}</p>
+        </div>
+        <div class="lp-results__scores" aria-label="IELTS natijalari">
+            <span class="lp-score-chip lp-score-chip--7">7.0</span>
+            <span class="lp-score-chip lp-score-chip--75">7.5</span>
+            <span class="lp-score-chip lp-score-chip--8">8.0</span>
+        </div>
+        {% if certificates %}
+        <div class="lp-cert-grid lp-swipe-row">
+            {% for certificate in certificates %}
+            <article class="lp-cert-card lp-reveal">
+                {% if certificate.certificate_image %}
+                <div class="lp-cert-card__media">
+                    <img src="{{ certificate.certificate_image.url }}"
+                         alt="IELTS certificate {{ certificate.student_name }}"
+                         loading="lazy"
+                         decoding="async"
+                         width="480"
+                         height="320"
+                         sizes="(max-width: 768px) 78vw, 240px">
+                </div>
+                {% else %}
+                <div class="lp-cert-card__score" aria-hidden="true">{{ certificate.ielts_score }}</div>
+                {% endif %}
+                <strong>{{ certificate.student_name }}</strong>
+                <div class="lp-cert-card__meta">IELTS {{ certificate.ielts_score }}</div>
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if students %}
+        <div class="lp-cert-grid lp-swipe-row lp-cert-grid--students">
+            {% for student in students %}
+            <article class="lp-cert-card lp-reveal">
+                {% if student.photo %}
+                <div class="lp-cert-card__media lp-cert-card__media--photo">
+                    <img src="{{ student.photo.url }}"
+                         alt="{{ student.full_name }}"
+                         loading="lazy"
+                         decoding="async"
+                         width="320"
+                         height="320"
+                         sizes="(max-width: 768px) 78vw, 220px">
+                </div>
+                {% else %}
+                <div class="lp-cert-card__avatar" aria-hidden="true">{{ student.first_name|make_list|first }}{{ student.last_name|make_list|first }}</div>
+                {% endif %}
+                <strong>{{ student.full_name }}</strong>
+                {% if student.achievement %}<div class="lp-cert-card__meta">{{ student.achievement }}</div>{% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- 7. Testimonials -->
 {% if testimonials %}
-<section class="testimonials-section">
+<section class="lp-testimonials-section lp-reveal" id="testimonials" data-lp-section="testimonials">
     <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Muvaffaqiyat Hikoyalari</span>
-            <h2 class="section-title">Talabalarimizdan Eshiting</h2>
-            <p class="section-description">Biz bilan ingliz tilini o'zgartirgan talabalarning haqiqiy tajribalari</p>
+        <div class="lp-section-head">
+            <span class="lp-kicker">{{ section_copy.testimonials.kicker }}</span>
+            <h2>{{ section_copy.testimonials.title }}</h2>
+            <p>{{ section_copy.testimonials.subtitle }}</p>
         </div>
-        <div class="testimonials-slider">
+        <div class="lp-testimonials lp-swipe-row">
             {% for testimonial in testimonials %}
-            <div class="testimonial-card">
-                {% if testimonial.student_photo %}
-                <div class="testimonial-photo">
-                    <img src="{{ testimonial.student_photo.url }}" alt="{{ testimonial.student_name }}" loading="lazy">
-                </div>
-                {% endif %}
-                <div class="testimonial-content">
-                    <div class="testimonial-rating">
-                        {% for i in "12345" %}
-                            <i class="fas fa-star {% if forloop.counter <= testimonial.rating %}active{% endif %}"></i>
-                        {% endfor %}
+            <article class="lp-testimonial-card lp-reveal">
+                <div class="lp-testimonial-card__head">
+                    {% if testimonial.student_photo %}
+                    <img class="lp-testimonial-card__photo"
+                         src="{{ testimonial.student_photo.url }}"
+                         alt="{{ testimonial.student_name }}"
+                         loading="lazy"
+                         decoding="async"
+                         width="56"
+                         height="56">
+                    {% else %}
+                    <span class="lp-testimonial-card__avatar" aria-hidden="true">{{ testimonial.student_name|make_list|first }}</span>
+                    {% endif %}
+                    <div>
+                        <strong>{{ testimonial.student_name }}</strong>
+                        <span class="lp-testimonial-card__rating">{{ testimonial.rating }}.0 ★</span>
                     </div>
-                    <p class="testimonial-text">"{{ testimonial.text }}"</p>
-                    <h4>{{ testimonial.student_name }}</h4>
-                    {% if testimonial.course %}
-                    <p class="testimonial-course">{{ testimonial.course.title }}</p>
-                    {% endif %}
-                    {% if testimonial.video_file %}
-                    <button class="btn btn-sm btn-outline watch-video-btn" data-testimonial-id="{{ testimonial.id }}">
-                        <i class="fas fa-play"></i> Videoni Ko'rish
-                    </button>
-                    {% endif %}
                 </div>
-            </div>
+                <p>"{{ testimonial.text|truncatewords:40 }}"</p>
+                {% if testimonial.video_file %}
+                <button type="button"
+                        class="lp-btn-secondary lp-testimonial-card__play watch-video-btn"
+                        data-testimonial-id="{{ testimonial.id }}"
+                        data-lp-track="testimonial_play">
+                    <i class="fas fa-play" aria-hidden="true"></i> Videoni ko‘rish
+                </button>
+                {% endif %}
+            </article>
             {% endfor %}
         </div>
     </div>
 </section>
 {% endif %}
 
-<!-- Courses Section -->
-<section class="courses-section">
+<!-- 8. News promos (optional) -->
+{% if news_promos %}
+<section class="lp-news" id="news">
     <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Bizning Dasturlarimiz</span>
-            <div class="section-header">
-                <h2 class="section-title">O'zingizga Mos Kursni Tanlang</h2>
-            </div>
-            <p class="section-description">Boshlang'ichdan ilg'or darajagacha, ingliz tilini o'rganish safaringiz uchun bizda mukammal kurs mavjud</p>
+        <div class="lp-section-head">
+            <span class="lp-kicker">{{ section_copy.news.kicker }}</span>
+            <h2>{{ section_copy.news.title }}</h2>
         </div>
-        <div class="courses-grid{% if courses|length == 1 %} courses-grid--single{% endif %}" id="courses-grid">
-            {% for course in courses %}
-            <div class="course-card">
-                {% if course.image %}
-                <div class="course-image">
-                    <img src="{{ course.image.url }}" alt="{{ course.title }}" loading="lazy">
-                    {% if course.promo_video_file %}
-                    <div class="course-video-overlay video-preview--clickable"
-                         role="button"
-                         tabindex="0"
-                         aria-label="{{ course.title }} promo videosini ochish"
-                         data-course-id="{{ course.id }}"
-                         data-video-file="{% absolute_media_url course.promo_video_file %}">
-                        <button type="button" class="play-btn" tabindex="-1" aria-hidden="true">
-                            <i class="fas fa-play"></i>
-                        </button>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-                <div class="course-content">
-                    <span class="course-level">{{ course.get_level_display }}</span>
-                    <h3><a href="{% url 'blog:course_detail' course.pk %}">{{ course.title }}</a></h3>
-                    <p>{{ course.short_description }}</p>
-                    <div class="course-meta">
-                        <div class="meta-item-small">
-                            <i class="fas fa-clock"></i>
-                            <span>{{ course.duration }}</span>
-                        </div>
-                    </div>
-                    <div class="course-footer">
-                        <div class="course-price-small">{{ course.price }} so'm</div>
-                        <button class="btn btn-primary btn-sm apply-course-btn" data-course-id="{{ course.id }}">
-                            <i class="fas fa-arrow-right"></i> Ariza Berish
-                        </button>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <p class="no-content">Hozircha kurslar mavjud emas.</p>
+        <div class="lp-benefits__grid">
+            {% for promo in news_promos %}
+            <article class="lp-benefit-card">
+                <span class="lp-benefit-card__tag">{{ promo.display_badge }}</span>
+                <h3>{{ promo.title }}</h3>
+                <p>{{ promo.description }}</p>
+                {% if promo.price %}<p><strong>{{ promo.formatted_price }} so‘m</strong></p>{% endif %}
+                <a href="{{ promo.cta_link }}" class="lp-btn-secondary" target="_blank" rel="noopener noreferrer" data-lp-track="news_card_click" data-campaign-id="{{ promo.campaign_id }}">{{ promo.cta_text }}</a>
+            </article>
             {% endfor %}
         </div>
     </div>
 </section>
+{% endif %}
 
-<!-- FAQ Section -->
-{% if faqs %}
-<section class="faq-section">
+<!-- 9. Purchase flow -->
+<section class="lp-purchase lp-reveal" id="purchase" data-lp-section="purchase">
     <div class="container">
-        <div class="section-intro">
-            <span class="section-badge">Savol-Javob</span>
-            <h2 class="section-title">Tez-Tez Beriladigan Savollar</h2>
-            <p class="section-description">Bizning kurslarimiz haqida bilishingiz kerak bo'lgan hamma narsa</p>
+        <div class="lp-section-head">
+            <span class="lp-kicker">{{ section_copy.purchase.kicker }}</span>
+            <h2>{{ section_copy.purchase.title }}</h2>
+            <p>{{ section_copy.purchase.subtitle }}</p>
         </div>
-        <div class="faq-container">
+        <div class="lp-purchase__track">
+        <div class="lp-purchase__steps">
+            {% for step in purchase_steps %}
+            <article class="lp-purchase-step lp-reveal">
+                <div class="lp-purchase-step__num">{{ step.step_number|stringformat:"02d" }}</div>
+                <h3>{{ step.title }}</h3>
+                <p>{{ step.description }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        </div>
+    </div>
+</section>
+
+<!-- 10. FAQ -->
+{% if faqs %}
+<section class="lp-faq lp-reveal" id="faq" data-lp-section="faq">
+    <div class="container">
+        <div class="lp-section-head">
+            <span class="lp-kicker">{{ section_copy.faq.kicker }}</span>
+            <h2>{{ section_copy.faq.title }}</h2>
+            <p>{{ section_copy.faq.subtitle }}</p>
+        </div>
+        <div class="lp-faq__list">
             {% for faq in faqs %}
-            <div class="faq-item">
-                <div class="faq-question">
-                    <h3>{{ faq.question }}</h3>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+            <article class="lp-faq__item">
+                <button type="button" class="lp-faq__question" aria-expanded="false">
+                    <span>{{ faq.question }}</span>
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div class="lp-faq__answer" hidden>
                     <p>{{ faq.answer|linebreaks }}</p>
                 </div>
-            </div>
+            </article>
             {% endfor %}
         </div>
     </div>
 </section>
 {% endif %}
 
-<!-- Application Modal -->
-<div id="application-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <h2>Kursga Ariza Berish</h2>
-        <form id="application-form" method="post" action="{% url 'blog:apply_course' %}">
-            {% csrf_token %}
-            <input type="hidden" name="course" id="application-course-id">
-            <div class="form-group">
-                <input type="text" name="name" class="form-control" placeholder="Ismingiz" required>
+<!-- 11. Final CTA -->
+<section class="lp-final-cta lp-reveal" data-lp-section="final-cta">
+    <div class="container">
+        <div class="lp-final-cta__box">
+            <h2>Jonli darslar + 100+ video + AI checker + umrbod access</h2>
+            <p class="lp-final-cta__price">{{ landing.formatted_base_price }} so‘m</p>
+            <div class="lp-final-cta__checks">
+                <span><i class="fas fa-broadcast-tower"></i> UK + 2 ustozdan jonli darslar</span>
+                <span><i class="fas fa-check"></i> Umrbod access</span>
+                <span><i class="fas fa-check"></i> AI Writing</span>
+                <span><i class="fas fa-check"></i> Reading & Listening</span>
+                <span><i class="fas fa-check"></i> 100+ video</span>
+                <span><i class="fas fa-check"></i> Progress tracking</span>
             </div>
-            <div class="form-group">
-                <input type="tel" name="phone" class="form-control" placeholder="Telefon Raqamingiz" required>
-            </div>
-            <div class="form-group">
-                <input type="text" name="email" class="form-control" placeholder="Telegram username (@username)" required>
-            </div>
-            <div class="form-group">
-                <textarea name="message" class="form-control" placeholder="Qo'shimcha Xabar (Ixtiyoriy)" rows="4"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Arizani Yuborish</button>
-        </form>
+            <a href="{{ landing.telegram_purchase_url }}"
+               class="lp-btn-primary"
+               target="_blank"
+               rel="noopener noreferrer"
+               data-lp-track="final_buy_click"
+               data-offer-type="base"
+               data-offer-price="{{ landing.base_price }}">
+                <i class="fab fa-telegram-plane"></i>
+                Telegram orqali xarid qilish
+            </a>
+        </div>
     </div>
-</div>
+</section>
 
-<!-- Video Modal -->
 <div id="video-modal" class="modal">
     <div class="modal-content modal-video">
-        <span class="close-modal">&times;</span>
+        <button type="button" class="close-modal" aria-label="Yopish">&times;</button>
         <div id="video-modal-content"></div>
     </div>
 </div>
+
 {% endblock %}
-
-{% block extra_js %}
-<script>
-    // FAQ Accordion
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.faq-question').forEach(question => {
-            question.addEventListener('click', function() {
-                const faqItem = this.parentElement;
-                const isActive = faqItem.classList.contains('active');
-                
-                // Close all FAQ items
-                document.querySelectorAll('.faq-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                
-                // Open clicked item if it wasn't active
-                if (!isActive) {
-                    faqItem.classList.add('active');
-                }
-            });
-        });
-        
-        // Timeline items will be animated by main.js observer
-    });
-    
-    // Course application handling
-    document.querySelectorAll('.apply-course-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const courseId = this.getAttribute('data-course-id');
-            document.getElementById('application-course-id').value = courseId;
-            document.getElementById('application-modal').style.display = 'block';
-        });
-    });
-
-</script>
-{% endblock %}
-

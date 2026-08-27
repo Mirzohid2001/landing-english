@@ -6425,3 +6425,17 @@ body.video-modal-open {
         padding: 0.38rem 0.56rem !important;
     }
 }
+
+/* Landing dark chrome: never inherit light-theme nav colors */
+.landing-page .nav-menu a {
+    color: #F7F9FF !important;
+    -webkit-text-fill-color: #F7F9FF !important;
+    background: transparent !important;
+}
+
+.landing-page .nav-menu a:hover,
+.landing-page .nav-menu a.is-active {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background: rgba(67, 135, 255, 0.22) !important;
+}

@@ -1,0 +1,34 @@
+/* Ton Academy — admin polish for landing CMS */
+.admin-hint {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #eef5ff;
+    border: 1px solid #c7dbff;
+    color: #1a3a6b;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.admin-hint code {
+    background: rgba(255, 255, 255, 0.7);
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+
+#changelist-form .results img,
+.aligned img.admin-preview {
+    max-width: 100%;
+}
+
+.field-image_preview img,
+.field-photo_preview img,
+.field-certificate_preview img {
+    max-width: 320px;
+    border-radius: 12px;
+    border: 1px solid #d0d7de;
+}
+
+.module h2 {
+    letter-spacing: 0.01em;
+}

@@ -6,44 +6,59 @@
     <title>{% block title %}Ton Academy{% endblock %}</title>
     {% load static %}
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
-    <link rel="manifest" href="{% static 'images/site.webmanifest' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}?v=3">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}?v=3">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}?v=3">
+    <link rel="manifest" href="{% static 'images/site.webmanifest' %}?v=3">
+    <meta name="theme-color" content="#020A1D">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% if landing.posthog_project_api_key %}
+    <script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="fo po init Fo Oo qo Zs Lo Bo Ro capture Do vo Go calculateEventProperties Vo register register_once register_for_session unregister unregister_for_session Ko Ao Zo getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync Yo identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset Xo shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty Qo Uo createPersonProfile setInternalOrTestUser Jo Eo il opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ho debug Js mn getPageViewId captureTraceFeedback captureTraceMetric Co".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('{{ landing.posthog_project_api_key|escapejs }}', {
+        api_host: '{{ landing.posthog_api_host|default:"https://us.i.posthog.com"|escapejs }}',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only'
+    });
+    </script>
+    {% endif %}
+    {% block extra_head %}{% endblock %}
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
-    <!-- Navigation -->
-    <nav class="navbar">
+    {% block announcement_bar %}{% endblock %}
+    {% block navbar %}
+    <nav class="navbar" id="site-navbar">
         <div class="container">
             <div class="nav-wrapper">
                 <a href="{% url 'blog:home' %}" class="logo">
-                    <i class="fas fa-graduation-cap"></i>
+                    <img src="{% static 'images/logo-mark.png' %}?v=3" alt="Ton Academy" class="logo-mark" width="36" height="36">
                     <span>Ton Academy</span>
                 </a>
-                <button class="mobile-menu-toggle" aria-label="Menyuni ochish/yopish">
+                <button type="button"
+                        class="mobile-menu-toggle"
+                        aria-label="Menyuni ochish/yopish"
+                        aria-expanded="false"
+                        aria-controls="site-nav-menu">
                     <span></span>
                     <span></span>
                     <span></span>
                 </button>
-                <ul class="nav-menu">
-                    <li><a href="{% url 'blog:home' %}">Bosh Sahifa</a></li>
-                    <li><a href="{% url 'blog:contact' %}">Ariza berish</a></li>
-                    <li><a href="{% url 'mock_tests:test_list' %}">Demo Mock testlar</a></li>
-                    <li><a href="{% url 'blog:students' %}">O'quvchilar Natijalari</a></li>
-                    <li><a href="{% url 'blog:videos' %}">Videolar</a></li>
-                    <li><a href="{% url 'blog:contact' %}">Aloqa</a></li>
-                    <li><a href="https://tonielts.uz/" class="admin-link" target="_blank" rel="noopener noreferrer">
-                        <i class="fas fa-cog"></i>
-                        <span>Systemaga O'tish</span>
-                    </a></li>
-                </ul>
+                {% block nav_shell %}
+                <div class="nav-shell" id="site-nav-menu">
+                    <ul class="nav-menu">
+                        {% block nav_links %}
+                        {% include 'includes/landing_nav.html' %}
+                        {% endblock %}
+                    </ul>
+                </div>
+                {% endblock %}
             </div>
         </div>
     </nav>
+    {% endblock %}
 
     <!-- Messages -->
     {% if messages %}
@@ -58,7 +73,7 @@
     {% endif %}
 
     <!-- Main Content -->
-    <main>
+    <main id="main-content">
         {% block content %}{% endblock %}
     </main>
 
@@ -68,27 +83,30 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h3>Ton Academy</h3>
-                    <p>Ingliz tilini mukammal o'rganish uchun darvoza. Minglab muvaffaqiyatli talabalar qatoriga qo'shiling.</p>
+                    <p>IELTS platform — video darslar, AI checker va mock testlar bir joyda.</p>
                 </div>
                 <div class="footer-section">
-                    <h4>Tezkor Havolalar</h4>
-                    <ul>
-                        <li><a href="{% url 'blog:home' %}">Bosh Sahifa</a></li>
-                        <li><a href="{% url 'blog:contact' %}">Ariza berish</a></li>
-                        <li><a href="{% url 'mock_tests:test_list' %}">Demo Mock testlar</a></li>
-                        <li><a href="{% url 'blog:students' %}">O'quvchilar Natijalari</a></li>
-                        <li><a href="{% url 'blog:contact' %}">Aloqa</a></li>
-                    </ul>
+                    <h4>Tezkor havolalar</h4>
+                    {% include 'includes/site_footer_links.html' %}
                 </div>
                 <div class="footer-section">
-                    <h4>Aloqa Ma'lumotlari</h4>
-                    <p><i class="fab fa-telegram"></i> <a href="https://t.me/Tonacademy2" target="_blank" rel="noopener noreferrer">@Tonacademy2</a></p>
+                    <h4>Aloqa ma'lumotlari</h4>
+                    <p><i class="fab fa-telegram"></i> <a href="{{ landing.telegram_purchase_url }}" target="_blank" rel="noopener noreferrer">@tonacademyuz</a></p>
                     <p><i class="fas fa-envelope"></i> kbaxshilloyevich@gmail.com</p>
                     <p><i class="fas fa-map-marker-alt"></i> Dubai, UAE</p>
+                    {% if landing.support_hours %}
+                    <p><i class="fas fa-clock"></i> {{ landing.support_hours }}</p>
+                    {% endif %}
+                    {% if landing.instagram_url %}
+                    <p><i class="fab fa-instagram"></i> <a href="{{ landing.instagram_url }}" target="_blank" rel="noopener noreferrer">@ton.academy.uz</a></p>
+                    {% endif %}
+                    {% if landing.youtube_url %}
+                    <p><i class="fab fa-youtube"></i> <a href="{{ landing.youtube_url }}" target="_blank" rel="noopener noreferrer">@TonAcademyuz</a></p>
+                    {% endif %}
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 Ton Academy. Barcha huquqlar himoyalangan.</p>
+                <p>&copy; {% block footer_year %}2026{% endblock %} Ton Academy. Barcha huquqlar himoyalangan.</p>
             </div>
         </div>
     </footer>

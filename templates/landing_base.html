@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body_class %}landing-page{% if announcement_promo %} has-announcement{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/landing.css' %}?v=10">
+{% endblock %}
+
+{% block announcement_bar %}
+<a href="#main-content" class="lp-skip-link">Asosiy kontentga o‘tish</a>
+{% include 'includes/landing_announcement.html' %}
+{% endblock %}
+
+{% block nav_shell %}
+<div class="nav-shell lp-nav-panel" id="site-nav-menu">
+    <ul class="nav-menu lp-nav-links">
+        {% include 'includes/landing_nav.html' %}
+    </ul>
+    <div class="lp-nav-actions">
+        {% include 'includes/landing_nav_cta.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+{% if landing.ga4_measurement_id %}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ landing.ga4_measurement_id }}"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '{{ landing.ga4_measurement_id }}');
+</script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+{% endblock %}
+
+{% block extra_js %}
+{% include 'includes/landing_mobile_cta.html' %}
+<script src="{% static 'js/landing.js' %}?v=8"></script>
+{% endblock %}

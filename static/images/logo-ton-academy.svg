@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 128" role="img" aria-label="Ton Academy">
+  <defs>
+    <linearGradient id="bg" x1="12%" y1="0%" x2="88%" y2="100%">
+      <stop offset="0%" stop-color="#0B1B3F"/>
+      <stop offset="100%" stop-color="#020A1D"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E653C7"/>
+      <stop offset="48%" stop-color="#8558EB"/>
+      <stop offset="100%" stop-color="#4387FF"/>
+    </linearGradient>
+    <linearGradient id="tfill" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#D7E4FF"/>
+    </linearGradient>
+    <linearGradient id="word" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F7F9FF"/>
+      <stop offset="100%" stop-color="#C9D7FF"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(0,0)">
+    <rect width="128" height="128" rx="30" fill="url(#bg)"/>
+    <rect x="10" y="10" width="108" height="108" rx="24" fill="none" stroke="url(#ring)" stroke-width="3.5"/>
+    <path d="M34 38h60c2.8 0 4.8 2.4 4.2 5.1l-2.2 9.2c-.4 1.7-2 2.9-3.8 2.9H76.5V88.5c0 2.5-2 4.5-4.5 4.5h-16c-2.5 0-4.5-2-4.5-4.5V55.2H35.8c-1.8 0-3.4-1.2-3.8-2.9l-2.2-9.2C29.2 40.4 31.2 38 34 38z" fill="url(#tfill)"/>
+  </g>
+  <text x="156" y="78" font-family="Manrope, Inter, Arial, sans-serif" font-size="52" font-weight="800" fill="url(#word)" letter-spacing="-1.2">Ton Academy</text>
+</svg>

@@ -182,6 +182,8 @@ class IELTSCertificate(models.Model):
     
     class Meta:
         ordering = ['-date_obtained', '-ielts_score']
+        verbose_name = 'IELTS sertifikat'
+        verbose_name_plural = 'IELTS sertifikatlar'
     
     def __str__(self):
         return f"{self.student_name} - IELTS {self.ielts_score}"
@@ -197,14 +199,19 @@ class FAQ(models.Model):
     
     class Meta:
         ordering = ['order', 'created_at']
-        verbose_name = "FAQ"
-        verbose_name_plural = "FAQs"
+        verbose_name = 'FAQ'
+        verbose_name_plural = 'FAQ savollar'
     
     def __str__(self):
         return self.question
 
 
 class ProcessStep(models.Model):
+    FLOW_CHOICES = [
+        ('general', 'Umumiy'),
+        ('purchase', 'Telegram xarid'),
+    ]
+
     ICON_CHOICES = [
         ('fas fa-user-plus', 'Sign Up'),
         ('fas fa-clipboard-check', 'Assessment'),
@@ -214,12 +221,17 @@ class ProcessStep(models.Model):
         ('fas fa-certificate', 'Certificate'),
         ('fas fa-users', 'Users'),
         ('fas fa-graduation-cap', 'Graduation'),
+        ('fab fa-telegram-plane', 'Telegram'),
+        ('fas fa-comments', 'Comments'),
+        ('fas fa-credit-card', 'Payment'),
+        ('fas fa-key', 'Key'),
     ]
     
     step_number = models.IntegerField(help_text="Step number (1, 2, 3, 4, etc.)")
     title = models.CharField(max_length=200)
     description = models.TextField()
-    icon = models.CharField(max_length=100, choices=ICON_CHOICES, help_text="Font Awesome icon class")
+    icon = models.CharField(max_length=100, help_text="Font Awesome icon class, masalan: fas fa-key")
+    flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default='general')
     order = models.IntegerField(default=0, help_text="Order in which step appears (lower numbers first)")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -308,3 +320,261 @@ class TelegramConfig(models.Model):
 
     def get_chat_ids_list(self):
         return [chat_id.strip() for chat_id in self.chat_ids.splitlines() if chat_id.strip()]
+
+
+class LandingSettings(models.Model):
+    """Landing sahifa singleton sozlamalari (599k bazaviy offer)."""
+
+    hero_headline = models.CharField(
+        max_length=300,
+        default='Kafolatlangan /\nIELTS - 7.0 + Online program',
+    )
+    hero_subtitle = models.TextField(
+        default=(
+            'IELTS balingizni Britaniyalik ustozlar va kafolatlangan tizim orqali o‘rganing'
+        ),
+    )
+    hero_badge_text = models.CharField(
+        max_length=200,
+        default='IELTS platform — joylar cheklangan, studentlarga beriladi',
+        blank=True,
+    )
+    base_price = models.PositiveIntegerField(default=599_000)
+    base_price_label = models.CharField(
+        max_length=120,
+        default='Platforma + jonli darslar — umrbod access',
+    )
+    pricing_card_title = models.CharField(max_length=120, default='Umrbod access')
+    pricing_card_badge = models.CharField(max_length=80, default='ENG YAXSHI TAKLIF')
+    reassurance_text = models.CharField(
+        max_length=200,
+        default='Bir martalik to‘lov • Jonli darslar • Umrbod access',
+    )
+    primary_cta_text = models.CharField(max_length=120, default='Bepul daraja testini boshlash')
+    secondary_cta_text = models.CharField(max_length=120, default='Telegram orqali xarid qilish')
+    telegram_purchase_url = models.URLField(default='https://t.me/tonacademyuz')
+    free_trial_url = models.CharField(max_length=300, default='/mock-tests/')
+    stat_students = models.CharField(max_length=40, default='1000+')
+    stat_students_label = models.CharField(max_length=80, default='talabalar')
+    stat_improvement = models.CharField(max_length=40, default='95%')
+    stat_improvement_label = models.CharField(
+        max_length=120,
+        default='o‘quvchilar kamida 1 bandga yaxshilandi',
+    )
+    instagram_url = models.URLField(blank=True, default='https://www.instagram.com/ton.academy.uz/')
+    youtube_url = models.URLField(blank=True, default='https://www.youtube.com/@TonAcademyuz')
+    support_hours = models.CharField(
+        max_length=120,
+        blank=True,
+        default='Dush–Shan: 09:00–20:00',
+    )
+    ga4_measurement_id = models.CharField(
+        max_length=32,
+        blank=True,
+        help_text='Google Analytics 4 ID (masalan G-XXXXXXXX). Bo‘sh bo‘lsa o‘lchov yoqilmaydi.',
+    )
+    posthog_project_api_key = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text='PostHog Project token (phc_…). Bo‘sh bo‘lsa PostHog o‘chiq.',
+    )
+    posthog_api_host = models.URLField(
+        blank=True,
+        default='https://us.i.posthog.com',
+        help_text='PostHog API host (US: https://us.i.posthog.com)',
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Landing sozlamasi'
+        verbose_name_plural = 'Landing sozlamalari'
+
+    def __str__(self):
+        return 'Landing sozlamalari'
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def formatted_base_price(self):
+        return f'{self.base_price:,}'.replace(',', ' ')
+
+
+class PromoCampaign(models.Model):
+    """Dynamic announcement bar, dolzarb taklif va yangiliklar."""
+
+    PLACEMENT_CHOICES = [
+        ('announcement', 'Announcement bar (tepa)'),
+        ('current_offer', 'Dolzarb taklif (hero ostida)'),
+        ('news', 'Yangilik / taklif kartasi'),
+    ]
+    BADGE_CHOICES = [
+        ('new', 'Yangi'),
+        ('live', 'LIVE'),
+        ('limited', 'Limited'),
+        ('webinar', 'Webinar'),
+        ('intensive', 'Intensive'),
+    ]
+
+    enabled = models.BooleanField(default=False)
+    placement = models.CharField(max_length=20, choices=PLACEMENT_CHOICES)
+    badge = models.CharField(max_length=20, choices=BADGE_CHOICES, default='live')
+    badge_custom = models.CharField(max_length=60, blank=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    offer_label = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text='Masalan: LIVE bundle — 899 000 so‘m',
+    )
+    price = models.PositiveIntegerField(null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    urgency_text = models.CharField(max_length=200, blank=True)
+    cta_text = models.CharField(max_length=120, default='Telegram orqali qo‘shilish')
+    cta_link = models.URLField(default='https://t.me/tonacademyuz')
+    campaign_id = models.CharField(max_length=60, blank=True, help_text='Analytics uchun unique ID')
+    image = models.ImageField(upload_to='landing/promo/', blank=True, null=True)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', '-created_at']
+        verbose_name = 'Promo kampaniya'
+        verbose_name_plural = 'Promo kampaniyalar'
+
+    def __str__(self):
+        return f'{self.get_placement_display()}: {self.title}'
+
+    @property
+    def is_active_now(self):
+        if not self.enabled:
+            return False
+        if self.expires_at:
+            from django.utils import timezone
+            if timezone.now() > self.expires_at:
+                return False
+        return True
+
+    def display_badge(self):
+        if self.badge_custom:
+            return self.badge_custom
+        return self.get_badge_display().upper()
+
+    def formatted_price(self):
+        if not self.price:
+            return ''
+        return f'{self.price:,}'.replace(',', ' ')
+
+
+class PlatformPreview(models.Model):
+    """Platforma preview tablari — real screenshotlar."""
+
+    TAB_CHOICES = [
+        ('all', 'Barchasi'),
+        ('writing', 'Writing AI'),
+        ('reading', 'Reading'),
+        ('listening', 'Listening'),
+        ('videos', 'Video darslar'),
+        ('progress', 'Progress'),
+    ]
+
+    tab = models.CharField(max_length=20, choices=TAB_CHOICES, unique=True)
+    title = models.CharField(max_length=120)
+    image = models.ImageField(upload_to='landing/platform/', blank=True, null=True)
+    alt_text = models.CharField(max_length=200, blank=True)
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Platforma preview'
+        verbose_name_plural = 'Platforma previewlar'
+
+    def __str__(self):
+        return self.title
+
+
+class LandingSectionCopy(models.Model):
+    SECTION_CHOICES = [
+        ('platform', 'Platforma'),
+        ('benefits', 'Benefits'),
+        ('ai', 'AI Checker'),
+        ('results', 'Natijalar'),
+        ('testimonials', 'Fikrlar'),
+        ('news', 'Yangiliklar'),
+        ('purchase', 'Xarid'),
+        ('faq', 'FAQ'),
+    ]
+
+    section = models.CharField(max_length=30, choices=SECTION_CHOICES, unique=True)
+    kicker = models.CharField(max_length=80)
+    title = models.CharField(max_length=220)
+    subtitle = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['section']
+        verbose_name = 'Bo‘lim matni'
+        verbose_name_plural = 'Bo‘lim matnlari'
+
+    def __str__(self):
+        return self.get_section_display()
+
+
+class LandingHeroProof(models.Model):
+    icon = models.CharField(max_length=100, help_text="Font Awesome icon class")
+    title = models.CharField(max_length=120)
+    subtitle = models.CharField(max_length=160)
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = 'Hero isbot'
+        verbose_name_plural = 'Hero isbotlar'
+
+    def __str__(self):
+        return self.title
+
+
+class LandingBenefitCard(models.Model):
+    icon = models.CharField(max_length=100, help_text="Font Awesome icon class")
+    title = models.CharField(max_length=160)
+    text = models.TextField()
+    badge = models.CharField(max_length=50, blank=True)
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = 'Benefit kartasi'
+        verbose_name_plural = 'Benefit kartalari'
+
+    def __str__(self):
+        return self.title
+
+
+class LandingAICard(models.Model):
+    KEY_CHOICES = [
+        ('writing', 'Writing AI'),
+        ('reading', 'Reading'),
+        ('listening', 'Listening'),
+    ]
+
+    key = models.CharField(max_length=20, choices=KEY_CHOICES, unique=True)
+    icon = models.CharField(max_length=100, help_text="Font Awesome icon class")
+    title = models.CharField(max_length=160)
+    text = models.TextField()
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = 'AI checker kartasi'
+        verbose_name_plural = 'AI checker kartalari'
+
+    def __str__(self):
+        return self.title

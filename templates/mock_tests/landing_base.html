@@ -1,0 +1,9 @@
+{% extends 'landing_base.html' %}
+{% load static %}
+
+{% block body_class %}landing-page{% if announcement_promo %} has-announcement{% endif %} mock-landing{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=19">
+{% endblock %}

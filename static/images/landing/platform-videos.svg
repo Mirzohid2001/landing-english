@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="Video lessons preview">
+  <rect width="1200" height="720" fill="#06152D"/>
+  <rect x="70" y="90" width="340" height="220" rx="20" fill="#07172F" stroke="rgba(103,130,207,.25)"/>
+  <rect x="70" y="90" width="340" height="140" rx="20" fill="#0A1E3D"/>
+  <circle cx="240" cy="160" r="34" fill="#E653C7" opacity=".85"/><polygon points="230,142 230,178 258,160" fill="#fff"/>
+  <rect x="430" y="90" width="340" height="220" rx="20" fill="#07172F" stroke="rgba(103,130,207,.25)"/>
+  <rect x="430" y="90" width="340" height="140" rx="20" fill="#0A1E3D"/>
+  <circle cx="600" cy="160" r="34" fill="#4387FF" opacity=".85"/><polygon points="590,142 590,178 618,160" fill="#fff"/>
+  <rect x="790" y="90" width="340" height="220" rx="20" fill="#07172F" stroke="rgba(103,130,207,.25)"/>
+  <rect x="790" y="90" width="340" height="140" rx="20" fill="#0A1E3D"/>
+  <circle cx="960" cy="160" r="34" fill="#8558EB" opacity=".85"/><polygon points="950,142 950,178 978,160" fill="#fff"/>
+  <rect x="70" y="340" width="1060" height="280" rx="24" fill="#07172F" stroke="rgba(103,130,207,.25)"/>
+  <rect x="110" y="390" width="980" height="14" rx="7" fill="#F7F9FF"/>
+  <rect x="110" y="430" width="760" height="10" rx="5" fill="#75839B" opacity=".45"/>
+  <text x="600" y="690" text-anchor="middle" fill="#75839B" font-family="Manrope,Arial,sans-serif" font-size="22">100+ video darslar kutubxonasi</text>
+</svg>

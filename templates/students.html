@@ -1,81 +1,79 @@
-{% extends 'base.html' %}
+{% extends 'landing_base.html' %}
 {% load static video_filters %}
 
-{% block title %}Bizning O'quvchilarning Natijalari - Ton Academy{% endblock %}
+{% block title %}O'quvchilar natijalari — Ton Academy{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="lp-page-hero">
     <div class="container">
-        <h1>Bizning O'quvchilarning Natijalari</h1>
-        <p>Bizning talabalarimizning muvaffaqiyat hikoyalari va natijalari</p>
+        <span class="lp-kicker">Natijalar</span>
+        <h1>Talabalarimizning natijalari</h1>
+        <p>Haqiqiy muvaffaqiyat hikoyalari, IELTS ballari va video sharhlar.</p>
+        <div class="lp-results__scores lp-page-hero__scores" aria-label="IELTS natijalari">
+            <span class="lp-score-chip lp-score-chip--7">7.0</span>
+            <span class="lp-score-chip lp-score-chip--75">7.5</span>
+            <span class="lp-score-chip lp-score-chip--8">8.0</span>
+        </div>
     </div>
 </section>
 
-<section class="students-page">
+<section class="lp-page-body">
     <div class="container">
-        <!-- Filter by Course -->
         {% if courses %}
-        <div class="courses-filters" style="margin-bottom: 3rem;">
-            <form method="get" class="filter-form">
-                <div class="form-group">
-                    <label for="course">Kurs bo'yicha filtrlash:</label>
-                    <select name="course" id="course" class="form-control" onchange="this.form.submit()">
-                        <option value="">Barcha kurslar</option>
-                        {% for course in courses %}
-                        <option value="{{ course.id }}" {% if course_filter == course.id|stringformat:"s" %}selected{% endif %}>
-                            {{ course.title }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </form>
-        </div>
+        <form method="get" class="lp-filter-bar">
+            <label for="course">Kurs bo'yicha</label>
+            <select name="course" id="course" class="lp-select" onchange="this.form.submit()">
+                <option value="">Barcha kurslar</option>
+                {% for course in courses %}
+                <option value="{{ course.id }}" {% if course_filter == course.id|stringformat:"s" %}selected{% endif %}>
+                    {{ course.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
         {% endif %}
 
-        <div class="students-grid">
+        <div class="lp-student-grid">
             {% for student in students %}
-            <div class="student-card">
+            <article class="lp-student-card">
                 {% if student.photo %}
-                <div class="student-photo">
+                <div class="lp-student-card__photo">
                     <img src="{{ student.photo.url }}" alt="{{ student.full_name }}" loading="lazy">
                     {% if student.video_file or student.video_url %}
-                    <div class="student-video-overlay video-preview--clickable"
+                    <div class="lp-student-card__overlay student-video-overlay video-preview--clickable"
                          role="button"
                          tabindex="0"
                          aria-label="{{ student.full_name }} videosini ochish"
                          data-student-id="{{ student.id }}"
                          {% if student.video_url %}data-video-url="{{ student.video_url }}"{% endif %}
                          {% if student.video_file %}data-video-file="{% absolute_media_url student.video_file %}"{% endif %}>
-                        <button type="button" class="play-btn" tabindex="-1" aria-hidden="true">
+                        <button type="button" class="lp-video-card__play play-btn" tabindex="-1" aria-hidden="true">
                             <i class="fas fa-play"></i>
                         </button>
                     </div>
                     {% endif %}
                 </div>
                 {% endif %}
-                <div class="student-info">
+                <div class="lp-student-card__body">
                     <h3>{{ student.full_name }}</h3>
                     {% if student.course %}
-                    <p class="student-course">
-                        <i class="fas fa-book"></i> {{ student.course.title }}
-                    </p>
+                    <p class="lp-student-card__meta"><i class="fas fa-book"></i> {{ student.course.title }}</p>
                     {% endif %}
                     {% if student.achievement %}
-                    <p class="student-achievement">
-                        <i class="fas fa-trophy"></i> {{ student.achievement }}
-                    </p>
+                    <p class="lp-student-card__achievement"><i class="fas fa-trophy"></i> {{ student.achievement }}</p>
                     {% endif %}
-                    <p class="student-bio">{{ student.bio|truncatewords:40 }}</p>
+                    {% if student.bio %}
+                    <p class="lp-student-card__bio">{{ student.bio|truncatewords:40 }}</p>
+                    {% endif %}
                 </div>
-            </div>
+            </article>
             {% empty %}
-            <p class="no-content">Hozircha o'quvchi natijalari mavjud emas.</p>
+            <p class="lp-empty-state">Hozircha o'quvchi natijalari mavjud emas.</p>
             {% endfor %}
         </div>
     </div>
 </section>
 
-<!-- Video Modal -->
 <div id="video-modal" class="modal">
     <div class="modal-content modal-video">
         <span class="close-modal" aria-label="Videoni yopish">&times;</span>

@@ -1,64 +1,102 @@
-{% extends 'base.html' %}
+{% extends 'landing_base.html' %}
 {% load static %}
 
-{% block title %}Aloqa - Ton Academy{% endblock %}
+{% block title %}Aloqa — Ton Academy{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="lp-page-hero">
     <div class="container">
-        <h1>Biz Bilan Bog'laning</h1>
-        <p>Har qanday savol yoki so'rovlar uchun biz bilan bog'laning</p>
+        <span class="lp-kicker">Aloqa</span>
+        <h1>Biz bilan bog'laning</h1>
+        <p>Savol, ariza yoki platforma haqida — Telegram orqali tez javob olasiz.</p>
     </div>
 </section>
 
-<section class="contact-page">
+<section class="lp-page-body">
     <div class="container">
-        <div class="contact-wrapper">
-            <div class="contact-info">
+        <div class="lp-contact-grid">
+            <aside class="lp-contact-card">
                 <h2>Bog'lanish</h2>
-                <div class="contact-item">
-                    <i class="fab fa-telegram"></i>
+                <div class="lp-contact-item">
+                    <span class="lp-contact-item__icon"><i class="fab fa-telegram"></i></span>
                     <div>
-                        <h4>Telegram</h4>
-                        <p><a href="https://t.me/Tonacademy2" target="_blank" rel="noopener noreferrer">@Tonacademy2</a></p>
+                        <h3>Telegram</h3>
+                        <p><a href="{{ landing.telegram_purchase_url }}" target="_blank" rel="noopener noreferrer">@tonacademyuz</a></p>
                     </div>
                 </div>
-                <div class="contact-item">
-                    <i class="fas fa-envelope"></i>
+                <div class="lp-contact-item">
+                    <span class="lp-contact-item__icon"><i class="fas fa-envelope"></i></span>
                     <div>
-                        <h4>Email</h4>
+                        <h3>Email</h3>
                         <p>kbaxshilloyevich@gmail.com</p>
                     </div>
                 </div>
-                <div class="contact-item">
-                    <i class="fas fa-map-marker-alt"></i>
+                <div class="lp-contact-item">
+                    <span class="lp-contact-item__icon"><i class="fas fa-map-marker-alt"></i></span>
                     <div>
-                        <h4>Manzil</h4>
+                        <h3>Manzil</h3>
                         <p>Dubai, UAE</p>
                     </div>
                 </div>
-            </div>
-            <div class="contact-form-wrapper">
-                <h2>Xabar Yuborish</h2>
-                <form id="contact-form" method="post" action="{% url 'blog:contact' %}">
+                <div class="lp-contact-item">
+                    <span class="lp-contact-item__icon"><i class="fas fa-clock"></i></span>
+                    <div>
+                        <h3>Ish vaqti</h3>
+                        <p>{{ landing.support_hours|default:"Dush–Shan: 09:00–20:00" }}</p>
+                    </div>
+                </div>
+                {% if landing.instagram_url %}
+                <div class="lp-contact-item">
+                    <span class="lp-contact-item__icon"><i class="fab fa-instagram"></i></span>
+                    <div>
+                        <h3>Instagram</h3>
+                        <p><a href="{{ landing.instagram_url }}" target="_blank" rel="noopener noreferrer">@ton.academy.uz</a></p>
+                    </div>
+                </div>
+                {% endif %}
+                {% if landing.youtube_url %}
+                <div class="lp-contact-item">
+                    <span class="lp-contact-item__icon"><i class="fab fa-youtube"></i></span>
+                    <div>
+                        <h3>YouTube</h3>
+                        <p><a href="{{ landing.youtube_url }}" target="_blank" rel="noopener noreferrer">@TonAcademyuz</a></p>
+                    </div>
+                </div>
+                {% endif %}
+                <a href="{{ landing.telegram_purchase_url }}"
+                   class="lp-btn-primary lp-contact-card__cta"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   data-lp-track="contact_buy_click">
+                    <i class="fab fa-telegram-plane"></i>
+                    Telegram orqali xarid qilish
+                </a>
+            </aside>
+
+            <div class="lp-contact-card lp-contact-form-card contact-form-wrapper">
+                <h2>Xabar yuborish</h2>
+                <form id="contact-form" method="post" action="{% url 'blog:contact' %}" class="lp-form">
                     {% csrf_token %}
-                    <div class="form-group">
-                        <input type="text" name="name" class="form-control" placeholder="Ismingiz" required>
+                    <div class="lp-form__group">
+                        <label for="contact-name">Ismingiz</label>
+                        <input type="text" name="name" id="contact-name" class="lp-input" placeholder="Ismingiz" required>
                     </div>
-                    <div class="form-group">
-                        <input type="tel" name="phone" class="form-control" placeholder="Telefon Raqamingiz" required>
+                    <div class="lp-form__group">
+                        <label for="contact-phone">Telefon raqam</label>
+                        <input type="tel" name="phone" id="contact-phone" class="lp-input" placeholder="+998 90 123 45 67" required>
                     </div>
-                    <div class="form-group">
-                        <input type="text" name="email" class="form-control" placeholder="Telegram username (@username)" required>
+                    <div class="lp-form__group">
+                        <label for="contact-email">Telegram username</label>
+                        <input type="text" name="email" id="contact-email" class="lp-input" placeholder="@username" required>
                     </div>
-                    <div class="form-group">
-                        <textarea name="message" class="form-control" placeholder="Xabaringiz" rows="5" required></textarea>
+                    <div class="lp-form__group">
+                        <label for="contact-message">Xabar</label>
+                        <textarea name="message" id="contact-message" class="lp-input lp-textarea" placeholder="Savolingiz yoki xabaringiz..." rows="5" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Xabar Yuborish</button>
+                    <button type="submit" class="lp-btn-primary">Xabar yuborish</button>
                 </form>
             </div>
         </div>
     </div>
 </section>
 {% endblock %}
-

@@ -1,0 +1,16 @@
+{% if picture %}
+<picture class="lp-picture{% if picture.class_name %} {{ picture.class_name }}-wrap{% endif %}">
+    {% if picture.is_responsive and picture.webp_srcset %}
+    <source type="image/webp" srcset="{{ picture.webp_srcset }}" sizes="{{ picture.sizes }}">
+    <source type="image/png" srcset="{{ picture.png_srcset }}" sizes="{{ picture.sizes }}">
+    {% endif %}
+    <img src="{{ picture.fallback }}"
+         alt="{{ picture.alt }}"
+         class="{% if picture.class_name %}{{ picture.class_name }}{% endif %}"
+         width="{{ picture.width }}"
+         height="{{ picture.height }}"
+         loading="{% if eager %}eager{% else %}lazy{% endif %}"
+         decoding="async"
+         {% if picture.sizes %}sizes="{{ picture.sizes }}"{% endif %}>
+</picture>
+{% endif %}

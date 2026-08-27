@@ -1,0 +1,22 @@
+{% if announcement_promo %}
+<div class="lp-announcement" data-lp-section="announcement">
+    <span class="lp-announcement__badge">
+        <span class="lp-announcement__pulse" aria-hidden="true"></span>
+        {{ announcement_promo.display_badge }}
+    </span>
+    <p class="lp-announcement__copy">
+        <span class="lp-announcement__text">{{ announcement_promo.title }}</span>
+        {% if announcement_promo.formatted_price %}
+        <span class="lp-announcement__price">{{ announcement_promo.formatted_price }} so‘m</span>
+        {% endif %}
+    </p>
+    <a href="{{ announcement_promo.cta_link }}"
+       class="lp-announcement__cta"
+       target="_blank"
+       rel="noopener noreferrer"
+       data-lp-track="announcement_click"
+       data-campaign-id="{{ announcement_promo.campaign_id }}"
+       data-offer-type="live_bundle"
+       data-offer-price="{{ announcement_promo.price|default:'' }}">Batafsil</a>
+</div>
+{% endif %}

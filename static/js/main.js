@@ -303,11 +303,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mobile menu toggle
     const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
     const navMenu = document.querySelector('.nav-menu');
-    
+    const navShell = document.querySelector('.lp-nav-panel') || document.querySelector('.nav-shell');
+    const isLandingPage = document.body.classList.contains('landing-page');
+
+    function setMobileNavOpen(isOpen) {
+        if (navShell) {
+            navShell.classList.toggle('active', isOpen);
+        } else if (navMenu) {
+            navMenu.classList.toggle('active', isOpen);
+        }
+        if (mobileMenuToggle) {
+            mobileMenuToggle.classList.toggle('active', isOpen);
+            mobileMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            mobileMenuToggle.setAttribute(
+                'aria-label',
+                isOpen ? 'Menyuni yopish' : 'Menyuni ochish'
+            );
+        }
+        if (isLandingPage) {
+            document.body.classList.toggle('lp-nav-open', isOpen);
+        }
+    }
+
     if (mobileMenuToggle) {
         mobileMenuToggle.addEventListener('click', function() {
-            navMenu.classList.toggle('active');
-            this.classList.toggle('active');
+            const isOpen = navShell
+                ? !navShell.classList.contains('active')
+                : navMenu && !navMenu.classList.contains('active');
+            setMobileNavOpen(isOpen);
+        });
+
+        document.querySelectorAll('.lp-nav-panel a, .nav-shell a').forEach((link) => {
+            link.addEventListener('click', () => setMobileNavOpen(false));
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                setMobileNavOpen(false);
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 1024) {
+                setMobileNavOpen(false);
+            }
         });
     }
     

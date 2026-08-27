@@ -104,86 +104,21 @@ class HomePageHeroBackgroundTests(TestCase):
     def setUp(self):
         self.client = Client()
 
-    def test_home_page_includes_hero_classroom_background(self):
+    def test_home_page_uses_landing_hero(self):
         response = self.client.get(reverse('blog:home'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'hero-photo')
-        self.assertContains(response, 'hero-photo__img')
-        self.assertContains(response, 'images/hero-classroom.png')
-
-
-class HomePageWebinarCtaTests(TestCase):
-    def setUp(self):
-        self.client = Client()
-
-    def test_home_page_shows_webinar_telegram_cta_after_hero(self):
-        content = self.client.get(reverse('blog:home')).content.decode()
-        self.assertIn('webinar-cta', content)
-        self.assertIn('webinar-cta__card', content)
-        self.assertIn('https://t.me/tonacademyuz', content)
-        self.assertIn('webinar-promo.png', content)
-        self.assertIn('Bepul webinarda qatnashish', content)
-        hero_pos = content.find('class="hero"')
-        webinar_pos = content.find('webinar-cta')
-        benefits_pos = content.find('benefits-section')
-        self.assertGreater(webinar_pos, hero_pos)
-        self.assertGreater(benefits_pos, webinar_pos)
-
-
-class HomePageCoursesLayoutTests(TestCase):
-    def setUp(self):
-        self.client = Client()
-        Course.objects.create(
-            title='Single IELTS Course',
-            description='Full description',
-            duration='Umrbod',
-            price='599000.00',
-            level='intermediate',
-        )
-
-    def test_single_course_uses_centered_grid_class(self):
-        response = self.client.get(reverse('blog:home'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'courses-grid courses-grid--single')
-
-    def test_courses_section_header_is_centered(self):
-        response = self.client.get(reverse('blog:home'))
-        self.assertContains(response, "O'zingizga Mos Kursni Tanlang")
-        self.assertContains(response, 'courses-section')
-
-    def test_courses_section_after_testimonials(self):
-        content = self.client.get(reverse('blog:home')).content.decode()
-        testimonials_pos = content.find('testimonials-section')
-        courses_pos = content.find('courses-section')
-        faq_pos = content.find('faq-section')
-        self.assertGreater(courses_pos, testimonials_pos)
-        if faq_pos != -1:
-            self.assertLess(courses_pos, faq_pos)
+        self.assertContains(response, 'lp-hero')
+        self.assertNotContains(response, 'hero-photo')
 
 
 class HomePageVideoTemplateTests(TestCase):
     def setUp(self):
         self.client = Client()
-        Video.objects.create(
-            title='Home Demo',
-            video_url='https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-            video_type='promo',
-            is_active=True,
-        )
-        make_student(
-            first_name='Sara',
-            last_name='Karimova',
-            bio='IELTS 8.0',
-            video_url='https://youtu.be/dQw4w9WgXcQ',
-            is_featured=True,
-        )
 
-    def test_home_page_includes_clickable_video_previews(self):
+    def test_home_page_no_longer_shows_video_grid(self):
         response = self.client.get(reverse('blog:home'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'video-preview-home video-preview--clickable')
-        self.assertContains(response, 'student-video-overlay video-preview--clickable')
-        self.assertContains(response, 'data-video-url=')
+        self.assertNotContains(response, 'videos-grid-home')
 
 
 class StudentsPageVideoTemplateTests(TestCase):

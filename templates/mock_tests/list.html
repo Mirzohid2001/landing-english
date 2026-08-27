@@ -1,27 +1,32 @@
-{% extends 'base.html' %}
+{% extends 'mock_tests/landing_base.html' %}
 {% load static %}
 
-{% block title %}Demo Mock Testlar - Ton Academy{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=18">
-{% endblock %}
+{% block title %}Demo Mock Testlar — Ton Academy{% endblock %}
 
 {% block content %}
-<section class="mock-hero">
-    <div class="container mock-hero-inner">
-        <span class="mock-hero-badge"><i class="fas fa-bolt"></i> Bepul demo</span>
+<section class="lp-page-hero">
+    <div class="container">
+        <span class="lp-kicker"><i class="fas fa-bolt"></i> Bepul demo</span>
         <h1>IELTS Mock Testlar</h1>
         <p>Haqiqiy imtihon muhitida mashq qiling — login shart emas, natijangiz darhol ko‘rinadi.</p>
-        <div class="mock-hero-stats">
-            <div class="mock-hero-stat"><strong>{{ tests_with_meta|length }}</strong><span>Demo test</span></div>
-            <div class="mock-hero-stat"><strong>{{ test_type_choices|length }}</strong><span>Test turi</span></div>
-            <div class="mock-hero-stat"><strong>100%</strong><span>Bepul</span></div>
+        <div class="lp-hero__stats mock-hero-stats">
+            <div class="lp-hero__stat">
+                <strong>{{ tests_with_meta|length }}</strong>
+                <span>Demo test</span>
+            </div>
+            <div class="lp-hero__stat">
+                <strong>{{ test_type_choices|length }}</strong>
+                <span>Test turi</span>
+            </div>
+            <div class="lp-hero__stat">
+                <strong>100%</strong>
+                <span>Bepul</span>
+            </div>
         </div>
     </div>
 </section>
 
-<section class="mock-tests-page">
+<section class="lp-page-body mock-tests-page">
     <div class="container">
         <div class="mock-filters">
             <a href="{% url 'mock_tests:test_list' %}" class="mock-filter-btn {% if not test_type %}active{% endif %}">Barchasi</a>
@@ -62,11 +67,11 @@
                 </div>
                 {% endif %}
                 <div class="mock-test-card-actions">
-                    <a href="{% url 'mock_tests:test_detail' test.pk %}" class="btn btn-primary">
+                    <a href="{% url 'mock_tests:test_detail' test.pk %}" class="lp-btn-primary lp-btn-sm">
                         <i class="fas fa-play"></i> {% if last %}Qayta ishlash{% else %}Boshlash{% endif %}
                     </a>
                     {% if last %}
-                    <a href="{% url 'mock_tests:test_result' test.pk last.pk %}" class="btn btn-outline mock-test-result-link">
+                    <a href="{% url 'mock_tests:test_result' test.pk last.pk %}" class="lp-btn-secondary lp-btn-sm mock-test-result-link">
                         <i class="fas fa-chart-bar"></i> Natija
                     </a>
                     {% endif %}
@@ -74,7 +79,7 @@
             </article>
             {% endwith %}
             {% empty %}
-            <p class="no-content">Hozircha demo testlar mavjud emas.</p>
+            <p class="lp-empty-state">Hozircha demo testlar mavjud emas.</p>
             {% endfor %}
         </div>
     </div>

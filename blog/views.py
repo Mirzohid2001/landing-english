@@ -12,36 +12,22 @@ from .models import (
 )
 from .forms import ContactForm, CourseApplicationForm
 from .telegram_bot import send_telegram_message, format_contact_message, format_course_application_message
+from .services.landing import get_landing_context
 
 
 def home(request):
-    """Главная страница с hero секцией, курсами, о'quvchilar natijalari, отзывами"""
-    featured_courses = Course.objects.filter(is_featured=True)[:6]
-    all_courses = Course.objects.all()[:6]
-    featured_students = StudentResult.objects.filter(is_active=True, is_featured=True)[:6]
-    featured_testimonials = Testimonial.objects.filter(is_featured=True)[:6]
-    features = Feature.objects.filter(is_active=True)
-    certificates = IELTSCertificate.objects.filter(show_on_homepage=True)
-    videos = Video.objects.filter(is_active=True)[:6]  # Последние активные видео для главной страницы
-    about = About.objects.first()
-    faqs = FAQ.objects.filter(is_active=True)
-    process_steps = ProcessStep.objects.filter(is_active=True)
-    
+    """Yangi landing page — dark premium IELTS SaaS."""
+    featured_students = StudentResult.objects.filter(is_active=True, is_featured=True)[:4]
+    featured_testimonials = Testimonial.objects.filter(is_featured=True)[:4]
+    certificates = IELTSCertificate.objects.filter(show_on_homepage=True)[:6]
+
     context = {
-        'featured_courses': featured_courses,
-        'courses': all_courses,
         'students': featured_students,
         'testimonials': featured_testimonials,
-        'features': features,
         'certificates': certificates,
-        'videos': videos,
-        'about': about,
-        'faqs': faqs,
-        'process_steps': process_steps,
+        **get_landing_context(),
     }
     return render(request, 'index.html', context)
-
-
 def courses(request):
     """Список всех курсов"""
     level_filter = request.GET.get('level', '')

@@ -1,22 +1,18 @@
-{% extends 'base.html' %}
+{% extends 'mock_tests/landing_base.html' %}
 {% load static %}
 
-{% block title %}Natija - {{ test.title }}{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=18">
-{% endblock %}
+{% block title %}Natija — {{ test.title }}{% endblock %}
 
 {% block content %}
-<section class="mock-result-hero">
+<section class="lp-page-hero lp-page-hero--compact">
     <div class="container">
-        <span class="mock-hero-badge">{{ test.get_test_type_display }}</span>
+        <span class="lp-kicker">{{ test.get_test_type_display }}</span>
         <h1>Test natijasi</h1>
         <p>{{ test.title }}</p>
     </div>
 </section>
 
-<section class="mock-result-page">
+<section class="lp-page-body mock-result-page">
     <div class="container">
         <div class="mock-result-card {% if passed %}mock-result-card--pass{% else %}mock-result-card--fail{% endif %}" data-score="{{ attempt.score_percent }}">
             {% if attempt.ielts_band %}
@@ -44,11 +40,11 @@
                 {% endif %}
             </p>
             <div class="mock-detail-actions mock-result-actions">
-                <a href="{% url 'mock_tests:test_take' test.pk %}" class="btn btn-primary">
+                <a href="{% url 'mock_tests:test_take' test.pk %}" class="lp-btn-primary">
                     <i class="fas fa-redo"></i> Qayta ishlash
                 </a>
-                <a href="{% url 'mock_tests:test_list' %}" class="btn btn-outline">Boshqa testlar</a>
-                <button type="button" class="btn btn-outline" onclick="window.print()">
+                <a href="{% url 'mock_tests:test_list' %}" class="lp-btn-secondary">Boshqa testlar</a>
+                <button type="button" class="lp-btn-secondary" onclick="window.print()">
                     <i class="fas fa-print"></i> Chop etish
                 </button>
             </div>
@@ -114,5 +110,6 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ block.super }}
 <script src="{% static 'js/mock-test-result.js' %}?v=2"></script>
 {% endblock %}

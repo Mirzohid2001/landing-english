@@ -1,22 +1,18 @@
-{% extends 'base.html' %}
+{% extends 'mock_tests/landing_base.html' %}
 {% load static %}
 
-{% block title %}{{ test.title }} - Demo Test{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/mock-tests.css' %}?v=18">
-{% endblock %}
+{% block title %}{{ test.title }} — Demo Test{% endblock %}
 
 {% block content %}
-<section class="mock-hero mock-hero--compact">
-    <div class="container mock-hero-inner">
-        <span class="mock-hero-badge">{{ test.get_test_type_display }}</span>
+<section class="lp-page-hero lp-page-hero--compact">
+    <div class="container">
+        <span class="lp-kicker">{{ test.get_test_type_display }}</span>
         <h1>{{ test.title }}</h1>
         <p>{{ test.get_difficulty_display }} daraja · bepul demo test</p>
     </div>
 </section>
 
-<section class="mock-test-detail">
+<section class="lp-page-body mock-test-detail">
     <div class="container">
         <div class="mock-detail-card">
             <div class="mock-detail-header">
@@ -36,7 +32,7 @@
                 </div>
             </div>
 
-            {% if test.description %}<p>{{ test.description|linebreaks }}</p>{% endif %}
+            {% if test.description %}<p class="mock-detail-copy">{{ test.description|linebreaks }}</p>{% endif %}
 
             <div class="mock-detail-howto">
                 <h3><i class="fas fa-route"></i> Qanday ishlaydi?</h3>
@@ -65,15 +61,15 @@
 
             <div class="mock-detail-actions">
                 {% if attempts_remaining > 0 %}
-                <a href="{% url 'mock_tests:test_take' test.pk %}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-rocket"></i> Testni Boshlash
+                <a href="{% url 'mock_tests:test_take' test.pk %}" class="lp-btn-primary">
+                    <i class="fas fa-rocket"></i> Testni boshlash
                 </a>
                 {% elif last_attempt %}
-                <a href="{% url 'mock_tests:test_result' test.pk last_attempt.pk %}" class="btn btn-primary btn-lg">
+                <a href="{% url 'mock_tests:test_result' test.pk last_attempt.pk %}" class="lp-btn-primary">
                     <i class="fas fa-chart-bar"></i> Oxirgi natijani ko'rish
                 </a>
                 {% endif %}
-                <a href="{% url 'mock_tests:test_list' %}" class="btn btn-outline">Orqaga</a>
+                <a href="{% url 'mock_tests:test_list' %}" class="lp-btn-secondary">Orqaga</a>
             </div>
         </div>
     </div>
