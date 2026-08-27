@@ -265,6 +265,7 @@ class LandingPageTemplateTests(TestCase):
         self.assertContains(response, 'has-announcement')
 
     def test_current_offer_hidden_when_disabled(self):
+        PromoCampaign.objects.filter(placement='current_offer').update(enabled=False)
         PromoCampaign.objects.create(
             enabled=False,
             placement='current_offer',

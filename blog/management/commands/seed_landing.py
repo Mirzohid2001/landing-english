@@ -141,6 +141,11 @@ class Command(BaseCommand):
             help='899k LIVE announcement + dolzarb taklifni yoqish',
         )
         parser.add_argument(
+            '--disable-promo',
+            action='store_true',
+            help='LIVE announcement + dolzarb taklifni o‘chirish',
+        )
+        parser.add_argument(
             '--deploy',
             action='store_true',
             help='Production: promo + GA4 + demo natijalar/testimonials',
@@ -149,6 +154,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         deploy = options['deploy']
         enable_promo = options['enable_promo'] or deploy
+        disable_promo = options['disable_promo']
+        if enable_promo and disable_promo:
+            self.stderr.write(self.style.ERROR('--enable-promo va --disable-promo birga ishlatilmaydi'))
+            return
 
         defaults = {**HERO_DEFAULTS}
         if deploy:
@@ -248,32 +257,46 @@ class Command(BaseCommand):
                 updated_faq += 1
         self.stdout.write(self.style.SUCCESS(f'FAQ: {created_faq} ta yangi, {updated_faq} ta yangilandi'))
 
+        # enabled: faqat --enable-promo/--deploy yoqadi, --disable-promo o‘chiradi.
+        # Oddiy seed mavjud promo holatini buzmaydi (production footgun oldini olish).
+        offer_defaults = {
+            'placement': 'current_offer',
+            'campaign_id': 'live_sr_aug26',
+            **LIVE_BUNDLE,
+            'order': 0,
+        }
+        ann_defaults = {
+            'placement': 'announcement',
+            'campaign_id': 'ann_live_sr_aug26',
+            'title': 'Jonli darslar va website ga to‘liq access',
+            'description': '',
+            'price': 899_000,
+            'cta_text': 'Batafsil',
+            'cta_link': 'https://t.me/tonacademyuz',
+            'badge': 'live',
+            'order': 0,
+        }
+        if enable_promo:
+            offer_defaults['enabled'] = True
+            ann_defaults['enabled'] = True
+        elif disable_promo:
+            offer_defaults['enabled'] = False
+            ann_defaults['enabled'] = False
+
         PromoCampaign.objects.update_or_create(
             campaign_id='live_sr_aug26',
-            defaults={
-                'enabled': enable_promo,
-                'placement': 'current_offer',
-                'campaign_id': 'live_sr_aug26',
-                **LIVE_BUNDLE,
-                'order': 0,
-            },
+            defaults=offer_defaults,
         )
         PromoCampaign.objects.update_or_create(
             campaign_id='ann_live_sr_aug26',
-            defaults={
-                'enabled': enable_promo,
-                'placement': 'announcement',
-                'campaign_id': 'ann_live_sr_aug26',
-                'title': 'Jonli darslar va website ga to‘liq access',
-                'description': '',
-                'price': 899_000,
-                'cta_text': 'Batafsil',
-                'cta_link': 'https://t.me/tonacademyuz',
-                'badge': 'live',
-                'order': 0,
-            },
+            defaults=ann_defaults,
         )
-        promo_status = 'yoqildi' if enable_promo else 'o‘chiq'
+        if enable_promo:
+            promo_status = 'yoqildi'
+        elif disable_promo:
+            promo_status = 'o‘chirildi'
+        else:
+            promo_status = 'holati saqlandi (o‘zgartirilmadi)'
         self.stdout.write(self.style.SUCCESS(f'LIVE promo: {promo_status}'))
 
         if deploy:

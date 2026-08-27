@@ -116,7 +116,7 @@ HERO_PROOFS = [
     {
         'icon': 'fas fa-chalkboard-teacher',
         'title': 'Jonli darslar',
-        'subtitle': 'UK + 2 ustoz',
+        'subtitle': 'jonli format',
     },
     {
         'icon': 'fas fa-mobile-alt',
@@ -191,16 +191,17 @@ DEFAULT_FAQS = [
     ),
     (
         '599 000 so‘mga aynan nimalar kiradi?',
-        'UK ustoz va yana 2 ta professional ustozdan jonli darslar, 100+ video darslar, AI checker, Reading/Listening/Writing materiallari, progress tracking va barcha yangilanishlar.',
+        'Jonli darslar, 100+ video darslar, AI checker, Reading/Listening/Writing materiallari, progress tracking va barcha yangilanishlar.',
     ),
     (
         'Jonli darslar bormi?',
-        'Ha. UK ustoz va yana 2 ta professional ustozlardan jonli darslar mavjud. Qo‘shimcha LIVE bundle (899k) da Speaking + Reading LIVE darslar kengaytirilgan formatda beriladi.',
+        'Ha, jonli darslar mavjud. Qo‘shimcha LIVE bundle (899k) da Speaking + Reading LIVE darslar kengaytirilgan formatda beriladi.',
     ),
     (
         'Speaking bormi?',
         'Ha, jonli darslar orqali Speaking amaliyoti bor. LIVE bundle (899k) da Speaking + Reading LIVE darslar alohida kengaytirilgan paket sifatida taklif etiladi.',
-    ),    (
+    ),
+    (
         'Loginni qachon olaman?',
         'To‘lov tasdiqlangandan so‘ng, odatda bir necha soat ichida Telegram orqali.',
     ),

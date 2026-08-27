@@ -17,6 +17,6 @@
        data-lp-track="announcement_click"
        data-campaign-id="{{ announcement_promo.campaign_id }}"
        data-offer-type="live_bundle"
-       data-offer-price="{{ announcement_promo.price|default:'' }}">Batafsil</a>
+       data-offer-price="{{ announcement_promo.price|default:'' }}">{{ announcement_promo.cta_text|default:'Batafsil' }}</a>
 </div>
 {% endif %}
