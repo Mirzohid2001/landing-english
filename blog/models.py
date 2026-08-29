@@ -353,6 +353,10 @@ class LandingSettings(models.Model):
     primary_cta_text = models.CharField(max_length=120, default='Bepul daraja testini boshlash')
     secondary_cta_text = models.CharField(max_length=120, default='Telegram orqali xarid qilish')
     telegram_purchase_url = models.URLField(default='https://t.me/tonacademyuz')
+    platform_url = models.URLField(
+        default='https://tonielts.uz/',
+        help_text='«Sistemaga o‘tish» tugmasi — o‘quv platformasi (login).',
+    )
     free_trial_url = models.CharField(max_length=300, default='/mock-tests/')
     stat_students = models.CharField(max_length=40, default='1000+')
     stat_students_label = models.CharField(max_length=80, default='talabalar')

@@ -357,7 +357,7 @@ class LandingSettingsAdmin(LandingCMSMixin, admin.ModelAdmin):
             ),
         }),
         ('3. CTA havolalari', {
-            'fields': ('telegram_purchase_url', 'free_trial_url'),
+            'fields': ('telegram_purchase_url', 'platform_url', 'free_trial_url'),
         }),
         ('4. Statistika (sahifa matnlari)', {
             'fields': (

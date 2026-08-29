@@ -45,6 +45,7 @@ HERO_DEFAULTS = {
     'instagram_url': 'https://www.instagram.com/ton.academy.uz/',
     'youtube_url': 'https://www.youtube.com/@TonAcademyuz',
     'telegram_purchase_url': 'https://t.me/tonacademyuz',
+    'platform_url': 'https://tonielts.uz/',
     'support_hours': 'Dush–Shan: 09:00–20:00',
     'ga4_measurement_id': GA4_ID,
     'posthog_project_api_key': POSTHOG_KEY,
@@ -259,6 +260,7 @@ class Command(BaseCommand):
 
         # enabled: faqat --enable-promo/--deploy yoqadi, --disable-promo o‘chiradi.
         # Oddiy seed mavjud promo holatini buzmaydi (production footgun oldini olish).
+        # Announcement bar olib tashlangan — hech qachon qayta yoqilmaydi.
         offer_defaults = {
             'placement': 'current_offer',
             'campaign_id': 'live_sr_aug26',
@@ -275,13 +277,12 @@ class Command(BaseCommand):
             'cta_link': 'https://t.me/tonacademyuz',
             'badge': 'live',
             'order': 0,
+            'enabled': False,
         }
         if enable_promo:
             offer_defaults['enabled'] = True
-            ann_defaults['enabled'] = True
         elif disable_promo:
             offer_defaults['enabled'] = False
-            ann_defaults['enabled'] = False
 
         PromoCampaign.objects.update_or_create(
             campaign_id='live_sr_aug26',
@@ -292,11 +293,11 @@ class Command(BaseCommand):
             defaults=ann_defaults,
         )
         if enable_promo:
-            promo_status = 'yoqildi'
+            promo_status = 'current_offer yoqildi, announcement o‘chiq'
         elif disable_promo:
             promo_status = 'o‘chirildi'
         else:
-            promo_status = 'holati saqlandi (o‘zgartirilmadi)'
+            promo_status = 'holati saqlandi (announcement o‘chiq)'
         self.stdout.write(self.style.SUCCESS(f'LIVE promo: {promo_status}'))
 
         if deploy:

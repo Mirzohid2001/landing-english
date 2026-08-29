@@ -158,7 +158,7 @@
 .landing-page .navbar {
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 10001 !important;
     background: rgba(7, 18, 42, 0.88);
     backdrop-filter: blur(22px) saturate(155%);
     -webkit-backdrop-filter: blur(22px) saturate(155%);
@@ -220,6 +220,10 @@
     gap: 0.65rem;
     min-width: 0;
     padding: 0.35rem 0;
+}
+
+.landing-page .lp-nav-drawer {
+    display: none;
 }
 
 .landing-page .lp-nav-links {
@@ -1646,6 +1650,18 @@ video.lp-ai-card__video {
     gap: 0.35rem;
 }
 
+.lp-final-cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.lp-final-cta__actions .lp-btn-primary,
+.lp-final-cta__actions .lp-btn-secondary {
+    min-width: min(100%, 280px);
+}
+
 /* Footer landing */
 .landing-page .footer {
     background: #020A1D;
@@ -1725,63 +1741,80 @@ video.lp-ai-card__video {
 
     .landing-page .mobile-menu-toggle {
         display: flex;
+        position: relative;
+        z-index: 10002;
     }
 
-    .landing-page .lp-nav-panel {
+    /* Desktop pill nav — hide on mobile */
+    .landing-page .lp-nav-panel--desktop {
+        display: none !important;
+    }
+
+    /*
+     * Mobile drawer lives OUTSIDE sticky/backdrop-filter navbar so
+     * position:fixed uses the viewport (not the 72px navbar box).
+     */
+    .landing-page .lp-nav-drawer {
+        display: flex;
         position: fixed;
         top: 72px;
         left: 0;
         right: 0;
         bottom: 0;
-        z-index: 9998;
+        z-index: 10000;
         flex-direction: column;
         align-items: stretch;
         justify-content: flex-start;
-        gap: 0;
+        gap: 0.75rem;
         padding: 1rem 1.25rem 1.5rem;
-        background: rgba(2, 10, 29, 0.98);
+        margin: 0;
+        background: #020A1D !important;
+        background-image: none !important;
         border-top: 1px solid var(--lp-border);
+        box-shadow: none;
+        overflow-x: hidden;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
-        transform: translateY(-8px);
-        transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+        /* no transform — keeps overlay simple and avoids fixed-child bugs */
+        transition: opacity 0.2s ease, visibility 0.2s ease;
     }
 
-    .landing-page.has-announcement .lp-nav-panel {
-        top: calc(72px + 48px);
+    .landing-page .lp-nav-drawer[hidden] {
+        display: none !important;
     }
 
-    .landing-page .lp-nav-panel.active {
+    .landing-page .lp-nav-drawer.active {
+        display: flex !important;
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
-        transform: translateY(0);
     }
 
-    .landing-page .lp-nav-links {
+    .landing-page .lp-nav-drawer .lp-nav-links {
         flex-direction: column;
         align-items: stretch;
         gap: 0.35rem;
         width: 100%;
         padding: 0;
         border-radius: 0;
-        background: transparent;
+        background: transparent !important;
         border: 0;
         box-shadow: none;
     }
 
-    .landing-page .lp-nav-links li {
+    .landing-page .lp-nav-drawer .lp-nav-links li {
         width: 100%;
     }
 
-    .landing-page .lp-nav-item--home,
-    .landing-page .lp-nav-item--secondary {
+    .landing-page .lp-nav-drawer .lp-nav-item--home,
+    .landing-page .lp-nav-drawer .lp-nav-item--secondary {
         display: list-item;
     }
 
-    .landing-page .nav-menu a {
+    .landing-page .lp-nav-drawer .nav-menu a {
         width: 100%;
         justify-content: flex-start;
         font-size: 1rem;
@@ -1789,28 +1822,27 @@ video.lp-ai-card__video {
         border-radius: 12px;
     }
 
-    .landing-page .lp-nav-actions {
+    .landing-page .lp-nav-drawer .lp-nav-actions {
         width: 100%;
         margin-top: auto;
         padding-top: 1rem;
         border-top: 1px solid var(--lp-border);
     }
 
-    .landing-page .lp-nav-cta {
+    .landing-page .lp-nav-drawer .lp-nav-cta {
         width: 100%;
         min-height: 48px;
         font-size: 0.95rem !important;
     }
 
-    .lp-nav-cta__label--short {
+    .landing-page .lp-nav-drawer .lp-nav-cta__label--short {
         display: none;
     }
 
-    .lp-nav-cta__label--full {
+    .landing-page .lp-nav-drawer .lp-nav-cta__label--full {
         display: inline;
     }
 }
-
 @media (max-width: 991px) {
     .landing-page .nav-menu {
         background: transparent;
@@ -2389,22 +2421,7 @@ body.lp-nav-open .lp-mobile-cta {
 }
 
 @media (max-width: 1024px) {
-    .landing-page .lp-nav-panel::before {
-        content: '';
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        background: rgba(1, 6, 18, 0.55);
-        opacity: 0;
-        transition: opacity 0.25s ease;
-        pointer-events: none;
-    }
-
-    .landing-page .lp-nav-panel.active::before {
-        opacity: 1;
-    }
-
-    .landing-page .lp-nav-panel {
+    .landing-page .lp-nav-drawer {
         padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
         padding-left: max(1.25rem, env(safe-area-inset-left));
         padding-right: max(1.25rem, env(safe-area-inset-right));
@@ -2424,11 +2441,11 @@ body.lp-nav-open .lp-mobile-cta {
         width: 18px;
     }
 
-    .landing-page .nav-menu a {
+    .landing-page .lp-nav-drawer .nav-menu a {
         min-height: 48px;
     }
 
-    .landing-page .lp-nav-secondary {
+    .landing-page .lp-nav-drawer .lp-nav-secondary {
         width: 100%;
         justify-content: center;
         min-height: 48px;

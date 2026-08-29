@@ -303,12 +303,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mobile menu toggle
     const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
     const navMenu = document.querySelector('.nav-menu');
-    const navShell = document.querySelector('.lp-nav-panel') || document.querySelector('.nav-shell');
+    // Prefer dedicated mobile drawer (#site-nav-menu) — must NOT live inside sticky navbar
+    // (position:fixed is trapped by sticky/backdrop-filter ancestors).
+    const navShell =
+        document.getElementById('site-nav-menu') ||
+        document.querySelector('.lp-nav-drawer') ||
+        document.querySelector('.lp-nav-panel') ||
+        document.querySelector('.nav-shell');
     const isLandingPage = document.body.classList.contains('landing-page');
+
+    function syncMobileNavOffset() {
+        if (!navShell || !navShell.classList.contains('lp-nav-drawer')) return;
+        const navbar = document.getElementById('site-navbar') || document.querySelector('.navbar');
+        if (!navbar) return;
+        const bottom = Math.ceil(navbar.getBoundingClientRect().bottom);
+        navShell.style.top = `${Math.max(0, bottom)}px`;
+    }
 
     function setMobileNavOpen(isOpen) {
         if (navShell) {
             navShell.classList.toggle('active', isOpen);
+            if (navShell.hasAttribute('hidden') || navShell.classList.contains('lp-nav-drawer')) {
+                if (isOpen) {
+                    navShell.removeAttribute('hidden');
+                    syncMobileNavOffset();
+                } else {
+                    navShell.setAttribute('hidden', '');
+                }
+            }
         } else if (navMenu) {
             navMenu.classList.toggle('active', isOpen);
         }
@@ -333,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setMobileNavOpen(isOpen);
         });
 
-        document.querySelectorAll('.lp-nav-panel a, .nav-shell a').forEach((link) => {
+        document.querySelectorAll('#site-nav-menu a, .lp-nav-drawer a, .lp-nav-panel a, .nav-shell a').forEach((link) => {
             link.addEventListener('click', () => setMobileNavOpen(false));
         });
 
@@ -346,8 +368,16 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('resize', () => {
             if (window.innerWidth > 1024) {
                 setMobileNavOpen(false);
+            } else if (navShell && navShell.classList.contains('active')) {
+                syncMobileNavOffset();
             }
         });
+
+        window.addEventListener('scroll', () => {
+            if (navShell && navShell.classList.contains('active')) {
+                syncMobileNavOffset();
+            }
+        }, { passive: true });
     }
     
     // Smooth scroll for anchor links

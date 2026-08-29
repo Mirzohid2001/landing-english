@@ -4,7 +4,7 @@
 {% block body_class %}landing-page{% if announcement_promo %} has-announcement{% endif %}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/landing.css' %}?v=17">
+<link rel="stylesheet" href="{% static 'css/landing.css' %}?v=20">
 {% endblock %}
 
 {% block announcement_bar %}
@@ -12,8 +12,38 @@
 {% include 'includes/landing_announcement.html' %}
 {% endblock %}
 
-{% block nav_shell %}
-<div class="nav-shell lp-nav-panel" id="site-nav-menu">
+{# Sticky/backdrop-filter navbar ichida fixed drawer ishlamaydi — desktop panel ichida, mobile drawer tashqarida. #}
+{% block navbar %}
+<nav class="navbar" id="site-navbar">
+    <div class="container">
+        <div class="nav-wrapper">
+            <a href="{% url 'blog:home' %}" class="logo">
+                <img src="{% static 'images/logo-mark.png' %}?v=3" alt="Ton Academy" class="logo-mark" width="36" height="36">
+                <span>Ton Academy</span>
+            </a>
+            <button type="button"
+                    class="mobile-menu-toggle"
+                    aria-label="Menyuni ochish"
+                    aria-expanded="false"
+                    aria-controls="site-nav-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-shell lp-nav-panel lp-nav-panel--desktop">
+                <ul class="nav-menu lp-nav-links">
+                    {% include 'includes/landing_nav.html' %}
+                </ul>
+                <div class="lp-nav-actions">
+                    {% include 'includes/landing_nav_cta.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="nav-shell lp-nav-panel lp-nav-drawer"
+     id="site-nav-menu"
+     hidden>
     <ul class="nav-menu lp-nav-links">
         {% include 'includes/landing_nav.html' %}
     </ul>
@@ -22,6 +52,8 @@
     </div>
 </div>
 {% endblock %}
+
+{% block nav_shell %}{% endblock %}
 
 {% block extra_head %}
 {% if landing.ga4_measurement_id %}

@@ -451,16 +451,26 @@
                 <span><i class="fas fa-check"></i> 100+ video</span>
                 <span><i class="fas fa-check"></i> Progress tracking</span>
             </div>
-            <a href="{{ landing.telegram_purchase_url }}"
-               class="lp-btn-primary"
-               target="_blank"
-               rel="noopener noreferrer"
-               data-lp-track="final_buy_click"
-               data-offer-type="base"
-               data-offer-price="{{ landing.base_price }}">
-                <i class="fab fa-telegram-plane"></i>
-                {{ landing.secondary_cta_text }}
-            </a>
+            <div class="lp-final-cta__actions">
+                <a href="{{ landing.telegram_purchase_url }}"
+                   class="lp-btn-primary"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   data-lp-track="final_buy_click"
+                   data-offer-type="base"
+                   data-offer-price="{{ landing.base_price }}">
+                    <i class="fab fa-telegram-plane"></i>
+                    {{ landing.secondary_cta_text }}
+                </a>
+                <a href="{{ landing.platform_url }}"
+                   class="lp-btn-secondary"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   data-lp-track="system_login_click">
+                    <i class="fas fa-arrow-right-to-bracket"></i>
+                    Sistemaga o‘tish
+                </a>
+            </div>
         </div>
     </div>
 </section>
