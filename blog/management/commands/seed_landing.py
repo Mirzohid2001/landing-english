@@ -258,14 +258,13 @@ class Command(BaseCommand):
                 updated_faq += 1
         self.stdout.write(self.style.SUCCESS(f'FAQ: {created_faq} ta yangi, {updated_faq} ta yangilandi'))
 
-        # enabled: faqat --enable-promo/--deploy yoqadi, --disable-promo o‘chiradi.
-        # Oddiy seed mavjud promo holatini buzmaydi (production footgun oldini olish).
-        # Announcement bar olib tashlangan — hech qachon qayta yoqilmaydi.
+        # Promo kartalar olib tashlangan — hech qachon qayta yoqilmaydi.
         offer_defaults = {
             'placement': 'current_offer',
             'campaign_id': 'live_sr_aug26',
             **LIVE_BUNDLE,
             'order': 0,
+            'enabled': False,
         }
         ann_defaults = {
             'placement': 'announcement',
@@ -279,10 +278,6 @@ class Command(BaseCommand):
             'order': 0,
             'enabled': False,
         }
-        if enable_promo:
-            offer_defaults['enabled'] = True
-        elif disable_promo:
-            offer_defaults['enabled'] = False
 
         PromoCampaign.objects.update_or_create(
             campaign_id='live_sr_aug26',
@@ -292,13 +287,7 @@ class Command(BaseCommand):
             campaign_id='ann_live_sr_aug26',
             defaults=ann_defaults,
         )
-        if enable_promo:
-            promo_status = 'current_offer yoqildi, announcement o‘chiq'
-        elif disable_promo:
-            promo_status = 'o‘chirildi'
-        else:
-            promo_status = 'holati saqlandi (announcement o‘chiq)'
-        self.stdout.write(self.style.SUCCESS(f'LIVE promo: {promo_status}'))
+        self.stdout.write(self.style.SUCCESS('LIVE promo: o‘chiq (announcement + current_offer)'))
 
         if deploy:
             demo = seed_demo_social_proof()
