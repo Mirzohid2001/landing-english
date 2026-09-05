@@ -161,10 +161,11 @@ class Command(BaseCommand):
             return
 
         defaults = {**HERO_DEFAULTS}
+        # PostHog har doim yoqiladi (seed --deploy shart emas).
+        defaults['posthog_project_api_key'] = POSTHOG_KEY
+        defaults['posthog_api_host'] = POSTHOG_HOST
         if deploy:
             defaults['ga4_measurement_id'] = GA4_ID
-            defaults['posthog_project_api_key'] = POSTHOG_KEY
-            defaults['posthog_api_host'] = POSTHOG_HOST
 
         LandingSettings.objects.update_or_create(pk=1, defaults=defaults)
         self.stdout.write(self.style.SUCCESS('LandingSettings yaratildi/yangilandi'))
