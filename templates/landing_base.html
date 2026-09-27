@@ -4,7 +4,7 @@
 {% block body_class %}landing-page{% if announcement_promo %} has-announcement{% endif %}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/landing.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/landing.css' %}?v=22">
 {% endblock %}
 
 {% block announcement_bar %}
@@ -73,5 +73,5 @@ gtag('config', '{{ landing.ga4_measurement_id }}');
 
 {% block extra_js %}
 {% include 'includes/landing_mobile_cta.html' %}
-<script src="{% static 'js/landing.js' %}?v=14"></script>
+<script src="{% static 'js/landing.js' %}?v=16"></script>
 {% endblock %}

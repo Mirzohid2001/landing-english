@@ -154,14 +154,30 @@
     }
 }
 
+/* Wheel/trackpad scroll-behavior: smooth aylanayotgan scroll ni qotib-qotib qoldiradi. */
+html:has(body.landing-page) {
+    scroll-behavior: auto;
+    overflow-x: clip;
+}
+
+body.landing-page {
+    overflow-x: clip;
+    background-attachment: scroll;
+}
+
+body.landing-page::before {
+    content: none;
+    display: none;
+}
+
 /* Landing navbar */
 .landing-page .navbar {
     position: sticky;
     top: 0;
     z-index: 10001 !important;
-    background: rgba(7, 18, 42, 0.88);
-    backdrop-filter: blur(22px) saturate(155%);
-    -webkit-backdrop-filter: blur(22px) saturate(155%);
+    background: rgba(7, 18, 42, 0.97);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border-bottom: 1px solid rgba(140, 170, 255, 0.28);
     box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
     padding: 0;
@@ -674,7 +690,6 @@
         radial-gradient(circle at 92% 0%, rgba(67, 135, 255, 0.18), transparent 42%),
         rgba(6, 21, 45, 0.92);
     border: 1px solid rgba(91, 125, 255, 0.38);
-    backdrop-filter: blur(16px);
     box-shadow: 0 20px 70px rgba(0, 40, 120, 0.25);
 }
 
@@ -1175,7 +1190,6 @@ video.lp-ai-card__video {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding: 0.2rem 0.15rem 0.45rem;
-    will-change: transform;
 }
 
 .lp-carousel.is-autoplay .lp-carousel__track {
@@ -1511,22 +1525,24 @@ video.lp-ai-card__video {
     margin-top: 0.65rem;
 }
 
-/* Scroll reveal */
+/* Scroll reveal — faqat opacity. translateY katta bloklarni scroll paytida siljitib qotish beradi. */
 .lp-reveal {
     opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.55s ease, transform 0.55s ease;
+    transition: opacity 0.35s ease;
 }
 
 .lp-reveal.is-visible {
     opacity: 1;
-    transform: translateY(0);
+}
+
+/* Butun section fade scroll paytida katta paint beradi — ular darhol ko‘rinadi. */
+section.lp-reveal {
+    opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
     .lp-reveal {
         opacity: 1;
-        transform: none;
         transition: none;
     }
 
@@ -2735,10 +2751,10 @@ body.lp-nav-open .lp-mobile-cta {
         bottom: 0;
         z-index: 10050;
         padding: 0.65rem 0.85rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
-        background: linear-gradient(180deg, rgba(2, 10, 29, 0.72), rgba(2, 10, 29, 0.97) 35%);
+        background: rgba(2, 10, 29, 0.96);
         border-top: 1px solid var(--lp-border);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
         transform: translateY(110%);
         transition: transform 0.28s ease, opacity 0.28s ease;
         opacity: 0;

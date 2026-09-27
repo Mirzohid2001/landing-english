@@ -91,16 +91,22 @@
     function initScrollDepth() {
         const marks = [25, 50, 75, 90];
         const fired = new Set();
+        let scrollScheduled = false;
         window.addEventListener('scroll', () => {
-            const doc = document.documentElement;
-            const max = doc.scrollHeight - window.innerHeight;
-            if (max <= 0) return;
-            const pct = Math.round((window.scrollY / max) * 100);
-            marks.forEach((mark) => {
-                if (pct >= mark && !fired.has(mark)) {
-                    fired.add(mark);
-                    track(`scroll_${mark}`);
-                }
+            if (scrollScheduled) return;
+            scrollScheduled = true;
+            window.requestAnimationFrame(() => {
+                scrollScheduled = false;
+                const doc = document.documentElement;
+                const max = doc.scrollHeight - window.innerHeight;
+                if (max <= 0) return;
+                const pct = Math.round((window.scrollY / max) * 100);
+                marks.forEach((mark) => {
+                    if (pct >= mark && !fired.has(mark)) {
+                        fired.add(mark);
+                        track(`scroll_${mark}`);
+                    }
+                });
             });
         }, { passive: true });
     }
@@ -254,7 +260,15 @@
             document.body.classList.toggle('lp-sticky-cta-visible', show);
         }
 
-        window.addEventListener('scroll', update, { passive: true });
+        let scrollScheduled = false;
+        window.addEventListener('scroll', () => {
+            if (scrollScheduled) return;
+            scrollScheduled = true;
+            window.requestAnimationFrame(() => {
+                scrollScheduled = false;
+                update();
+            });
+        }, { passive: true });
         window.addEventListener('resize', update);
         if (mq.addEventListener) {
             mq.addEventListener('change', update);
@@ -289,6 +303,7 @@
         const canHover = window.matchMedia('(hover: hover)').matches;
         let offset = 0;
         let paused = false;
+        let inView = true;
         let pointerDown = false;
         let loopWidth = 0;
         let rafId = 0;
@@ -354,7 +369,7 @@
             const delta = Math.min(48, ts - lastTs);
             lastTs = ts;
 
-            if (!paused && !reduceMotion && !document.hidden && loopWidth > 0) {
+            if (!paused && inView && !reduceMotion && !document.hidden && loopWidth > 0) {
                 offset += (speed * delta) / 1000;
                 if (offset >= loopWidth) {
                     offset %= loopWidth;
@@ -362,6 +377,17 @@
                 applyTransform();
             }
 
+            if (!inView || document.hidden) {
+                rafId = 0;
+                lastTs = 0;
+                return;
+            }
+            rafId = window.requestAnimationFrame(tick);
+        }
+
+        function startTicker() {
+            if (rafId || reduceMotion || !inView) return;
+            lastTs = 0;
             rafId = window.requestAnimationFrame(tick);
         }
 
@@ -435,12 +461,18 @@
             img.addEventListener('error', recalc, { once: true });
         });
 
+        if ('IntersectionObserver' in window) {
+            const viewObserver = new IntersectionObserver((entries) => {
+                inView = entries.some((entry) => entry.isIntersecting);
+                if (inView) startTicker();
+            }, { rootMargin: '120px' });
+            viewObserver.observe(viewport);
+        }
+
         window.requestAnimationFrame(() => {
             ensureLoopCopies();
             applyTransform();
-            if (!reduceMotion) {
-                rafId = window.requestAnimationFrame(tick);
-            }
+            startTicker();
         });
 
         window.addEventListener('beforeunload', () => {
