@@ -42,7 +42,7 @@ HERO_DEFAULTS = {
     'base_price_label': 'Platforma + jonli darslar — umrbod access',
     'pricing_card_title': 'Umrbod access',
     'reassurance_text': 'Bir martalik to‘lov • Jonli darslar • Umrbod access',
-    'instagram_url': 'https://www.instagram.com/ton.academy.uz/',
+    'instagram_url': 'https://www.instagram.com/tonacademyuz/',
     'youtube_url': 'https://www.youtube.com/@TonAcademyuz',
     'telegram_purchase_url': 'https://t.me/tonacademyuz',
     'platform_url': 'https://tonielts.uz/',

@@ -365,7 +365,7 @@ class LandingSettings(models.Model):
         max_length=120,
         default='o‘quvchilar kamida 1 bandga yaxshilandi',
     )
-    instagram_url = models.URLField(blank=True, default='https://www.instagram.com/ton.academy.uz/')
+    instagram_url = models.URLField(blank=True, default='https://www.instagram.com/tonacademyuz/')
     youtube_url = models.URLField(blank=True, default='https://www.youtube.com/@TonAcademyuz')
     support_hours = models.CharField(
         max_length=120,
