@@ -54,7 +54,7 @@ class CourseAdmin(admin.ModelAdmin):
     )
 
     def save_model(self, request, obj, form, change):
-        obj.duration = 'Umrbod'
+        obj.duration = 'Study plan'
         super().save_model(request, obj, form, change)
 
 

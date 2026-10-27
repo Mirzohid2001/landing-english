@@ -348,13 +348,13 @@ class LandingSettings(models.Model):
     base_price = models.PositiveIntegerField(default=599_000)
     base_price_label = models.CharField(
         max_length=120,
-        default='Platforma + jonli darslar — umrbod access',
+        default='Platforma + jonli darslar — study plan',
     )
-    pricing_card_title = models.CharField(max_length=120, default='Umrbod access')
+    pricing_card_title = models.CharField(max_length=120, default='Study plan')
     pricing_card_badge = models.CharField(max_length=80, default='ENG YAXSHI TAKLIF')
     reassurance_text = models.CharField(
         max_length=200,
-        default='Bir martalik to‘lov • Jonli darslar • Umrbod access',
+        default='Bir martalik to‘lov • Jonli darslar • Study plan',
     )
     primary_cta_text = models.CharField(max_length=120, default='Bepul daraja testini boshlash')
     secondary_cta_text = models.CharField(max_length=120, default='Telegram orqali xarid qilish')

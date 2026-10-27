@@ -39,9 +39,9 @@ HERO_DEFAULTS = {
     'hero_badge_text': 'UK ustoz + jonli darslar — joylar cheklangan',
     'primary_cta_text': 'Bepul daraja testini boshlash',
     'secondary_cta_text': 'Telegram orqali xarid qilish',
-    'base_price_label': 'Platforma + jonli darslar — umrbod access',
-    'pricing_card_title': 'Umrbod access',
-    'reassurance_text': 'Bir martalik to‘lov • Jonli darslar • Umrbod access',
+    'base_price_label': 'Platforma + jonli darslar — study plan',
+    'pricing_card_title': 'Study plan',
+    'reassurance_text': 'Bir martalik to‘lov • Jonli darslar • Study plan',
     'instagram_url': 'https://www.instagram.com/tonacademyuz/',
     'youtube_url': 'https://www.youtube.com/@TonAcademyuz',
     'telegram_purchase_url': 'https://t.me/tonacademyuz',
@@ -74,7 +74,7 @@ DEMO_STUDENTS = [
     ('Dilnoza', 'Yusupova', 'IELTS 7.5', 'Platformadagi AI checker va video darslar yordamida 6.5 dan 7.5 ga chiqdim.'),
     ('Sardor', 'Mirzayev', 'IELTS 7.0', 'Reading va Listening mashqlari haqiqiy imtihonga juda o‘xshash edi.'),
     ('Nilufar', 'Qodirova', 'IELTS 8.0', 'Writing AI tavsiyalari band score ni tez oshirishga yordam berdi.'),
-    ('Otabek', 'Normatov', 'IELTS 7.5', '599k platforma — bir martalik to‘lov, umrbod foyda.'),
+    ('Otabek', 'Normatov', 'IELTS 7.5', 'Platforma va study plan yordamida bir martalik to‘lov bilan natijaga chiqdim.'),
 ]
 
 DEMO_TESTIMONIALS = [

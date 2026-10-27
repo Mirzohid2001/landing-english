@@ -50,10 +50,10 @@ BENEFIT_CARDS = [
         'badge': 'LIVE',
     },
     {
-        'icon': 'fas fa-infinity',
-        'title': 'Umrbod foydalanish',
-        'text': 'Bir marta to‘lov — umrbod foydalanish. Yashirin to‘lovlar yo‘q.',
-        'badge': 'Lifetime',
+        'icon': 'fas fa-clipboard-list',
+        'title': 'Study plan',
+        'text': 'Shaxsiy study plan — bosqichma-bosqich tayyorgarlik yo‘li.',
+        'badge': 'Plan',
     },
     {
         'icon': 'fas fa-video',
@@ -134,7 +134,7 @@ SECTION_COPY_DEFAULTS = {
     'benefits': {
         'kicker': 'Nimalar olasiz?',
         'title': 'Platformada nimalar olasiz?',
-        'subtitle': 'Jonli darslar, video kurslar, AI checker — bir martalik to‘lov bilan umrbod access.',
+        'subtitle': 'Jonli darslar, video kurslar, AI checker va study plan — bir joyda.',
     },
     'ai': {
         'kicker': 'AI Checker',
@@ -171,11 +171,11 @@ SECTION_COPY_DEFAULTS = {
 DEFAULT_FAQS = [
     (
         'Bu oylik to‘lovmi?',
-        'Yo‘q. Bir martalik to‘lov. Umrbod platformaga kirish huquqi beriladi.',
+        'Yo‘q. Bir martalik to‘lov. Platformaga kirish va study plan beriladi.',
     ),
     (
-        'Umrbod access nimani anglatadi?',
-        'Bir marta to‘lov qilasiz va platformaning barcha mavjud funksiyalaridan cheklovsiz foydalanasiz.',
+        'Study plan nimani anglatadi?',
+        'Study plan — siz uchun tuzilgan bosqichma-bosqich tayyorgarlik rejasi. Platformadagi darslar va mashqlar shu reja asosida ketma-ket beriladi.',
     ),
     (
         'AI checker nimalarni tekshiradi?',
