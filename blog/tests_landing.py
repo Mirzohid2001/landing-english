@@ -290,7 +290,7 @@ class LandingPageTemplateTests(TestCase):
             'Britaniyalik ustozlar va kafolatlangan tizim orqali',
         )
         self.assertContains(response, '1000+')
-        self.assertContains(response, 'Bir martalik')
+        self.assertContains(response, 'Jonli darslar • Study plan')
         self.assertContains(response, 'Mobil + Desktop')
         self.assertContains(response, 'fas fa-users')
 

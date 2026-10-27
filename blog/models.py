@@ -354,7 +354,7 @@ class LandingSettings(models.Model):
     pricing_card_badge = models.CharField(max_length=80, default='ENG YAXSHI TAKLIF')
     reassurance_text = models.CharField(
         max_length=200,
-        default='Bir martalik to‘lov • Jonli darslar • Study plan',
+        default='Jonli darslar • Study plan',
     )
     primary_cta_text = models.CharField(max_length=120, default='Bepul daraja testini boshlash')
     secondary_cta_text = models.CharField(max_length=120, default='Telegram orqali xarid qilish')

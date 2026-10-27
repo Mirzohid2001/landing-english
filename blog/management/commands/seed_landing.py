@@ -41,7 +41,7 @@ HERO_DEFAULTS = {
     'secondary_cta_text': 'Telegram orqali xarid qilish',
     'base_price_label': 'Platforma + jonli darslar — study plan',
     'pricing_card_title': 'Study plan',
-    'reassurance_text': 'Bir martalik to‘lov • Jonli darslar • Study plan',
+    'reassurance_text': 'Jonli darslar • Study plan',
     'instagram_url': 'https://www.instagram.com/tonacademyuz/',
     'youtube_url': 'https://www.youtube.com/@TonAcademyuz',
     'telegram_purchase_url': 'https://t.me/tonacademyuz',
