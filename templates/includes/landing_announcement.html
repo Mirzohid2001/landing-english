@@ -6,9 +6,6 @@
     </span>
     <p class="lp-announcement__copy">
         <span class="lp-announcement__text">{{ announcement_promo.title }}</span>
-        {% if announcement_promo.formatted_price %}
-        <span class="lp-announcement__price">{{ announcement_promo.formatted_price }} so‘m</span>
-        {% endif %}
     </p>
     <a href="{{ announcement_promo.cta_link }}"
        class="lp-announcement__cta"

@@ -97,10 +97,12 @@ class LandingPageTemplateTests(TestCase):
         self.assertContains(response, 'landing-page')
         self.assertContains(response, 'landing.css')
 
-    def test_home_shows_599k_price(self):
+    def test_home_pricing_card_without_visible_price(self):
         response = self.client.get(reverse('blog:home'))
-        self.assertContains(response, '599 000 so‘m')
         self.assertContains(response, 'lp-pricing-card')
+        self.assertNotContains(response, 'lp-pricing-card__price')
+        self.assertNotContains(response, 'lp-final-cta__price')
+        self.assertNotContains(response, '599 000 so‘m')
 
     def test_home_has_telegram_purchase_cta(self):
         response = self.client.get(reverse('blog:home'))

@@ -64,7 +64,7 @@
                 </div>
                 <p class="lp-hero__reassurance">{{ landing.reassurance_text }}</p>
             </div>
-            <aside class="lp-pricing-card" aria-label="599 000 so‘m pricing">
+            <aside class="lp-pricing-card" aria-label="Platforma taklifi">
                 <div class="lp-planet" aria-hidden="true">
                     {% include 'includes/lp_picture.html' with picture=planet_picture eager=True %}
                 </div>
@@ -72,7 +72,6 @@
                     <span class="lp-pricing-card__badge">{{ landing.pricing_card_badge }}</span>
                     <span class="lp-pricing-card__label">{{ landing.base_price_label }}</span>
                     <h3>{{ landing.pricing_card_title }}</h3>
-                    <p class="lp-pricing-card__price">{{ landing.formatted_base_price }} so‘m</p>
                     <ul class="lp-pricing-card__list">
                         <li class="is-highlight">
                             <i class="fas fa-broadcast-tower" aria-hidden="true"></i>
@@ -109,9 +108,6 @@
                 {% endif %}
             </div>
             <div class="lp-offer-card__price-box">
-                {% if current_offer_promo.price %}
-                <div class="lp-offer-card__price">{{ current_offer_promo.formatted_price }}<small>so‘m</small></div>
-                {% endif %}
                 <a href="{{ current_offer_promo.cta_link }}"
                    class="lp-btn-primary"
                    target="_blank"
@@ -380,7 +376,6 @@
                 <span class="lp-benefit-card__tag">{{ promo.display_badge }}</span>
                 <h3>{{ promo.title }}</h3>
                 <p>{{ promo.description }}</p>
-                {% if promo.price %}<p><strong>{{ promo.formatted_price }} so‘m</strong></p>{% endif %}
                 <a href="{{ promo.cta_link }}" class="lp-btn-secondary" target="_blank" rel="noopener noreferrer" data-lp-track="news_card_click" data-campaign-id="{{ promo.campaign_id }}">{{ promo.cta_text }}</a>
             </article>
             {% endfor %}
@@ -442,7 +437,6 @@
     <div class="container">
         <div class="lp-final-cta__box">
             <h2>Jonli darslar + 100+ video + AI checker + umrbod access</h2>
-            <p class="lp-final-cta__price">{{ landing.formatted_base_price }} so‘m</p>
             <div class="lp-final-cta__checks">
                 <span><i class="fas fa-broadcast-tower"></i> Jonli darslar</span>
                 <span><i class="fas fa-check"></i> Umrbod access</span>

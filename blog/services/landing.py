@@ -25,7 +25,7 @@ PURCHASE_STEPS = [
     {
         'step_number': 2,
         'title': 'Admin bilan bog‘laning',
-        'description': 'Qaysi paket kerakligini yozing — 599k yoki LIVE bundle.',
+        'description': 'Qaysi paket kerakligini yozing.',
         'icon': 'fas fa-comments',
     },
     {
@@ -132,8 +132,8 @@ SECTION_COPY_DEFAULTS = {
         'subtitle': 'Real dashboard, AI checker, jonli darslar va progress — barchasi bitta joyda.',
     },
     'benefits': {
-        'kicker': '599 000 so‘m',
-        'title': '599 000 so‘mga nimalar olasiz?',
+        'kicker': 'Nimalar olasiz?',
+        'title': 'Platformada nimalar olasiz?',
         'subtitle': 'Jonli darslar, video kurslar, AI checker — bir martalik to‘lov bilan umrbod access.',
     },
     'ai': {
@@ -171,7 +171,7 @@ SECTION_COPY_DEFAULTS = {
 DEFAULT_FAQS = [
     (
         'Bu oylik to‘lovmi?',
-        'Yo‘q. 599 000 so‘m — bir martalik to‘lov. Umrbod platformaga kirish huquqi beriladi.',
+        'Yo‘q. Bir martalik to‘lov. Umrbod platformaga kirish huquqi beriladi.',
     ),
     (
         'Umrbod access nimani anglatadi?',
@@ -190,16 +190,16 @@ DEFAULT_FAQS = [
         'Ha, platforma mobil brauzerda ham ishlaydi.',
     ),
     (
-        '599 000 so‘mga aynan nimalar kiradi?',
+        'Platformaga aynan nimalar kiradi?',
         'Jonli darslar, 100+ video darslar, AI checker, Reading/Listening/Writing materiallari, progress tracking va barcha yangilanishlar.',
     ),
     (
         'Jonli darslar bormi?',
-        'Ha, jonli darslar mavjud. Qo‘shimcha LIVE bundle (899k) da Speaking + Reading LIVE darslar kengaytirilgan formatda beriladi.',
+        'Ha, jonli darslar mavjud. Qo‘shimcha LIVE bundle da Speaking + Reading LIVE darslar kengaytirilgan formatda beriladi.',
     ),
     (
         'Speaking bormi?',
-        'Ha, jonli darslar orqali Speaking amaliyoti bor. LIVE bundle (899k) da Speaking + Reading LIVE darslar alohida kengaytirilgan paket sifatida taklif etiladi.',
+        'Ha, jonli darslar orqali Speaking amaliyoti bor. LIVE bundle da Speaking + Reading LIVE darslar alohida kengaytirilgan paket sifatida taklif etiladi.',
     ),
     (
         'Loginni qachon olaman?',
