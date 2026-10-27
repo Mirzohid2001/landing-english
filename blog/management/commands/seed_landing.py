@@ -40,7 +40,7 @@ HERO_DEFAULTS = {
     'primary_cta_text': 'Bepul daraja testini boshlash',
     'secondary_cta_text': 'Telegram orqali xarid qilish',
     'base_price_label': 'Platforma + jonli darslar — study plan',
-    'pricing_card_title': 'Study plan',
+    'pricing_card_title': 'UK ustozlar bilan jonli darslar\nStudy plan',
     'reassurance_text': 'Jonli darslar • Study plan',
     'instagram_url': 'https://www.instagram.com/tonacademyuz/',
     'youtube_url': 'https://www.youtube.com/@TonAcademyuz',

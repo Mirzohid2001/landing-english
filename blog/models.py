@@ -350,7 +350,10 @@ class LandingSettings(models.Model):
         max_length=120,
         default='Platforma + jonli darslar — study plan',
     )
-    pricing_card_title = models.CharField(max_length=120, default='Study plan')
+    pricing_card_title = models.CharField(
+        max_length=120,
+        default='UK ustozlar bilan jonli darslar\nStudy plan',
+    )
     pricing_card_badge = models.CharField(max_length=80, default='ENG YAXSHI TAKLIF')
     reassurance_text = models.CharField(
         max_length=200,
