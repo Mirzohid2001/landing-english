@@ -15,7 +15,13 @@ class Course(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     duration = models.CharField(max_length=100, help_text="e.g., '3 months', '6 weeks'")
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Ixtiyoriy. Bo‘sh qoldirish mumkin.',
+    )
     level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
     image = models.ImageField(upload_to='courses/', blank=True, null=True)
     promo_video_file = models.FileField(upload_to='videos/courses/', blank=True, null=True, help_text="Local video file only")

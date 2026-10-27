@@ -23,9 +23,11 @@
                             <i class="fas fa-clock"></i>
                             <span>{{ course.duration }}</span>
                         </div>
+                        {% if course.price %}
                         <div class="meta-item price-item">
                             <span class="course-price">${{ course.price }}</span>
                         </div>
+                        {% endif %}
                     </div>
                     <div class="course-actions">
                         <button class="btn btn-primary btn-lg apply-course-btn" data-course-id="{{ course.id }}">
