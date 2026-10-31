@@ -2797,12 +2797,11 @@ body.lp-nav-open .lp-mobile-cta {
     }
 
     .lp-mobile-cta__price {
-        font-size: 1rem;
-        font-weight: 800;
+        font-size: 0.78rem;
+        font-weight: 700;
+        line-height: 1.25;
         color: var(--lp-text);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: normal;
     }
 
     .lp-mobile-cta__btn {
